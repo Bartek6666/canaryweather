@@ -26,7 +26,7 @@ import { useTranslation } from 'react-i18next';
 import { theme, colors, spacing, typography, glass, glassTokens, glassText, borderRadius, gradients, shadows } from '../constants/theme';
 import locationsMapping from '../constants/locations_mapping.json';
 import { findNearestStations, NearbyStation } from '../services/weatherService';
-import { GlassCard, LanguageSwitcher } from '../components';
+import { GlassCard, HeroLogo, LanguageSwitcher } from '../components';
 
 // Satellite map background – place your image at assets/map_bg.jpg
 const MAP_BG_SOURCE = require('../../assets/map_bg.jpg');
@@ -332,7 +332,7 @@ export default function SearchScreen({ navigation }: Props) {
                   <LanguageSwitcher delay={50} />
                 </View>
                 <View style={styles.logoContainer}>
-                  <Ionicons name="sunny" size={44} color={colors.accent} />
+                  <HeroLogo size={90} />
                 </View>
                 <Text style={styles.title}>{t('search.title')}</Text>
                 <Text style={styles.subtitle}>{t('search.subtitle')}</Text>
@@ -538,16 +538,9 @@ const styles = StyleSheet.create({
   header: { alignItems: 'center', marginBottom: spacing.xl },
   languageSwitcherRow: { alignSelf: 'flex-end', marginBottom: spacing.md },
   logoContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: glassTokens.bgDefault,
-    borderWidth: 1,
-    borderColor: glassTokens.borderColor,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: spacing.md,
-    ...shadows.glass,
+    marginBottom: spacing.sm,
   },
   title: {
     ...typography.h1,
