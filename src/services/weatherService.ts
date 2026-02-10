@@ -628,3 +628,84 @@ export async function fetchLiveWeather(
     return null;
   }
 }
+
+// ─── CALIMA DETECTION (Open-Meteo Air Quality API) ────────────────────────────
+
+// PM10 thresholds for Calima detection (µg/m³)
+const PM10_CALIMA_THRESHOLD = 50; // Elevated dust levels
+const PM10_SEVERE_CALIMA_THRESHOLD = 100; // Severe Calima conditions
+
+export interface CalimaStatus {
+  isDetected: boolean;
+  isSevere: boolean;
+  pm10: number;
+  timestamp: string;
+}
+
+interface OpenMeteoAirQualityResponse {
+  current: {
+    time: string;
+    pm10: number;
+  };
+}
+
+/**
+ * Fetches current air quality data to detect Calima (Saharan dust storm)
+ * Uses Open-Meteo Air Quality API (free, no API key required)
+ * @param lat Latitude
+ * @param lon Longitude
+ * @returns CalimaStatus or null if request fails
+ */
+export async function fetchCalimaStatus(
+  lat: number,
+  lon: number
+): Promise<CalimaStatus | null> {
+  const TIMEOUT_MS = 10000;
+
+  try {
+    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=pm10&timezone=auto`;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      console.warn(`Open-Meteo Air Quality API error: ${response.status}`);
+      return null;
+    }
+
+    const data: OpenMeteoAirQualityResponse = await response.json();
+
+    if (!data.current || data.current.pm10 === undefined) {
+      console.warn('Open-Meteo Air Quality API: No PM10 data available');
+      return null;
+    }
+
+    const pm10 = data.current.pm10;
+
+    return {
+      isDetected: pm10 >= PM10_CALIMA_THRESHOLD,
+      isSevere: pm10 >= PM10_SEVERE_CALIMA_THRESHOLD,
+      pm10: Math.round(pm10),
+      timestamp: data.current.time,
+    };
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        console.warn('Open-Meteo Air Quality API: Request timed out');
+      } else {
+        console.warn('Open-Meteo Air Quality API: Network error -', error.message);
+      }
+    }
+    return null;
+  }
+}

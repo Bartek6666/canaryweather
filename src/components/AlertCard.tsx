@@ -1,11 +1,11 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, Animated, Easing, TouchableOpacity, Modal, ScrollView, Pressable } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
-import { MotiView } from 'moti';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { spacing, glassTokens, shadows } from '../constants/theme';
+import { spacing, glassTokens, shadows, colors } from '../constants/theme';
 
 // Orange tint for Calima alert
 const ALERT_ORANGE = 'rgba(255, 140, 0, 0.2)';
@@ -19,6 +19,33 @@ interface AlertCardProps {
 
 export function AlertCard({ type = 'calima', visible = true }: AlertCardProps) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
+  const pulseAnim = useRef(new Animated.Value(0.6)).current;
+  const [showInfoModal, setShowInfoModal] = useState(false);
+
+  useEffect(() => {
+    if (!visible) return;
+
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1200,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 0.6,
+          duration: 1200,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    pulse.start();
+    return () => pulse.stop();
+  }, [visible]);
 
   if (!visible) return null;
 
@@ -37,43 +64,105 @@ export function AlertCard({ type = 'calima', visible = true }: AlertCardProps) {
   const content = getAlertContent();
 
   return (
-    <MotiView
-      from={{ opacity: 0.6 }}
-      animate={{ opacity: 1 }}
-      transition={{
-        type: 'timing',
-        duration: 1200,
-        loop: true,
-      }}
-      style={styles.wrapper}
-    >
-      <View style={styles.container}>
-        <BlurView
-          intensity={glassTokens.blurIntensity}
-          tint="light"
-          style={[StyleSheet.absoluteFill, styles.blur]}
-        />
-        <View style={styles.overlay} />
+    <>
+      <Animated.View style={[styles.wrapper, { opacity: pulseAnim }]}>
+        <View style={styles.container}>
+          <BlurView
+            intensity={glassTokens.blurIntensity}
+            tint="light"
+            style={[StyleSheet.absoluteFill, styles.blur]}
+          />
+          <View style={styles.overlay} />
 
-        <View style={styles.content}>
-          {/* Icon with glow */}
-          <View style={styles.iconContainer}>
-            <Ionicons
-              name={content.icon}
-              size={28}
-              color={ALERT_ICON_COLOR}
-              style={styles.icon}
-            />
-          </View>
+          <View style={styles.content}>
+            {/* Icon with glow */}
+            <View style={styles.iconContainer}>
+              <Ionicons
+                name={content.icon}
+                size={28}
+                color={ALERT_ICON_COLOR}
+                style={styles.icon}
+              />
+            </View>
 
-          {/* Text content */}
-          <View style={styles.textContainer}>
-            <Text style={styles.title}>{content.title}</Text>
-            <Text style={styles.description}>{content.description}</Text>
+            {/* Text content */}
+            <View style={styles.textContainer}>
+              <Text style={styles.title}>{content.title}</Text>
+              <Text style={styles.description}>{content.description}</Text>
+            </View>
+
+            {/* Info button */}
+            <TouchableOpacity
+              style={styles.infoButton}
+              onPress={() => setShowInfoModal(true)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="information-circle" size={24} color="rgba(255, 255, 255, 0.9)" />
+            </TouchableOpacity>
           </View>
         </View>
-      </View>
-    </MotiView>
+      </Animated.View>
+
+      {/* Info Modal */}
+      <Modal
+        visible={showInfoModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowInfoModal(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setShowInfoModal(false)} />
+
+          <View style={[styles.modalContent, { marginTop: insets.top + 20, marginBottom: insets.bottom + 20 }]}>
+            <BlurView
+              intensity={80}
+              tint="dark"
+              style={[StyleSheet.absoluteFill, styles.modalBlur]}
+            />
+            <View style={styles.modalOverlay} />
+
+            {/* Modal Header */}
+            <View style={styles.modalHeader}>
+              <View style={styles.modalTitleRow}>
+                <Ionicons name="warning" size={24} color={ALERT_ICON_COLOR} />
+                <Text style={styles.modalTitle}>{t('result.calimaInfoTitle')}</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setShowInfoModal(false)}
+              >
+                <Ionicons name="close" size={24} color="rgba(255, 255, 255, 0.8)" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
+              {/* What is Calima */}
+              <Text style={styles.modalText}>{t('result.calimaInfoWhat')}</Text>
+
+              {/* Dangers */}
+              <View style={styles.modalSection}>
+                <View style={styles.sectionHeader}>
+                  <Ionicons name="alert-circle" size={20} color="#FF6B6B" />
+                  <Text style={styles.sectionTitle}>{t('result.calimaInfoDangers')}</Text>
+                </View>
+                <Text style={styles.modalList}>{t('result.calimaInfoDangersList')}</Text>
+              </View>
+
+              {/* Safety */}
+              <View style={styles.modalSection}>
+                <View style={styles.sectionHeader}>
+                  <Ionicons name="shield-checkmark" size={20} color="#4ECDC4" />
+                  <Text style={styles.sectionTitle}>{t('result.calimaInfoSafety')}</Text>
+                </View>
+                <Text style={styles.modalList}>{t('result.calimaInfoSafetyList')}</Text>
+              </View>
+
+              <View style={styles.modalBottomSpacer} />
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }
 
@@ -109,7 +198,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.md,
-    // Glow effect
     shadowColor: ALERT_GLOW_COLOR,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
@@ -123,6 +211,7 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     flex: 1,
+    paddingRight: spacing.sm,
   },
   title: {
     fontSize: 16,
@@ -138,6 +227,101 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: 'rgba(255, 255, 255, 0.85)',
     lineHeight: 18,
+  },
+  infoButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: spacing.xs,
+  },
+
+  // Modal styles
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  modalContent: {
+    width: '100%',
+    maxHeight: '85%',
+    borderRadius: 20,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 140, 0, 0.3)',
+  },
+  modalBlur: {
+    borderRadius: 20,
+  },
+  modalOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(30, 30, 30, 0.85)',
+    borderRadius: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  modalTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginLeft: spacing.sm,
+  },
+  closeButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalScroll: {
+    padding: spacing.lg,
+  },
+  modalText: {
+    fontSize: 15,
+    fontWeight: '400',
+    color: 'rgba(255, 255, 255, 0.9)',
+    lineHeight: 22,
+    marginBottom: spacing.lg,
+  },
+  modalSection: {
+    marginBottom: spacing.lg,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+  },
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginLeft: spacing.sm,
+  },
+  modalList: {
+    fontSize: 14,
+    fontWeight: '400',
+    color: 'rgba(255, 255, 255, 0.85)',
+    lineHeight: 24,
+    paddingLeft: spacing.xs,
+  },
+  modalBottomSpacer: {
+    height: spacing.lg,
   },
 });
 

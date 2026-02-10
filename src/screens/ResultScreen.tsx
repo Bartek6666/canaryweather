@@ -17,7 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { colors, spacing, typography, glass, glassText, borderRadius, gradients, shadows, getSunChanceColor, liveCard, theme } from '../constants/theme';
 import { AlertCard, GlassCard, SunChanceGauge, WeatherIcon } from '../components';
 import locationsMapping from '../constants/locations_mapping.json';
-import { calculateSunChance, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather } from '../services/weatherService';
+import { calculateSunChance, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus } from '../services/weatherService';
 import { supabase } from '../services/supabase';
 import { SunChanceResult, MonthlyStats, LiveWeatherData, WeatherCondition } from '../types';
 import { MONTH_KEYS } from '../i18n';
@@ -246,8 +246,8 @@ export default function ResultScreen({ navigation, route }: Props) {
   const [isLoadingLive, setIsLoadingLive] = useState(true);
   const [liveError, setLiveError] = useState(false);
 
-  // Calima alert state (TODO: connect to PM10 API data in future)
-  const [isCalimaDetected] = useState(true); // Set to true for demo, will be API-driven
+  // Calima alert state (connected to Open-Meteo Air Quality API)
+  const [calimaStatus, setCalimaStatus] = useState<CalimaStatus | null>(null);
 
   const station = useMemo(() => (locationsMapping.stations as Record<string, any>)[stationId], [stationId]);
 
@@ -300,6 +300,22 @@ export default function ResultScreen({ navigation, route }: Props) {
 
     // Refresh live data every 5 minutes
     const interval = setInterval(loadLiveWeather, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [station]);
+
+  // Fetch Calima status from Open-Meteo Air Quality API
+  useEffect(() => {
+    if (!station) return;
+
+    const loadCalimaStatus = async () => {
+      const status = await fetchCalimaStatus(station.latitude, station.longitude);
+      setCalimaStatus(status);
+    };
+
+    loadCalimaStatus();
+
+    // Refresh calima status every 30 minutes
+    const interval = setInterval(loadCalimaStatus, 30 * 60 * 1000);
     return () => clearInterval(interval);
   }, [station]);
 
@@ -390,8 +406,8 @@ export default function ResultScreen({ navigation, route }: Props) {
           ))}
         </View>
 
-        {/* Calima Alert - displayed when Saharan dust storm is detected */}
-        <AlertCard type="calima" visible={isCalimaDetected} />
+        {/* Calima Alert - displayed when Saharan dust storm is detected (PM10 > 50 µg/m³) */}
+        <AlertCard type="calima" visible={calimaStatus?.isDetected ?? false} />
 
         <SunChanceGauge percentage={sunChanceResult?.sun_chance ?? 0} confidence={sunChanceResult?.confidence ?? 'low'} isLoading={isLoading} />
 
