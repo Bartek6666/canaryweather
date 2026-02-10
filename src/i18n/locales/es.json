@@ -29,6 +29,8 @@
   "result": {
     "live": "EN VIVO",
     "offline": "SIN CONEXIÓN",
+    "cached": "ARCHIVADO",
+    "offlineData": "Datos archivados (offline)",
     "noLiveData": "Sin datos en vivo",
     "checkConnection": "Comprueba tu conexión a internet",
     "calimaAlert": "Alerta: Calima",

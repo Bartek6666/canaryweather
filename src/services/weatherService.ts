@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './supabase';
 import {
   WeatherData,
@@ -9,6 +10,80 @@ import {
   WeatherCondition,
 } from '../types';
 import locationsMapping from '../constants/locations_mapping.json';
+
+// ─── OFFLINE CACHE ────────────────────────────────────────────────────────────
+
+const CACHE_KEY_PREFIX = 'weather_cache_';
+const CACHE_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+interface CachedWeatherData {
+  data: LiveWeatherData;
+  timestamp: number;
+  stationId: string;
+}
+
+/**
+ * Saves weather data to AsyncStorage cache
+ */
+async function saveWeatherToCache(stationId: string, data: LiveWeatherData): Promise<void> {
+  try {
+    const cacheEntry: CachedWeatherData = {
+      data,
+      timestamp: Date.now(),
+      stationId,
+    };
+    await AsyncStorage.setItem(
+      `${CACHE_KEY_PREFIX}${stationId}`,
+      JSON.stringify(cacheEntry)
+    );
+  } catch (error) {
+    console.warn('Failed to save weather to cache:', error);
+  }
+}
+
+/**
+ * Retrieves weather data from AsyncStorage cache
+ * Returns null if cache is empty, expired, or invalid
+ */
+async function getWeatherFromCache(stationId: string): Promise<LiveWeatherData | null> {
+  try {
+    const cached = await AsyncStorage.getItem(`${CACHE_KEY_PREFIX}${stationId}`);
+    if (!cached) return null;
+
+    const cacheEntry: CachedWeatherData = JSON.parse(cached);
+
+    // Validate cache entry structure
+    if (!cacheEntry.data || !cacheEntry.timestamp || !cacheEntry.stationId) {
+      return null;
+    }
+
+    // Check if cache is expired (older than 24 hours)
+    if (Date.now() - cacheEntry.timestamp > CACHE_EXPIRY_MS) {
+      console.log('[Cache] Weather data expired, removing');
+      await AsyncStorage.removeItem(`${CACHE_KEY_PREFIX}${stationId}`);
+      return null;
+    }
+
+    // Validate LiveWeatherData structure
+    const data = cacheEntry.data;
+    if (
+      typeof data.temperature !== 'number' ||
+      typeof data.humidity !== 'number' ||
+      typeof data.windSpeed !== 'number' ||
+      typeof data.weatherCode !== 'number' ||
+      typeof data.condition !== 'string' ||
+      typeof data.conditionLabelKey !== 'string'
+    ) {
+      console.warn('[Cache] Invalid weather data structure');
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.warn('Failed to read weather from cache:', error);
+    return null;
+  }
+}
 
 // Constants from config
 const LAPSE_RATE = locationsMapping.altitudeCorrection.lapseRate; // 0.6°C per 100m
@@ -552,20 +627,30 @@ function getMockWeatherData(): LiveWeatherData {
 const USE_MOCK_DATA = __DEV__ && false; // Change to true to force mock data
 
 /**
+ * Result from fetchLiveWeather including cache status
+ */
+export interface LiveWeatherResult {
+  data: LiveWeatherData;
+  isFromCache: boolean;
+}
+
+/**
  * Fetches current weather data from Open-Meteo API (free, no API key required)
- * Falls back to mock data in development mode if network fails
+ * Falls back to cached data if network fails, then to mock data in dev mode
  * @param lat Latitude
  * @param lon Longitude
- * @returns LiveWeatherData or null if request fails
+ * @param stationId Station ID for cache key
+ * @returns LiveWeatherResult with data and cache status, or null if all fails
  */
 export async function fetchLiveWeather(
   lat: number,
-  lon: number
-): Promise<LiveWeatherData | null> {
+  lon: number,
+  stationId?: string
+): Promise<LiveWeatherResult | null> {
   // Force mock data for UI testing
   if (USE_MOCK_DATA) {
     console.log('[DEV] Using mock weather data');
-    return getMockWeatherData();
+    return { data: getMockWeatherData(), isFromCache: false };
   }
 
   const TIMEOUT_MS = 10000; // 10 seconds timeout
@@ -589,19 +674,35 @@ export async function fetchLiveWeather(
 
     if (!response.ok) {
       console.warn(`Open-Meteo API error: ${response.status}`);
-      return __DEV__ ? getMockWeatherData() : null;
+      // Try cache fallback
+      if (stationId) {
+        const cached = await getWeatherFromCache(stationId);
+        if (cached) {
+          console.log('[Cache] Using cached weather data (API error)');
+          return { data: cached, isFromCache: true };
+        }
+      }
+      return __DEV__ ? { data: getMockWeatherData(), isFromCache: false } : null;
     }
 
     const data: OpenMeteoResponse = await response.json();
 
     if (!data.current) {
       console.warn('Open-Meteo API: No current data available');
-      return __DEV__ ? getMockWeatherData() : null;
+      // Try cache fallback
+      if (stationId) {
+        const cached = await getWeatherFromCache(stationId);
+        if (cached) {
+          console.log('[Cache] Using cached weather data (no API data)');
+          return { data: cached, isFromCache: true };
+        }
+      }
+      return __DEV__ ? { data: getMockWeatherData(), isFromCache: false } : null;
     }
 
     const { condition, labelKey } = mapWmoCode(data.current.weather_code);
 
-    return {
+    const weatherData: LiveWeatherData = {
       temperature: Math.round(data.current.temperature_2m),
       humidity: Math.round(data.current.relative_humidity_2m),
       windSpeed: Math.round(data.current.wind_speed_10m),
@@ -610,6 +711,14 @@ export async function fetchLiveWeather(
       conditionLabelKey: labelKey,
       timestamp: data.current.time,
     };
+
+    // Save to cache on success
+    if (stationId) {
+      await saveWeatherToCache(stationId, weatherData);
+      console.log('[Cache] Weather data saved to cache');
+    }
+
+    return { data: weatherData, isFromCache: false };
   } catch (error) {
     if (error instanceof Error) {
       if (error.name === 'AbortError') {
@@ -619,10 +728,19 @@ export async function fetchLiveWeather(
       }
     }
 
+    // Try cache fallback first
+    if (stationId) {
+      const cached = await getWeatherFromCache(stationId);
+      if (cached) {
+        console.log('[Cache] Using cached weather data (network error)');
+        return { data: cached, isFromCache: true };
+      }
+    }
+
     // Fallback to mock data in development mode
     if (__DEV__) {
       console.log('[DEV] Network failed, using mock weather data');
-      return getMockWeatherData();
+      return { data: getMockWeatherData(), isFromCache: false };
     }
 
     return null;

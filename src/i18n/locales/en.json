@@ -29,6 +29,8 @@
   "result": {
     "live": "LIVE",
     "offline": "OFFLINE",
+    "cached": "CACHED",
+    "offlineData": "Archived data (offline)",
     "noLiveData": "No live data",
     "checkConnection": "Check your internet connection",
     "calimaAlert": "Alert: Calima",

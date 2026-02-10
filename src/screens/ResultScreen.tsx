@@ -17,7 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { colors, spacing, typography, glass, glassText, borderRadius, gradients, shadows, getSunChanceColor, liveCard, theme } from '../constants/theme';
 import { AlertCard, GlassCard, SunChanceGauge, WeatherIcon } from '../components';
 import locationsMapping from '../constants/locations_mapping.json';
-import { calculateSunChance, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus } from '../services/weatherService';
+import { calculateSunChance, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult } from '../services/weatherService';
 import { supabase } from '../services/supabase';
 import { SunChanceResult, MonthlyStats, LiveWeatherData, WeatherCondition } from '../types';
 import { MONTH_KEYS } from '../i18n';
@@ -34,9 +34,10 @@ interface LiveWeatherCardProps {
   data: LiveWeatherData | null;
   isLoading: boolean;
   hasError: boolean;
+  isFromCache?: boolean;
 }
 
-function LiveWeatherCard({ data, isLoading, hasError }: LiveWeatherCardProps) {
+function LiveWeatherCard({ data, isLoading, hasError, isFromCache = false }: LiveWeatherCardProps) {
   const { t } = useTranslation();
   const pulseAnim = useRef(new Animated.Value(0.4)).current;
   const skeletonAnim = useRef(new Animated.Value(0.3)).current;
@@ -114,58 +115,76 @@ function LiveWeatherCard({ data, isLoading, hasError }: LiveWeatherCardProps) {
   }
 
   return (
-    <GlassCard style={styles.liveCard} delay={100}>
-      <View style={styles.liveCardInner}>
-        {/* Figma: Top row - Temperature (left) + Live Badge (right) */}
-        <View style={styles.liveTopRow}>
-          <Text style={styles.liveTempValue}>{data.temperature}°C</Text>
-          <View style={styles.liveBadge}>
-            <Animated.View style={[styles.liveDot, { opacity: pulseAnim, transform: [{ scale: pulseScale }] }]} />
-            <Text style={styles.liveBadgeText}>{t('result.live')}</Text>
-          </View>
-        </View>
-
-        {/* Figma: Bottom row - Wind info (left) + Weather icon with label (right) */}
-        <View style={styles.liveBottomRow}>
-          {/* Wind info with small glow icon */}
-          <View style={styles.liveWindSection}>
-            <View style={styles.liveWindRow}>
-              <View style={styles.parameterIconWrapper}>
-                <MaterialCommunityIcons
-                  name="weather-windy"
-                  size={16}
-                  color="#FFFFFF"
-                  style={styles.parameterIcon}
-                />
-              </View>
-              <Text style={styles.liveWindText}>{t('result.wind')}: {data.windSpeed} km/h</Text>
-            </View>
-            {/* Humidity info */}
-            <View style={styles.liveWindRow}>
-              <View style={styles.parameterIconWrapper}>
-                <Ionicons
-                  name="water-outline"
-                  size={16}
-                  color="#FFFFFF"
-                  style={styles.parameterIcon}
-                />
-              </View>
-              <Text style={styles.liveWindText}>{t('result.humidity')}: {data.humidity}%</Text>
+    <View>
+      <GlassCard style={styles.liveCard} delay={100}>
+        <View style={styles.liveCardInner}>
+          {/* Figma: Top row - Temperature (left) + Live Badge (right) */}
+          <View style={styles.liveTopRow}>
+            <Text style={styles.liveTempValue}>{data.temperature}°C</Text>
+            <View style={isFromCache ? [styles.liveBadge, styles.liveBadgeCache] : styles.liveBadge}>
+              {!isFromCache && (
+                <Animated.View style={[styles.liveDot, { opacity: pulseAnim, transform: [{ scale: pulseScale }] }]} />
+              )}
+              {isFromCache && (
+                <Ionicons name="cloud-offline-outline" size={14} color={colors.textMuted} style={{ marginRight: spacing.xs }} />
+              )}
+              <Text style={isFromCache ? [styles.liveBadgeText, styles.liveBadgeTextCache] : styles.liveBadgeText}>
+                {isFromCache ? t('result.cached') : t('result.live')}
+              </Text>
             </View>
           </View>
 
-          {/* Main weather icon with glow + condition label */}
-          <View style={styles.liveWeatherSection}>
-            <WeatherIcon
-              condition={data.condition}
-              size={54}
-              showGlow={true}
-            />
-            <Text style={styles.liveConditionLabel}>{t(`weather.${data.conditionLabelKey}`)}</Text>
+          {/* Figma: Bottom row - Wind info (left) + Weather icon with label (right) */}
+          <View style={styles.liveBottomRow}>
+            {/* Wind info with small glow icon */}
+            <View style={styles.liveWindSection}>
+              <View style={styles.liveWindRow}>
+                <View style={styles.parameterIconWrapper}>
+                  <MaterialCommunityIcons
+                    name="weather-windy"
+                    size={16}
+                    color="#FFFFFF"
+                    style={styles.parameterIcon}
+                  />
+                </View>
+                <Text style={styles.liveWindText}>{t('result.wind')}: {data.windSpeed} km/h</Text>
+              </View>
+              {/* Humidity info */}
+              <View style={styles.liveWindRow}>
+                <View style={styles.parameterIconWrapper}>
+                  <Ionicons
+                    name="water-outline"
+                    size={16}
+                    color="#FFFFFF"
+                    style={styles.parameterIcon}
+                  />
+                </View>
+                <Text style={styles.liveWindText}>{t('result.humidity')}: {data.humidity}%</Text>
+              </View>
+            </View>
+
+            {/* Main weather icon with glow + condition label */}
+            <View style={styles.liveWeatherSection}>
+              <WeatherIcon
+                condition={data.condition}
+                size={54}
+                showGlow={true}
+              />
+              <Text style={styles.liveConditionLabel}>{t(`weather.${data.conditionLabelKey}`)}</Text>
+            </View>
           </View>
         </View>
-      </View>
-    </GlassCard>
+      </GlassCard>
+      {/* Offline cache indicator */}
+      {isFromCache && (
+        <View style={styles.cacheIndicator}>
+          <View style={styles.cacheIndicatorInner}>
+            <Ionicons name="time-outline" size={12} color={colors.textMuted} />
+            <Text style={styles.cacheIndicatorText}>{t('result.offlineData')}</Text>
+          </View>
+        </View>
+      )}
+    </View>
   );
 }
 
@@ -245,6 +264,7 @@ export default function ResultScreen({ navigation, route }: Props) {
   const [liveData, setLiveData] = useState<LiveWeatherData | null>(null);
   const [isLoadingLive, setIsLoadingLive] = useState(true);
   const [liveError, setLiveError] = useState(false);
+  const [isFromCache, setIsFromCache] = useState(false);
 
   // Calima alert state (connected to Open-Meteo Air Quality API)
   const [calimaStatus, setCalimaStatus] = useState<CalimaStatus | null>(null);
@@ -283,13 +303,15 @@ export default function ResultScreen({ navigation, route }: Props) {
       setIsLoadingLive(true);
       setLiveError(false);
 
-      const data = await fetchLiveWeather(station.latitude, station.longitude);
+      const result = await fetchLiveWeather(station.latitude, station.longitude, stationId);
 
-      if (data) {
-        setLiveData(data);
+      if (result) {
+        setLiveData(result.data);
+        setIsFromCache(result.isFromCache);
         setLiveError(false);
       } else {
         setLiveData(null);
+        setIsFromCache(false);
         setLiveError(true);
       }
 
@@ -301,7 +323,7 @@ export default function ResultScreen({ navigation, route }: Props) {
     // Refresh live data every 5 minutes
     const interval = setInterval(loadLiveWeather, 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [station]);
+  }, [station, stationId]);
 
   // Fetch Calima status from Open-Meteo Air Quality API
   useEffect(() => {
@@ -395,7 +417,7 @@ export default function ResultScreen({ navigation, route }: Props) {
         <Animated.ScrollView style={[styles.scroll, { opacity: fadeAnim }]} contentContainerStyle={styles.scrollContent}>
 
         {/* Live Weather Card — real-time data from Open-Meteo */}
-        <LiveWeatherCard data={liveData} isLoading={isLoadingLive} hasError={liveError} />
+        <LiveWeatherCard data={liveData} isLoading={isLoadingLive} hasError={liveError} isFromCache={isFromCache} />
 
         {/* FIGMA: STYLE_TARGET — Month selector chips */}
         <View style={styles.monthSelector}>
@@ -696,6 +718,35 @@ const styles = StyleSheet.create({
   liveBadgeOffline: {
     backgroundColor: 'rgba(134, 142, 150, 0.15)',
     borderColor: 'rgba(134, 142, 150, 0.3)',
+  },
+  // Cache state (data from offline storage)
+  liveBadgeCache: {
+    backgroundColor: 'rgba(255, 193, 7, 0.15)',
+    borderColor: 'rgba(255, 193, 7, 0.3)',
+  },
+  liveBadgeTextCache: {
+    color: colors.textMuted,
+  },
+  cacheIndicator: {
+    alignItems: 'center',
+    marginTop: -spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  cacheIndicatorInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  cacheIndicatorText: {
+    fontSize: 11,
+    color: colors.textMuted,
+    marginLeft: spacing.xs,
+    fontWeight: '500',
   },
   liveOfflineContent: {
     alignItems: 'flex-start',

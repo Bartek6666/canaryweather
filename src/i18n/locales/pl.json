@@ -29,6 +29,8 @@
   "result": {
     "live": "LIVE",
     "offline": "OFFLINE",
+    "cached": "ARCHIWUM",
+    "offlineData": "Dane archiwalne (offline)",
     "noLiveData": "Brak danych live",
     "checkConnection": "Sprawdź połączenie internetowe",
     "calimaAlert": "Uwaga: Calima",
