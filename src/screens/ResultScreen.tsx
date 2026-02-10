@@ -149,8 +149,8 @@ function LiveWeatherCard({ data, isLoading, hasError, isFromCache = false }: Liv
                 </View>
                 <Text style={styles.liveWindText}>{t('result.wind')}: {data.windSpeed} km/h</Text>
               </View>
-              {/* Humidity info */}
-              <View style={styles.liveWindRow}>
+              {/* Humidity info - last row, no bottom margin */}
+              <View style={[styles.liveWindRow, styles.liveWindRowLast]}>
                 <View style={styles.parameterIconWrapper}>
                   <Ionicons
                     name="water-outline"
@@ -615,35 +615,36 @@ const styles = StyleSheet.create({
     padding: liveCard.padding,
     minHeight: liveCard.minHeight - 2, // account for border
   },
-  // Figma: Top row layout
+  // Figma: Top row layout - tighter spacing
   liveTopRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
-  // Figma: Live Badge - white glass with green dot
+  // Figma: Live Badge - compact, subtle but clear
   liveBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.liveBadgeBg,
     borderWidth: 1,
     borderColor: colors.liveBadgeBorder,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: borderRadius.full,
   },
   liveDot: {
-    width: liveCard.liveDotSize,
-    height: liveCard.liveDotSize,
-    borderRadius: liveCard.liveDotSize / 2,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     backgroundColor: colors.liveGreen,
-    marginRight: spacing.sm,
+    marginRight: spacing.xs,
   },
   liveBadgeText: {
-    fontSize: 14,
+    fontSize: 10,
     color: colors.textPrimary,
-    fontWeight: '500',
+    fontWeight: '600',
+    letterSpacing: 0.5,
   },
   // Figma: Temperature - 60px bold
   liveTempValue: {
@@ -672,8 +673,11 @@ const styles = StyleSheet.create({
   liveWindRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: spacing.xs,
+    gap: 6,
+    marginBottom: 6,
+  },
+  liveWindRowLast: {
+    marginBottom: 0,
   },
   liveWindText: {
     fontSize: typography.liveInfo.fontSize,
@@ -695,21 +699,21 @@ const styles = StyleSheet.create({
   parameterIcon: {
     opacity: 0.6,
   },
-  // Figma: Weather icon section (right side)
+  // Figma: Weather icon section (right side) - label aligned with Humidity
   liveWeatherSection: {
     flexDirection: 'column',
     alignItems: 'center',
-    marginTop: -10, // Figma: -mt-2.5
+    justifyContent: 'flex-end',
   },
+  // Condition label - same typography as Wind/Humidity for consistency
   liveConditionLabel: {
-    fontSize: 11,
+    fontSize: typography.liveInfo.fontSize,
     fontWeight: '500',
     color: colors.textPrimary,
-    marginTop: spacing.xs,
+    marginTop: 4,
     textAlign: 'center',
-    width: 100,
-    lineHeight: 15,
-    // Text shadow for readability
+    maxWidth: 110,
+    lineHeight: typography.liveInfo.lineHeight,
     textShadowColor: 'rgba(0, 0, 0, 0.2)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
