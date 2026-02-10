@@ -62,4 +62,4 @@ Aplikacja wykorzystuje estetykę Glassmorphism z ciemnym granatowym tłem i prze
 
 ## Licencja
 
-Projekt prywatny.
+MIT License - zobacz [LICENSE](LICENSE)
