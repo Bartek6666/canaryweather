@@ -31,6 +31,8 @@
     "offline": "OFFLINE",
     "noLiveData": "Keine Live-Daten",
     "checkConnection": "Überprüfen Sie Ihre Internetverbindung",
+    "calimaAlert": "Warnung: Calima",
+    "calimaDesc": "Saharastaub-Sturm prognostiziert. Eingeschränkte Sicht und höhere Temperaturen möglich.",
     "humidity": "Luftfeuchtigkeit",
     "wind": "Wind",
     "sunChance": "Sonnenchance",

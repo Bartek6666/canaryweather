@@ -31,6 +31,8 @@
     "offline": "OFFLINE",
     "noLiveData": "No live data",
     "checkConnection": "Check your internet connection",
+    "calimaAlert": "Alert: Calima",
+    "calimaDesc": "Saharan dust storm forecasted. Reduced visibility and higher temperatures possible.",
     "humidity": "Humidity",
     "wind": "Wind",
     "sunChance": "Sun Chance",

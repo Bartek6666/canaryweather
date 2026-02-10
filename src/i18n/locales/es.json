@@ -31,6 +31,8 @@
     "offline": "SIN CONEXIÓN",
     "noLiveData": "Sin datos en vivo",
     "checkConnection": "Comprueba tu conexión a internet",
+    "calimaAlert": "Alerta: Calima",
+    "calimaDesc": "Tormenta de polvo sahariano prevista. Posible reducción de visibilidad y temperaturas más altas.",
     "humidity": "Humedad",
     "wind": "Viento",
     "sunChance": "Prob. Sol",

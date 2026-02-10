@@ -15,7 +15,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
 import { colors, spacing, typography, glass, glassText, borderRadius, gradients, shadows, getSunChanceColor, liveCard, theme } from '../constants/theme';
-import { GlassCard, SunChanceGauge, WeatherIcon } from '../components';
+import { AlertCard, GlassCard, SunChanceGauge, WeatherIcon } from '../components';
 import locationsMapping from '../constants/locations_mapping.json';
 import { calculateSunChance, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather } from '../services/weatherService';
 import { supabase } from '../services/supabase';
@@ -246,6 +246,9 @@ export default function ResultScreen({ navigation, route }: Props) {
   const [isLoadingLive, setIsLoadingLive] = useState(true);
   const [liveError, setLiveError] = useState(false);
 
+  // Calima alert state (TODO: connect to PM10 API data in future)
+  const [isCalimaDetected] = useState(true); // Set to true for demo, will be API-driven
+
   const station = useMemo(() => (locationsMapping.stations as Record<string, any>)[stationId], [stationId]);
 
   const fetchYearlyData = useCallback(async (month: number) => {
@@ -386,6 +389,9 @@ export default function ResultScreen({ navigation, route }: Props) {
             </TouchableOpacity>
           ))}
         </View>
+
+        {/* Calima Alert - displayed when Saharan dust storm is detected */}
+        <AlertCard type="calima" visible={isCalimaDetected} />
 
         <SunChanceGauge percentage={sunChanceResult?.sun_chance ?? 0} confidence={sunChanceResult?.confidence ?? 'low'} isLoading={isLoading} />
 

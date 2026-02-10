@@ -31,6 +31,8 @@
     "offline": "OFFLINE",
     "noLiveData": "Brak danych live",
     "checkConnection": "Sprawdź połączenie internetowe",
+    "calimaAlert": "Uwaga: Calima",
+    "calimaDesc": "Prognozowana burza piaskowa z Sahary. Możliwe ograniczenie widoczności i wyższa temperatura.",
     "humidity": "Wilgotność",
     "wind": "Wiatr",
     "sunChance": "Sun Chance",
