@@ -1,0 +1,364 @@
+{
+  "version": "1.1.0",
+  "lastUpdated": "2025-02-03",
+  "description": "AEMET weather stations mapping for Canary Islands with location aliases - VERIFIED IDs",
+  "stations": {
+    "C449C": {
+      "name": "Santa Cruz de Tenerife",
+      "island": "Tenerife",
+      "municipality": "Santa Cruz de Tenerife",
+      "latitude": 28.4636,
+      "longitude": -16.2518,
+      "altitude": 35,
+      "isNorthern": true,
+      "aliases": [
+        "Santa Cruz",
+        "Santa Cruz de Tenerife",
+        "Anaga"
+      ]
+    },
+    "C429I": {
+      "name": "Tenerife Sur Aeropuerto",
+      "island": "Tenerife",
+      "municipality": "Granadilla de Abona",
+      "latitude": 28.0447,
+      "longitude": -16.5614,
+      "altitude": 64,
+      "isNorthern": false,
+      "aliases": [
+        "Tenerife Sur",
+        "Tenerife South",
+        "Reina Sofia",
+        "Granadilla",
+        "El Medano",
+        "El Médano",
+        "Los Abrigos"
+      ]
+    },
+    "C447A": {
+      "name": "Tenerife Norte Aeropuerto",
+      "island": "Tenerife",
+      "municipality": "San Cristóbal de La Laguna",
+      "latitude": 28.4827,
+      "longitude": -16.3414,
+      "altitude": 617,
+      "isNorthern": true,
+      "aliases": [
+        "La Laguna",
+        "Los Rodeos",
+        "Tenerife Norte Aeropuerto",
+        "San Cristóbal de La Laguna"
+      ]
+    },
+    "C430E": {
+      "name": "Izaña",
+      "island": "Tenerife",
+      "municipality": "La Orotava",
+      "latitude": 28.3092,
+      "longitude": -16.4994,
+      "altitude": 2371,
+      "isNorthern": false,
+      "aliases": [
+        "Izaña",
+        "Teide",
+        "El Teide",
+        "Parque Nacional del Teide",
+        "Las Cañadas"
+      ]
+    },
+    "C459Z": {
+      "name": "Puerto de la Cruz",
+      "island": "Tenerife",
+      "municipality": "Puerto de la Cruz",
+      "latitude": 28.4167,
+      "longitude": -16.5489,
+      "altitude": 25,
+      "isNorthern": true,
+      "aliases": [
+        "Puerto de la Cruz",
+        "Puerto Cruz",
+        "La Orotava",
+        "Orotava",
+        "Los Realejos",
+        "Icod",
+        "Icod de los Vinos"
+      ]
+    },
+    "C419X": {
+      "name": "Adeje",
+      "island": "Tenerife",
+      "municipality": "Adeje",
+      "latitude": 28.1119,
+      "longitude": -16.7256,
+      "altitude": 270,
+      "isNorthern": false,
+      "aliases": [
+        "Adeje",
+        "Costa Adeje",
+        "Playa de las Americas",
+        "Playa de las Américas",
+        "Las Americas",
+        "Los Cristianos",
+        "Torviscas",
+        "Fanabe",
+        "Fañabé",
+        "La Caleta",
+        "Playa Paraiso",
+        "Playa Paraíso",
+        "Callao Salvaje"
+      ]
+    },
+    "C649I": {
+      "name": "Gran Canaria Aeropuerto",
+      "island": "Gran Canaria",
+      "municipality": "Telde",
+      "latitude": 27.9319,
+      "longitude": -15.3867,
+      "altitude": 24,
+      "isNorthern": false,
+      "aliases": [
+        "Gran Canaria Aeropuerto",
+        "Gando",
+        "Telde",
+        "Aeropuerto Gran Canaria"
+      ]
+    },
+    "C689E": {
+      "name": "Maspalomas",
+      "island": "Gran Canaria",
+      "municipality": "San Bartolomé de Tirajana",
+      "latitude": 27.7625,
+      "longitude": -15.5864,
+      "altitude": 62,
+      "isNorthern": false,
+      "aliases": [
+        "Maspalomas",
+        "Playa del Ingles",
+        "Playa del Inglés",
+        "San Agustin",
+        "San Agustín",
+        "Meloneras",
+        "San Bartolome de Tirajana",
+        "San Bartolomé de Tirajana",
+        "Faro de Maspalomas",
+        "Dunas de Maspalomas"
+      ]
+    },
+    "C629X": {
+      "name": "Mogán Puerto",
+      "island": "Gran Canaria",
+      "municipality": "Mogán",
+      "latitude": 27.8125,
+      "longitude": -15.7181,
+      "altitude": 30,
+      "isNorthern": false,
+      "aliases": [
+        "Mogan",
+        "Mogán",
+        "Puerto de Mogan",
+        "Puerto de Mogán",
+        "Puerto Rico",
+        "Amadores",
+        "Taurito"
+      ]
+    },
+    "C658L": {
+      "name": "Las Palmas de Gran Canaria",
+      "island": "Gran Canaria",
+      "municipality": "Las Palmas de Gran Canaria",
+      "latitude": 28.1000,
+      "longitude": -15.4167,
+      "altitude": 269,
+      "isNorthern": true,
+      "aliases": [
+        "Las Palmas",
+        "Las Palmas de Gran Canaria",
+        "Tafira",
+        "Santa Catalina",
+        "Triana",
+        "Vegueta"
+      ]
+    },
+    "C029O": {
+      "name": "Lanzarote Aeropuerto",
+      "island": "Lanzarote",
+      "municipality": "San Bartolomé",
+      "latitude": 28.9508,
+      "longitude": -13.6056,
+      "altitude": 14,
+      "isNorthern": false,
+      "aliases": [
+        "Lanzarote",
+        "Arrecife",
+        "Puerto del Carmen",
+        "Playa Blanca",
+        "Costa Teguise",
+        "Teguise",
+        "Yaiza",
+        "Timanfaya"
+      ]
+    },
+    "C038N": {
+      "name": "Haría",
+      "island": "Lanzarote",
+      "municipality": "Haría",
+      "latitude": 29.1439,
+      "longitude": -13.4958,
+      "altitude": 270,
+      "isNorthern": true,
+      "aliases": [
+        "Haria",
+        "Haría",
+        "Orzola",
+        "Órzola",
+        "Famara",
+        "Caleta de Famara"
+      ]
+    },
+    "C249I": {
+      "name": "Fuerteventura Aeropuerto",
+      "island": "Fuerteventura",
+      "municipality": "Puerto del Rosario",
+      "latitude": 28.4528,
+      "longitude": -13.8633,
+      "altitude": 25,
+      "isNorthern": false,
+      "aliases": [
+        "Fuerteventura",
+        "Puerto del Rosario",
+        "Corralejo",
+        "Caleta de Fuste",
+        "Costa Calma",
+        "Jandia",
+        "Jandía",
+        "Morro Jable",
+        "Cofete",
+        "Betancuria",
+        "La Oliva",
+        "El Cotillo",
+        "Antigua"
+      ]
+    },
+    "C139E": {
+      "name": "La Palma Aeropuerto",
+      "island": "La Palma",
+      "municipality": "Breña Baja",
+      "latitude": 28.6264,
+      "longitude": -17.7558,
+      "altitude": 33,
+      "isNorthern": false,
+      "aliases": [
+        "La Palma",
+        "Santa Cruz de La Palma",
+        "Los Cancajos",
+        "Breña Baja",
+        "Los Llanos",
+        "Los Llanos de Aridane",
+        "Tazacorte",
+        "Puerto Naos",
+        "El Paso",
+        "Fuencaliente"
+      ]
+    },
+    "C101A": {
+      "name": "Roque de los Muchachos",
+      "island": "La Palma",
+      "municipality": "Garafía",
+      "latitude": 28.7567,
+      "longitude": -17.8850,
+      "altitude": 2326,
+      "isNorthern": true,
+      "aliases": [
+        "Roque de los Muchachos",
+        "Observatorio",
+        "Garafía",
+        "Caldera de Taburiente"
+      ]
+    },
+    "C329B": {
+      "name": "La Gomera Aeropuerto",
+      "island": "La Gomera",
+      "municipality": "Alajeró",
+      "latitude": 28.0292,
+      "longitude": -17.2142,
+      "altitude": 225,
+      "isNorthern": false,
+      "aliases": [
+        "La Gomera",
+        "San Sebastian de la Gomera",
+        "San Sebastián de la Gomera",
+        "Valle Gran Rey",
+        "Playa de Santiago",
+        "Alajeró",
+        "Hermigua",
+        "Vallehermoso",
+        "Garajonay"
+      ]
+    },
+    "C929I": {
+      "name": "El Hierro Aeropuerto",
+      "island": "El Hierro",
+      "municipality": "Valverde",
+      "latitude": 27.8147,
+      "longitude": -17.8886,
+      "altitude": 32,
+      "isNorthern": false,
+      "aliases": [
+        "El Hierro",
+        "Valverde",
+        "Frontera",
+        "La Restinga",
+        "El Pinar",
+        "Las Puntas"
+      ]
+    }
+  },
+  "islands": {
+    "Tenerife": {
+      "mainStation": "C419X",
+      "stations": ["C449C", "C429I", "C447A", "C430E", "C459Z", "C419X"],
+      "backgroundImage": "tenerife_teide.jpg"
+    },
+    "Gran Canaria": {
+      "mainStation": "C689E",
+      "stations": ["C649I", "C658L", "C689E", "C629X"],
+      "backgroundImage": "gran_canaria_dunas.jpg"
+    },
+    "Lanzarote": {
+      "mainStation": "C029O",
+      "stations": ["C029O", "C038N"],
+      "backgroundImage": "lanzarote_timanfaya.jpg"
+    },
+    "Fuerteventura": {
+      "mainStation": "C249I",
+      "stations": ["C249I"],
+      "backgroundImage": "fuerteventura_beach.jpg"
+    },
+    "La Palma": {
+      "mainStation": "C139E",
+      "stations": ["C139E", "C101A"],
+      "backgroundImage": "la_palma_caldera.jpg"
+    },
+    "La Gomera": {
+      "mainStation": "C329B",
+      "stations": ["C329B"],
+      "backgroundImage": "la_gomera_garajonay.jpg"
+    },
+    "El Hierro": {
+      "mainStation": "C929I",
+      "stations": ["C929I"],
+      "backgroundImage": "el_hierro_coast.jpg"
+    }
+  },
+  "altitudeCorrection": {
+    "description": "Temperature decreases by 0.6°C per 100m of elevation difference",
+    "lapseRate": 0.6,
+    "unit": "°C per 100m"
+  },
+  "sunChanceConfig": {
+    "minSunHours": 6,
+    "maxPrecip": 0,
+    "northernMultiplier": 0.85,
+    "description": "Sunny day = sol > 6h AND precip = 0. For northern stations without sol data, use precip=0 with 0.85 multiplier"
+  }
+}
