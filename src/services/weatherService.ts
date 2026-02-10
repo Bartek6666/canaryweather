@@ -130,14 +130,32 @@ export async function calculateSunChance(
   const tenYearsAgo = new Date();
   tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
 
-  const { data, error } = await supabase
-    .from('weather_data')
-    .select('date, sol, precip')
-    .eq('station_id', stationId)
-    .gte('date', tenYearsAgo.toISOString().split('T')[0]);
+  let data;
+  try {
+    const result = await supabase
+      .from('weather_data')
+      .select('date, sol, precip')
+      .eq('station_id', stationId)
+      .gte('date', tenYearsAgo.toISOString().split('T')[0]);
 
-  if (error) {
-    throw new Error(`Failed to fetch weather data: ${error.message}`);
+    if (result.error) {
+      console.warn('[Offline] Cannot fetch sun chance data:', result.error.message);
+      return {
+        sunny_days: 0,
+        total_days: 0,
+        sun_chance: 0,
+        confidence: 'low',
+      };
+    }
+    data = result.data;
+  } catch (e) {
+    console.warn('[Offline] Network error fetching sun chance data');
+    return {
+      sunny_days: 0,
+      total_days: 0,
+      sun_chance: 0,
+      confidence: 'low',
+    };
   }
 
   if (!data || data.length === 0) {
@@ -207,14 +225,22 @@ export async function getMonthlyStats(stationId: string): Promise<MonthlyStats[]
   const tenYearsAgo = new Date();
   tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
 
-  const { data, error } = await supabase
-    .from('weather_data')
-    .select('date, tmax, tmin, precip, sol')
-    .eq('station_id', stationId)
-    .gte('date', tenYearsAgo.toISOString().split('T')[0]);
+  let data;
+  try {
+    const result = await supabase
+      .from('weather_data')
+      .select('date, tmax, tmin, precip, sol')
+      .eq('station_id', stationId)
+      .gte('date', tenYearsAgo.toISOString().split('T')[0]);
 
-  if (error) {
-    throw new Error(`Failed to fetch weather data: ${error.message}`);
+    if (result.error) {
+      console.warn('[Offline] Cannot fetch monthly stats:', result.error.message);
+      return [];
+    }
+    data = result.data;
+  } catch (e) {
+    console.warn('[Offline] Network error fetching monthly stats');
+    return [];
   }
 
   if (!data || data.length === 0) {
@@ -431,13 +457,25 @@ export async function getBestWeeksForStation(stationId: string): Promise<WeeklyB
   const tenYearsAgo = new Date();
   tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
 
-  const { data, error } = await supabase
-    .from('weather_data')
-    .select('date, sol, precip, tmax')
-    .eq('station_id', stationId)
-    .gte('date', tenYearsAgo.toISOString().split('T')[0]);
+  let data;
+  try {
+    const result = await supabase
+      .from('weather_data')
+      .select('date, sol, precip, tmax')
+      .eq('station_id', stationId)
+      .gte('date', tenYearsAgo.toISOString().split('T')[0]);
 
-  if (error || !data || data.length === 0) {
+    if (result.error) {
+      console.warn('[Offline] Cannot fetch best weeks data:', result.error.message);
+      return [];
+    }
+    data = result.data;
+  } catch (e) {
+    console.warn('[Offline] Network error fetching best weeks data');
+    return [];
+  }
+
+  if (!data || data.length === 0) {
     return [];
   }
 
@@ -640,12 +678,14 @@ export interface LiveWeatherResult {
  * @param lat Latitude
  * @param lon Longitude
  * @param stationId Station ID for cache key
+ * @param forceRefresh If true, skip cache fallback on error (for pull-to-refresh)
  * @returns LiveWeatherResult with data and cache status, or null if all fails
  */
 export async function fetchLiveWeather(
   lat: number,
   lon: number,
-  stationId?: string
+  stationId?: string,
+  forceRefresh: boolean = false
 ): Promise<LiveWeatherResult | null> {
   // Force mock data for UI testing
   if (USE_MOCK_DATA) {
@@ -674,8 +714,8 @@ export async function fetchLiveWeather(
 
     if (!response.ok) {
       console.warn(`Open-Meteo API error: ${response.status}`);
-      // Try cache fallback
-      if (stationId) {
+      // Try cache fallback (unless force refresh)
+      if (stationId && !forceRefresh) {
         const cached = await getWeatherFromCache(stationId);
         if (cached) {
           console.log('[Cache] Using cached weather data (API error)');
@@ -689,8 +729,8 @@ export async function fetchLiveWeather(
 
     if (!data.current) {
       console.warn('Open-Meteo API: No current data available');
-      // Try cache fallback
-      if (stationId) {
+      // Try cache fallback (unless force refresh)
+      if (stationId && !forceRefresh) {
         const cached = await getWeatherFromCache(stationId);
         if (cached) {
           console.log('[Cache] Using cached weather data (no API data)');
@@ -728,8 +768,8 @@ export async function fetchLiveWeather(
       }
     }
 
-    // Try cache fallback first
-    if (stationId) {
+    // Try cache fallback first (unless force refresh)
+    if (stationId && !forceRefresh) {
       const cached = await getWeatherFromCache(stationId);
       if (cached) {
         console.log('[Cache] Using cached weather data (network error)');

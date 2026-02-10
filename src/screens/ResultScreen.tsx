@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Animated,
   ImageBackground,
+  RefreshControl,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -269,26 +270,33 @@ export default function ResultScreen({ navigation, route }: Props) {
   // Calima alert state (connected to Open-Meteo Air Quality API)
   const [calimaStatus, setCalimaStatus] = useState<CalimaStatus | null>(null);
 
+  // Pull-to-refresh state
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   const station = useMemo(() => (locationsMapping.stations as Record<string, any>)[stationId], [stationId]);
 
   const fetchYearlyData = useCallback(async (month: number) => {
     const currentYear = new Date().getFullYear();
     const years: YearlyData[] = [];
-    for (let year = currentYear; year >= currentYear - 9; year--) {
-      const start = new Date(year, month - 1, 1).toISOString().split('T')[0];
-      const end = new Date(year, month, 0).toISOString().split('T')[0];
-      const { data } = await supabase.from('weather_data').select('tmax, tmin, precip, sol').eq('station_id', stationId).gte('date', start).lte('date', end);
-      if (!data || data.length === 0) continue;
-      const hasSol = data.some(d => d.sol !== null);
-      const sunnyDays = hasSol ? data.filter(d => d.sol !== null && d.sol > 6 && (d.precip === null || d.precip === 0)).length : data.filter(d => d.precip === null || d.precip === 0).length;
-      const validTmax = data.filter(d => d.tmax !== null);
-      const validTmin = data.filter(d => d.tmin !== null);
-      years.push({
-        year, sunnyDays, totalDays: data.length,
-        avgTmax: validTmax.length > 0 ? validTmax.reduce((s, d) => s + (d.tmax || 0), 0) / validTmax.length : 0,
-        avgTmin: validTmin.length > 0 ? validTmin.reduce((s, d) => s + (d.tmin || 0), 0) / validTmin.length : 0,
-        precipDays: data.filter(d => d.precip !== null && d.precip > 0).length,
-      });
+    try {
+      for (let year = currentYear; year >= currentYear - 9; year--) {
+        const start = new Date(year, month - 1, 1).toISOString().split('T')[0];
+        const end = new Date(year, month, 0).toISOString().split('T')[0];
+        const { data, error } = await supabase.from('weather_data').select('tmax, tmin, precip, sol').eq('station_id', stationId).gte('date', start).lte('date', end);
+        if (error || !data || data.length === 0) continue;
+        const hasSol = data.some(d => d.sol !== null);
+        const sunnyDays = hasSol ? data.filter(d => d.sol !== null && d.sol > 6 && (d.precip === null || d.precip === 0)).length : data.filter(d => d.precip === null || d.precip === 0).length;
+        const validTmax = data.filter(d => d.tmax !== null);
+        const validTmin = data.filter(d => d.tmin !== null);
+        years.push({
+          year, sunnyDays, totalDays: data.length,
+          avgTmax: validTmax.length > 0 ? validTmax.reduce((s, d) => s + (d.tmax || 0), 0) / validTmax.length : 0,
+          avgTmin: validTmin.length > 0 ? validTmin.reduce((s, d) => s + (d.tmin || 0), 0) / validTmin.length : 0,
+          precipDays: data.filter(d => d.precip !== null && d.precip > 0).length,
+        });
+      }
+    } catch (e) {
+      console.warn('[Offline] Network error fetching yearly data');
     }
     return years;
   }, [stationId]);
@@ -359,6 +367,33 @@ export default function ResultScreen({ navigation, route }: Props) {
 
   const currentStats = useMemo(() => monthlyStats.find(s => s.month === selectedMonth), [monthlyStats, selectedMonth]);
 
+  // Pull-to-refresh handler - force fresh data from API
+  const handleRefresh = useCallback(async () => {
+    if (!station) return;
+
+    setIsRefreshing(true);
+
+    try {
+      // Fetch fresh weather data, bypassing cache
+      const result = await fetchLiveWeather(station.latitude, station.longitude, stationId, true);
+
+      if (result) {
+        setLiveData(result.data);
+        setIsFromCache(result.isFromCache);
+        setLiveError(false);
+      } else {
+        setLiveError(true);
+      }
+
+      // Also refresh Calima status
+      const calimaResult = await fetchCalimaStatus(station.latitude, station.longitude);
+      setCalimaStatus(calimaResult);
+    } catch (error) {
+      console.error('Refresh failed:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [station, stationId]);
 
   const getSummary = () => {
     const c = sunChanceResult?.sun_chance ?? 0;
@@ -414,7 +449,19 @@ export default function ResultScreen({ navigation, route }: Props) {
           <View style={styles.headerSpacer} />
         </View>
 
-        <Animated.ScrollView style={[styles.scroll, { opacity: fadeAnim }]} contentContainerStyle={styles.scrollContent}>
+        <Animated.ScrollView
+          style={[styles.scroll, { opacity: fadeAnim }]}
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.textPrimary}
+              colors={[colors.textPrimary]}
+              progressBackgroundColor="transparent"
+            />
+          }
+        >
 
         {/* Live Weather Card — real-time data from Open-Meteo */}
         <LiveWeatherCard data={liveData} isLoading={isLoadingLive} hasError={liveError} isFromCache={isFromCache} />
