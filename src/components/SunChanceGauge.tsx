@@ -294,12 +294,14 @@ const styles = StyleSheet.create({
     textShadowRadius: 4,
   },
   label: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     color: glassText.secondary,
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
     marginTop: spacing.xs,
+    textAlign: 'center',
+    maxWidth: 140,
   },
   confidence: {
     fontSize: 12,
