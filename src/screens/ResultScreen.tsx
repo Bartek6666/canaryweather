@@ -478,14 +478,17 @@ export default function ResultScreen({ navigation, route }: Props) {
         {/* Calima Alert - displayed when Saharan dust storm is detected (PM10 > 50 µg/m³) */}
         <AlertCard type="calima" visible={calimaStatus?.isDetected ?? false} />
 
-        <SunChanceGauge percentage={sunChanceResult?.sun_chance ?? 0} confidence={sunChanceResult?.confidence ?? 'low'} isLoading={isLoading} />
+        {/* Sun Chance Gauge - show loading state or actual data, hide when offline with no data */}
+        {(isLoading || (sunChanceResult && sunChanceResult.total_days > 0)) && (
+          <SunChanceGauge percentage={sunChanceResult?.sun_chance ?? 0} confidence={sunChanceResult?.confidence ?? 'low'} isLoading={isLoading} />
+        )}
 
-        {sunChanceResult && !isLoading && (
+        {sunChanceResult && sunChanceResult.total_days > 0 && !isLoading && (
           <View style={styles.statsInfo}><Text style={styles.statsText}>{t('result.basedOnDays', { count: sunChanceResult.total_days })}</Text></View>
         )}
 
-        {/* FIGMA: STYLE_TARGET — Temperature cards row */}
-        {currentStats && !isLoading && (
+        {/* FIGMA: STYLE_TARGET — Temperature cards row (only when we have data) */}
+        {currentStats && currentStats.total_days > 0 && !isLoading && (
           <View style={styles.tempCards}>
             <GlassCard style={styles.tempCard} delay={200}>
               <View style={styles.tempCardInner}>
@@ -515,8 +518,8 @@ export default function ResultScreen({ navigation, route }: Props) {
           </View>
         )}
 
-        {/* FIGMA: STYLE_TARGET — Summary card */}
-        {sunChanceResult && !isLoading && (
+        {/* FIGMA: STYLE_TARGET — Summary card (only show when we have actual data) */}
+        {sunChanceResult && sunChanceResult.total_days > 0 && !isLoading && (
           <GlassCard style={styles.summaryContainer} delay={900}>
             <View style={styles.summaryInner}>
               <View style={styles.summaryHeader}>
