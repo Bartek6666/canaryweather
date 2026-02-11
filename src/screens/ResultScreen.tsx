@@ -589,7 +589,7 @@ const styles = StyleSheet.create({
   monthBtnText: { fontSize: 13, fontWeight: '600', color: colors.textSecondary },
   monthBtnTextActive: { color: colors.textPrimary, fontWeight: '700' },
   statsInfo: { alignItems: 'center', marginBottom: spacing.sm },
-  statsText: { ...typography.label },
+  statsText: { ...typography.bodySmall },
   tempCards: { flexDirection: 'row', marginBottom: spacing.lg, gap: spacing.sm },
   // FIGMA: STYLE_TARGET — Temperature card (glassmorphism)
   tempCard: { flex: 1 },
