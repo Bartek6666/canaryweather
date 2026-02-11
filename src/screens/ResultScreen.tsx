@@ -463,21 +463,6 @@ export default function ResultScreen({ navigation, route }: Props) {
           }
         >
 
-        {/* Live Weather Card — real-time data from Open-Meteo */}
-        <LiveWeatherCard data={liveData} isLoading={isLoadingLive} hasError={liveError} isFromCache={isFromCache} />
-
-        {/* FIGMA: STYLE_TARGET — Month selector chips */}
-        <View style={styles.monthSelector}>
-          {MONTH_KEYS.map((monthKey, i) => (
-            <TouchableOpacity key={i} style={[styles.monthBtn, selectedMonth === i + 1 && styles.monthBtnActive]} onPress={() => setSelectedMonth(i + 1)}>
-              <Text style={[styles.monthBtnText, selectedMonth === i + 1 && styles.monthBtnTextActive]}>{t(`monthsShort.${monthKey}`)}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Calima Alert - displayed when Saharan dust storm is detected (PM10 > 50 µg/m³) */}
-        <AlertCard type="calima" visible={calimaStatus?.isDetected ?? false} />
-
         {/* Sun Chance Gauge - show loading state or actual data, hide when offline with no data */}
         {(isLoading || (sunChanceResult && sunChanceResult.total_days > 0)) && (
           <SunChanceGauge percentage={sunChanceResult?.sun_chance ?? 0} confidence={sunChanceResult?.confidence ?? 'low'} isLoading={isLoading} />
@@ -506,6 +491,21 @@ export default function ResultScreen({ navigation, route }: Props) {
             </GlassCard>
           </View>
         )}
+
+        {/* FIGMA: STYLE_TARGET — Month selector chips */}
+        <View style={styles.monthSelector}>
+          {MONTH_KEYS.map((monthKey, i) => (
+            <TouchableOpacity key={i} style={[styles.monthBtn, selectedMonth === i + 1 && styles.monthBtnActive]} onPress={() => setSelectedMonth(i + 1)}>
+              <Text style={[styles.monthBtnText, selectedMonth === i + 1 && styles.monthBtnTextActive]}>{t(`monthsShort.${monthKey}`)}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Live Weather Card — real-time data from Open-Meteo */}
+        <LiveWeatherCard data={liveData} isLoading={isLoadingLive} hasError={liveError} isFromCache={isFromCache} />
+
+        {/* Calima Alert - displayed when Saharan dust storm is detected (PM10 > 50 µg/m³) */}
+        <AlertCard type="calima" visible={calimaStatus?.isDetected ?? false} />
 
         {/* FIGMA: STYLE_TARGET — History section (year cards) */}
         {yearlyData.length > 0 && !isLoading && (
