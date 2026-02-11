@@ -76,18 +76,18 @@
     "december": "December"
   },
   "monthsShort": {
-    "january": "JA",
-    "february": "FE",
-    "march": "MA",
-    "april": "AP",
-    "may": "MA",
-    "june": "JU",
-    "july": "JU",
-    "august": "AU",
-    "september": "SE",
-    "october": "OC",
-    "november": "NO",
-    "december": "DE"
+    "january": "JAN",
+    "february": "FEB",
+    "march": "MAR",
+    "april": "APR",
+    "may": "MAY",
+    "june": "JUN",
+    "july": "JUL",
+    "august": "AUG",
+    "september": "SEP",
+    "october": "OCT",
+    "november": "NOV",
+    "december": "DEC"
   },
   "islands": {
     "tenerife": "Tenerife",

@@ -76,18 +76,18 @@
     "december": "Grudzień"
   },
   "monthsShort": {
-    "january": "ST",
-    "february": "LU",
-    "march": "MA",
-    "april": "KW",
-    "may": "MA",
-    "june": "CZ",
-    "july": "LI",
-    "august": "SI",
-    "september": "WR",
-    "october": "PA",
-    "november": "LI",
-    "december": "GR"
+    "january": "STY",
+    "february": "LUT",
+    "march": "MAR",
+    "april": "KWI",
+    "may": "MAJ",
+    "june": "CZE",
+    "july": "LIP",
+    "august": "SIE",
+    "september": "WRZ",
+    "october": "PAŹ",
+    "november": "LIS",
+    "december": "GRU"
   },
   "islands": {
     "tenerife": "Teneryfa",
