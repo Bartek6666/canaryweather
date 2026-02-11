@@ -58,7 +58,8 @@
     "summaryExcellent": "{{name}} in {{month}} is an excellent choice!",
     "summaryVeryGood": "{{name}} offers very good sunny conditions.",
     "summaryModerate": "Moderate conditions - prepare for variable weather.",
-    "summaryPoor": "More cloudy days - consider a different time."
+    "summaryPoor": "More cloudy days - consider a different time.",
+    "nearestAemetStation": "Nearest AEMET station"
   },
   "months": {
     "january": "January",

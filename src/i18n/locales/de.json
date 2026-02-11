@@ -58,7 +58,8 @@
     "summaryExcellent": "{{name}} im {{month}} ist eine ausgezeichnete Wahl!",
     "summaryVeryGood": "{{name}} bietet sehr gute Sonnenbedingungen.",
     "summaryModerate": "Moderate Bedingungen - bereiten Sie sich auf wechselhaftes Wetter vor.",
-    "summaryPoor": "Mehr bewölkte Tage - erwägen Sie einen anderen Zeitpunkt."
+    "summaryPoor": "Mehr bewölkte Tage - erwägen Sie einen anderen Zeitpunkt.",
+    "nearestAemetStation": "Nächste AEMET-Station"
   },
   "months": {
     "january": "Januar",

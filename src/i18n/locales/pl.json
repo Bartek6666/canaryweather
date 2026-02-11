@@ -58,7 +58,8 @@
     "summaryExcellent": "{{name}} w {{month}} to doskonały wybór!",
     "summaryVeryGood": "{{name}} oferuje bardzo dobre warunki słoneczne.",
     "summaryModerate": "Umiarkowane warunki - przygotuj się na zmienną aurę.",
-    "summaryPoor": "Więcej pochmurnych dni - rozważ inny termin."
+    "summaryPoor": "Więcej pochmurnych dni - rozważ inny termin.",
+    "nearestAemetStation": "Najbliższa stacja AEMET"
   },
   "months": {
     "january": "Styczeń",

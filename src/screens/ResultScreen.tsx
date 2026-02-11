@@ -442,7 +442,7 @@ export default function ResultScreen({ navigation, route }: Props) {
             <View style={styles.headerLocation}>
               <Ionicons name="location" size={14} color={colors.primary} />
               <Text style={styles.headerIsland}>
-                {locationAlias ? `${station.name} • ${station.island}` : station.island}
+                {locationAlias ? `${t('result.nearestAemetStation')} - ${station.name}` : station.island}
               </Text>
             </View>
           </View>
