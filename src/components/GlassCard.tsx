@@ -79,12 +79,25 @@ export function GlassCard({
     return content;
   }
 
+  // Extract flex from style for the outer Animated.View
+  const flatStyle = StyleSheet.flatten(style) || {};
+  const outerStyle = {
+    flex: flatStyle.flex,
+    flexGrow: flatStyle.flexGrow,
+    flexShrink: flatStyle.flexShrink,
+    width: flatStyle.width,
+    height: flatStyle.height,
+  };
+
   return (
     <Animated.View
-      style={{
-        opacity: fadeAnim,
-        transform: [{ translateY: translateAnim }],
-      }}
+      style={[
+        {
+          opacity: fadeAnim,
+          transform: [{ translateY: translateAnim }],
+        },
+        outerStyle,
+      ]}
     >
       {content}
     </Animated.View>
