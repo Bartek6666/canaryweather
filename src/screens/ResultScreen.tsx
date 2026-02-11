@@ -597,7 +597,7 @@ const styles = StyleSheet.create({
   tempValue: { ...typography.value, marginTop: spacing.xs },
   tempValueHigh: { color: colors.tempHot },
   tempValueLow: { color: colors.tempCold },
-  historySection: { marginTop: spacing.lg },
+  historySection: { marginTop: spacing.sm },
   historyHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md },
   historyTitle: {
     ...typography.h3,
