@@ -501,11 +501,11 @@ export default function ResultScreen({ navigation, route }: Props) {
           ))}
         </View>
 
-        {/* Live Weather Card — real-time data from Open-Meteo */}
-        <LiveWeatherCard data={liveData} isLoading={isLoadingLive} hasError={liveError} isFromCache={isFromCache} />
-
         {/* Calima Alert - displayed when Saharan dust storm is detected (PM10 > 50 µg/m³) */}
         <AlertCard type="calima" visible={calimaStatus?.isDetected ?? false} />
+
+        {/* Live Weather Card — real-time data from Open-Meteo */}
+        <LiveWeatherCard data={liveData} isLoading={isLoadingLive} hasError={liveError} isFromCache={isFromCache} />
 
         {/* FIGMA: STYLE_TARGET — History section (year cards) */}
         {yearlyData.length > 0 && !isLoading && (
