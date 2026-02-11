@@ -118,6 +118,9 @@ export default function SearchScreen({ navigation }: Props) {
   const [geocodeQuery, setGeocodeQuery] = useState('');
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const geocodeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const placesRef = useRef<View>(null);
+  const shouldScrollToPlaces = useRef(false);
 
   useEffect(() => {
     Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }).start();
@@ -295,6 +298,33 @@ export default function SearchScreen({ navigation }: Props) {
 
   const [selectedIsland, setSelectedIsland] = useState<string | null>(null);
 
+  const handleSelectIsland = useCallback((islandKey: string) => {
+    if (selectedIsland === islandKey) {
+      setSelectedIsland(null);
+      return;
+    }
+    setSelectedIsland(islandKey);
+    shouldScrollToPlaces.current = true;
+  }, [selectedIsland]);
+
+  const handlePlacesLayout = useCallback(() => {
+    if (shouldScrollToPlaces.current && placesRef.current && scrollViewRef.current) {
+      shouldScrollToPlaces.current = false;
+      setTimeout(() => {
+        placesRef.current?.measureLayout(
+          scrollViewRef.current as any,
+          (_x, y) => {
+            scrollViewRef.current?.scrollTo({
+              y: y - 80,
+              animated: true,
+            });
+          },
+          () => {}
+        );
+      }, 100);
+    }
+  }, []);
+
   const hasAnyResults = searchResults.length > 0 || geocodeResults.length > 0;
 
   return (
@@ -320,6 +350,7 @@ export default function SearchScreen({ navigation }: Props) {
         >
           <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
             <ScrollView
+              ref={scrollViewRef}
               style={styles.scrollView}
               contentContainerStyle={styles.scrollContent}
               keyboardShouldPersistTaps="handled"
@@ -462,7 +493,7 @@ export default function SearchScreen({ navigation }: Props) {
                       <TouchableOpacity
                         key={island.key}
                         activeOpacity={0.8}
-                        onPress={() => setSelectedIsland(selectedIsland === island.key ? null : island.key)}
+                        onPress={() => handleSelectIsland(island.key)}
                       >
                         <GlassCard
                           style={[
@@ -472,7 +503,7 @@ export default function SearchScreen({ navigation }: Props) {
                           delay={100 + index * 50}
                         >
                           <View style={styles.islandItemInner}>
-                            <MaterialCommunityIcons name={island.icon} size={28} color={selectedIsland === island.key ? colors.accent : glassText.secondary} />
+                            <MaterialCommunityIcons name={island.icon} size={28} color={selectedIsland === island.key ? '#FFD700' : glassText.secondary} />
                             <Text style={[styles.islandItemName, selectedIsland === island.key && styles.islandItemNameActive]} numberOfLines={2}>{t(`islands.${island.key}`)}</Text>
                           </View>
                         </GlassCard>
@@ -481,6 +512,10 @@ export default function SearchScreen({ navigation }: Props) {
                   </View>
 
                   {selectedIsland && (
+                    <View
+                      ref={placesRef}
+                      onLayout={handlePlacesLayout}
+                    >
                     <GlassCard style={styles.placesContainer} delay={100}>
                       <View style={styles.placesContainerInner}>
                         <View style={styles.placesHeader}>
@@ -510,6 +545,7 @@ export default function SearchScreen({ navigation }: Props) {
                         </View>
                       </View>
                     </GlassCard>
+                    </View>
                   )}
                 </View>
               )}
@@ -655,7 +691,13 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
   },
   islandItemActive: {
-    borderColor: colors.accent,
+    borderColor: '#FFD700',
+    borderWidth: 2,
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 8,
   },
   islandItemName: {
     ...typography.bodySmall,
@@ -667,7 +709,7 @@ const styles = StyleSheet.create({
   },
   islandItemNameActive: {
     fontWeight: '600',
-    color: colors.accent,
+    color: '#FFD700',
   },
   // Places within island - grid of squares with GlassCard
   placesContainer: {
