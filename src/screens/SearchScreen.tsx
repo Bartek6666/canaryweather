@@ -665,7 +665,7 @@ const styles = StyleSheet.create({
   noResultsContainer: { alignItems: 'center', marginTop: spacing.md, marginBottom: spacing.sm, paddingVertical: spacing.xl - spacing.xs, ...glass.cardSubtle },
   noResultsText: { fontSize: 15, color: colors.textSecondary, marginTop: spacing.sm + 2, fontWeight: '500' },
   noResultsHint: { ...typography.label, color: colors.textMuted, marginTop: spacing.xs, textAlign: 'center', paddingHorizontal: spacing.xl - spacing.xs },
-  popularSection: { marginTop: spacing.lg },
+  popularSection: { marginTop: spacing.xs },
   popularTitle: {
     ...typography.h2,
     marginBottom: spacing.md,
