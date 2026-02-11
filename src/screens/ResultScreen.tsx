@@ -576,8 +576,9 @@ const styles = StyleSheet.create({
   },
   // FIGMA: STYLE_TARGET — Month chip (bg, radius, padding)
   monthBtn: {
-    width: '15%',
+    width: '16%',
     paddingVertical: 10,
+    paddingHorizontal: 2,
     marginBottom: spacing.sm,
     alignItems: 'center',
     justifyContent: 'center',
