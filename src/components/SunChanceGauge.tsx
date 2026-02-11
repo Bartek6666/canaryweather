@@ -267,10 +267,7 @@ export function SunChanceGauge({ percentage, confidence, isLoading = false }: Su
 
 const styles = StyleSheet.create({
   container: {
-    alignSelf: 'center',
     marginVertical: spacing.lg,
-    width: SIZE + spacing.xl * 2,
-    aspectRatio: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
