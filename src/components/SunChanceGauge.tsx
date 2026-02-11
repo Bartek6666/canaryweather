@@ -94,10 +94,19 @@ export function SunChanceGauge({ percentage, confidence, isLoading = false }: Su
   }, [percentage, isLoading]);
 
   const getPercentageColor = (value: number): string => {
-    if (value >= 70) return colors.sunChanceHigh;
+    if (value >= 65) return colors.sunChanceHigh;
     if (value >= 40) return colors.sunChanceMedium;
     return colors.sunChanceLow;
   };
+
+  // Calculate confidence based on sun chance percentage
+  const getConfidenceLevel = (value: number): 'high' | 'medium' | 'low' => {
+    if (value >= 65) return 'high';
+    if (value >= 40) return 'medium';
+    return 'low';
+  };
+
+  const calculatedConfidence = getConfidenceLevel(percentage);
 
   // Generate gradient segments
   const renderGradientArc = () => {
@@ -248,7 +257,7 @@ export function SunChanceGauge({ percentage, confidence, isLoading = false }: Su
               {displayedPercentage}%
             </Text>
             <Text style={styles.label}>{t('result.sunChance')}</Text>
-            <Text style={styles.confidence}>{confidenceLabels[confidence]}</Text>
+            <Text style={styles.confidence}>{confidenceLabels[calculatedConfidence]}</Text>
           </View>
         </View>
       </View>
@@ -294,17 +303,17 @@ const styles = StyleSheet.create({
     textShadowRadius: 4,
   },
   label: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '600',
     color: glassText.secondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginTop: spacing.xs,
     textAlign: 'center',
-    maxWidth: 140,
+    maxWidth: 160,
   },
   confidence: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '500',
     color: glassText.muted,
     marginTop: spacing.xs,
