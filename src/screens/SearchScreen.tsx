@@ -63,9 +63,14 @@ const { width, height } = Dimensions.get('window');
 
 // Time gradient is resolved via theme helper
 
+// Normalize text by removing diacritics (accents) for search
+function normalizeText(text: string): string {
+  return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+
 function fuzzyMatch(query: string, target: string): number {
-  const q = query.toLowerCase().trim();
-  const t = target.toLowerCase();
+  const q = normalizeText(query);
+  const t = normalizeText(target);
   if (!q) return 0;
   if (t === q) return 100;
   if (t.startsWith(q)) return 90;

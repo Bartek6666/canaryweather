@@ -399,6 +399,8 @@
     {"name": "Garachico", "island": "Tenerife", "coords": {"lat": 28.3722, "lon": -16.7636}},
     {"name": "Icod de los Vinos", "island": "Tenerife", "coords": {"lat": 28.3667, "lon": -16.7181}},
     {"name": "Candelaria", "island": "Tenerife", "coords": {"lat": 28.3547, "lon": -16.3728}},
+    {"name": "Güímar", "island": "Tenerife", "coords": {"lat": 28.3167, "lon": -16.4167}},
+    {"name": "Tacoronte", "island": "Tenerife", "coords": {"lat": 28.4764, "lon": -16.4106}},
     {"name": "Teide", "island": "Tenerife", "coords": {"lat": 28.2723, "lon": -16.6422}},
     {"name": "Maspalomas", "island": "Gran Canaria", "coords": {"lat": 27.7600, "lon": -15.5867}},
     {"name": "Playa del Inglés", "island": "Gran Canaria", "coords": {"lat": 27.7569, "lon": -15.5689}},
