@@ -7,11 +7,6 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
-    "locales": {
-      "en": "./locales/en.json",
-      "pl": "./locales/pl.json",
-      "es": "./locales/es.json"
-    },
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -59,7 +54,17 @@
           "locationAlwaysAndWhenInUsePermission": "Allow Canary Weather to use your location to find the nearest weather station."
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "lint": {
+              "checkReleaseBuilds": false
+            }
+          }
+        }
+      ]
     ],
     "extra": {
       "supabaseUrl": "${EXPO_PUBLIC_SUPABASE_URL}",
