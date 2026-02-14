@@ -234,9 +234,12 @@ export default function SearchScreen({ navigation }: Props) {
     setSearchMode('idle');
 
     // Find nearest station to the city coordinates
-    // For high altitude locations (Teide), include high altitude stations
-    const excludeHighAltitude = !city.isHighAltitude;
-    const nearest = findNearestStationService(city.coords.lat, city.coords.lon, excludeHighAltitude);
+    // For high altitude locations (Teide, Roque de los Muchachos): FORCE high altitude stations only
+    // For regular towns: exclude high altitude stations
+    const isHighAltitude = city.isHighAltitude === true;
+    const excludeHighAltitude = !isHighAltitude;
+    const forceHighAltitude = isHighAltitude;
+    const nearest = findNearestStationService(city.coords.lat, city.coords.lon, excludeHighAltitude, forceHighAltitude);
     if (nearest) {
       navigation.navigate('Result', {
         stationId: nearest.stationId,

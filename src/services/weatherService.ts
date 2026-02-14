@@ -327,11 +327,13 @@ export async function getMonthlyStats(stationId: string): Promise<MonthlyStats[]
 /**
  * Finds the nearest station to given coordinates
  * @param excludeHighAltitude If true (default), excludes high altitude stations (Izaña, Roque de los Muchachos)
+ * @param forceHighAltitude If true, ONLY considers high altitude stations (for mountain peaks)
  */
 export function findNearestStation(
   lat: number,
   lon: number,
-  excludeHighAltitude: boolean = true
+  excludeHighAltitude: boolean = true,
+  forceHighAltitude: boolean = false
 ): { stationId: string; distance: number; station: StationMapping } | null {
   let nearestStation: string | null = null;
   let minDistance = Infinity;
@@ -339,7 +341,11 @@ export function findNearestStation(
   const stations = locationsMapping.stations as Record<string, StationMapping>;
 
   for (const [stationId, station] of Object.entries(stations)) {
-    // Skip high altitude stations unless explicitly requested
+    // For mountain peaks: ONLY use high altitude stations
+    if (forceHighAltitude && !station.isHighAltitude) {
+      continue;
+    }
+    // For regular locations: skip high altitude stations
     if (excludeHighAltitude && station.isHighAltitude) {
       continue;
     }
