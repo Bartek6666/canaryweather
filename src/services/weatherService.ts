@@ -4,7 +4,6 @@ import {
   WeatherData,
   SunChanceResult,
   MonthlyStats,
-  AltitudeCorrection,
   StationMapping,
   LiveWeatherData,
   WeatherCondition,
@@ -114,31 +113,9 @@ async function getWeatherFromCache(stationId: string): Promise<LiveWeatherData |
 }
 
 // Constants from config
-const LAPSE_RATE = locationsMapping.altitudeCorrection.lapseRate; // 0.6°C per 100m
 const MIN_SUN_HOURS = locationsMapping.sunChanceConfig.minSunHours;
 const MAX_PRECIP = locationsMapping.sunChanceConfig.maxPrecip;
 const NORTHERN_MULTIPLIER = locationsMapping.sunChanceConfig.northernMultiplier;
-
-/**
- * Applies altitude correction to temperature
- * Temperature decreases by 0.6°C per 100m of elevation
- */
-export function applyAltitudeCorrection(
-  temperature: number,
-  stationAltitude: number,
-  targetAltitude: number
-): AltitudeCorrection {
-  const altitudeDifference = targetAltitude - stationAltitude;
-  const correctionApplied = (altitudeDifference / 100) * LAPSE_RATE;
-  const correctedTemp = temperature - correctionApplied;
-
-  return {
-    originalTemp: temperature,
-    correctedTemp: Math.round(correctedTemp * 10) / 10,
-    altitudeDifference,
-    correctionApplied: Math.round(correctionApplied * 10) / 10,
-  };
-}
 
 /**
  * Calculates sun chance for a given station and date range
@@ -349,10 +326,12 @@ export async function getMonthlyStats(stationId: string): Promise<MonthlyStats[]
 
 /**
  * Finds the nearest station to given coordinates
+ * @param excludeHighAltitude If true (default), excludes high altitude stations (Izaña, Roque de los Muchachos)
  */
 export function findNearestStation(
   lat: number,
-  lon: number
+  lon: number,
+  excludeHighAltitude: boolean = true
 ): { stationId: string; distance: number; station: StationMapping } | null {
   let nearestStation: string | null = null;
   let minDistance = Infinity;
@@ -360,6 +339,10 @@ export function findNearestStation(
   const stations = locationsMapping.stations as Record<string, StationMapping>;
 
   for (const [stationId, station] of Object.entries(stations)) {
+    // Skip high altitude stations unless explicitly requested
+    if (excludeHighAltitude && station.isHighAltitude) {
+      continue;
+    }
     const distance = haversineDistance(lat, lon, station.latitude, station.longitude);
     if (distance < minDistance) {
       minDistance = distance;
@@ -389,22 +372,26 @@ export interface NearbyStation {
 
 /**
  * Finds the 3 nearest stations to given coordinates, sorted by distance
+ * @param excludeHighAltitude If true (default), excludes high altitude stations (Izaña, Roque de los Muchachos)
  */
 export function findNearestStations(
   lat: number,
   lon: number,
-  count: number = 3
+  count: number = 3,
+  excludeHighAltitude: boolean = true
 ): NearbyStation[] {
   const stations = locationsMapping.stations as Record<string, StationMapping>;
 
-  const withDistance = Object.entries(stations).map(([id, station]) => ({
-    stationId: id,
-    name: station.name,
-    island: station.island,
-    distance: Math.round(haversineDistance(lat, lon, station.latitude, station.longitude) * 10) / 10,
-    latitude: station.latitude,
-    longitude: station.longitude,
-  }));
+  const withDistance = Object.entries(stations)
+    .filter(([_, station]) => !excludeHighAltitude || !station.isHighAltitude)
+    .map(([id, station]) => ({
+      stationId: id,
+      name: station.name,
+      island: station.island,
+      distance: Math.round(haversineDistance(lat, lon, station.latitude, station.longitude) * 10) / 10,
+      latitude: station.latitude,
+      longitude: station.longitude,
+    }));
 
   return withDistance
     .sort((a, b) => a.distance - b.distance)

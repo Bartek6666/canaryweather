@@ -55,6 +55,7 @@ interface CityResult {
   island: string;
   coords: { lat: number; lon: number };
   score: number;
+  isHighAltitude?: boolean;
 }
 
 type SearchMode = 'cities' | 'geocode' | 'no_results' | 'idle';
@@ -98,6 +99,7 @@ function searchCities(query: string): CityResult[] {
         island: city.island,
         coords: city.coords,
         score: bestScore,
+        isHighAltitude: city.isHighAltitude,
       });
     }
   }
@@ -232,7 +234,9 @@ export default function SearchScreen({ navigation }: Props) {
     setSearchMode('idle');
 
     // Find nearest station to the city coordinates
-    const nearest = findNearestStationService(city.coords.lat, city.coords.lon);
+    // For high altitude locations (Teide), include high altitude stations
+    const excludeHighAltitude = !city.isHighAltitude;
+    const nearest = findNearestStationService(city.coords.lat, city.coords.lon, excludeHighAltitude);
     if (nearest) {
       navigation.navigate('Result', {
         stationId: nearest.stationId,

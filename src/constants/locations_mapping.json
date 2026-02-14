@@ -58,6 +58,7 @@
       "longitude": -16.4994,
       "altitude": 2371,
       "isNorthern": false,
+      "isHighAltitude": true,
       "aliases": [
         "Izaña",
         "Teide",
@@ -300,6 +301,7 @@
       "longitude": -17.8850,
       "altitude": 2326,
       "isNorthern": true,
+      "isHighAltitude": true,
       "aliases": [
         "Roque de los Muchachos",
         "Observatorio",
@@ -401,7 +403,7 @@
     {"name": "Candelaria", "island": "Tenerife", "coords": {"lat": 28.3547, "lon": -16.3728}},
     {"name": "Güímar", "island": "Tenerife", "coords": {"lat": 28.3167, "lon": -16.4167}},
     {"name": "Tacoronte", "island": "Tenerife", "coords": {"lat": 28.4764, "lon": -16.4106}},
-    {"name": "Teide", "island": "Tenerife", "coords": {"lat": 28.2723, "lon": -16.6422}},
+    {"name": "Teide", "island": "Tenerife", "coords": {"lat": 28.3092, "lon": -16.4994}, "isHighAltitude": true},
     {"name": "Maspalomas", "island": "Gran Canaria", "coords": {"lat": 27.7600, "lon": -15.5867}},
     {"name": "Playa del Inglés", "island": "Gran Canaria", "coords": {"lat": 27.7569, "lon": -15.5689}},
     {"name": "Las Palmas de Gran Canaria", "island": "Gran Canaria", "coords": {"lat": 28.1235, "lon": -15.4363}},

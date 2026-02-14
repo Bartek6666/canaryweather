@@ -36,6 +36,7 @@ export interface StationMapping {
   longitude: number;
   altitude: number;
   isNorthern: boolean;
+  isHighAltitude?: boolean;
   aliases: string[];
 }
 
@@ -105,6 +106,7 @@ export interface City {
     lat: number;
     lon: number;
   };
+  isHighAltitude?: boolean;
 }
 
 export interface LocationsMapping {
@@ -152,14 +154,6 @@ export interface AemetDailyData {
   racha: string;
   horaracha: string;
   dir: string;
-}
-
-// Temperature correction types
-export interface AltitudeCorrection {
-  originalTemp: number;
-  correctedTemp: number;
-  altitudeDifference: number;
-  correctionApplied: number;
 }
 
 // Live weather data from Open-Meteo API
