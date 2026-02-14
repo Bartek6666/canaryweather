@@ -33,7 +33,12 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.canaryweather.app",
-      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"]
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -53,11 +58,16 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Allow Canary Weather to use your location to find the nearest weather station."
         }
-      ]
+      ],
+      "expo-font"
     ],
     "extra": {
       "supabaseUrl": "${EXPO_PUBLIC_SUPABASE_URL}",
-      "supabaseAnonKey": "${EXPO_PUBLIC_SUPABASE_ANON_KEY}"
-    }
+      "supabaseAnonKey": "${EXPO_PUBLIC_SUPABASE_ANON_KEY}",
+      "eas": {
+        "projectId": "67122cf1-dce3-44e7-a2e2-c8913d4fb158"
+      }
+    },
+    "owner": "bartek666"
   }
 }
