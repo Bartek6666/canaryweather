@@ -1,7 +1,7 @@
 {
-  "version": "1.3.0",
-  "lastUpdated": "2025-02-14",
-  "description": "AEMET weather stations mapping for Canary Islands with location aliases and cities database - VERIFIED IDs",
+  "version": "1.4.0",
+  "lastUpdated": "2026-02-14",
+  "description": "AEMET weather stations mapping for Canary Islands with location aliases, cities database, and intelligent peak/town station selection - VERIFIED IDs",
   "stations": {
     "C449C": {
       "name": "Santa Cruz de Tenerife",
@@ -63,8 +63,13 @@
         "Izaña",
         "Teide",
         "El Teide",
+        "Pico del Teide",
+        "Pico Viejo",
         "Parque Nacional del Teide",
-        "Las Cañadas"
+        "Las Cañadas",
+        "Las Cañadas del Teide",
+        "Montaña Blanca",
+        "Roques de García"
       ]
     },
     "C459Z": {
@@ -305,8 +310,11 @@
       "aliases": [
         "Roque de los Muchachos",
         "Observatorio",
-        "Garafía",
-        "Caldera de Taburiente"
+        "Observatorio del Roque",
+        "Caldera de Taburiente",
+        "Pico de la Cruz",
+        "Pico de la Nieve",
+        "Cumbre de La Palma"
       ]
     },
     "C329B": {
@@ -403,7 +411,14 @@
     {"name": "Candelaria", "island": "Tenerife", "coords": {"lat": 28.3547, "lon": -16.3728}},
     {"name": "Güímar", "island": "Tenerife", "coords": {"lat": 28.3167, "lon": -16.4167}},
     {"name": "Tacoronte", "island": "Tenerife", "coords": {"lat": 28.4764, "lon": -16.4106}},
-    {"name": "Teide", "island": "Tenerife", "coords": {"lat": 28.3092, "lon": -16.4994}, "isHighAltitude": true},
+    {"name": "Teide", "island": "Tenerife", "coords": {"lat": 28.2724, "lon": -16.6427}, "isHighAltitude": true},
+    {"name": "Pico del Teide", "island": "Tenerife", "coords": {"lat": 28.2724, "lon": -16.6427}, "isHighAltitude": true},
+    {"name": "Pico Viejo", "island": "Tenerife", "coords": {"lat": 28.2704, "lon": -16.6660}, "isHighAltitude": true},
+    {"name": "Las Cañadas del Teide", "island": "Tenerife", "coords": {"lat": 28.2280, "lon": -16.5500}, "isHighAltitude": true},
+    {"name": "Parque Nacional del Teide", "island": "Tenerife", "coords": {"lat": 28.2724, "lon": -16.6427}, "isHighAltitude": true},
+    {"name": "Roque de los Muchachos", "island": "La Palma", "coords": {"lat": 28.7544, "lon": -17.8859}, "isHighAltitude": true},
+    {"name": "Caldera de Taburiente", "island": "La Palma", "coords": {"lat": 28.7167, "lon": -17.9000}, "isHighAltitude": true},
+    {"name": "Pico de la Cruz", "island": "La Palma", "coords": {"lat": 28.7278, "lon": -17.8772}, "isHighAltitude": true},
     {"name": "Maspalomas", "island": "Gran Canaria", "coords": {"lat": 27.7600, "lon": -15.5867}},
     {"name": "Playa del Inglés", "island": "Gran Canaria", "coords": {"lat": 27.7569, "lon": -15.5689}},
     {"name": "Las Palmas de Gran Canaria", "island": "Gran Canaria", "coords": {"lat": 28.1235, "lon": -15.4363}},
