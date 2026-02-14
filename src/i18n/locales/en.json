@@ -70,7 +70,7 @@
     "summaryHot": "Hot temperatures - stay hydrated.",
     "summaryMild": "Pleasant, mild temperature.",
     "nearestAemetStation": "Nearest AEMET station",
-    "highAltitudeFallback": "No high-altitude AEMET station available. Weather data from {{station}}."
+    "highAltitudeFallback": "No AEMET high-altitude station available. Weather data from {{station}}."
   },
   "months": {
     "january": "January",

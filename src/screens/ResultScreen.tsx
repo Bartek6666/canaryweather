@@ -1057,8 +1057,8 @@ const styles = StyleSheet.create({
   },
   fallbackBannerText: {
     flex: 1,
-    fontSize: 12,
+    fontSize: 13,
     color: colors.textMuted,
-    lineHeight: 16,
+    lineHeight: 18,
   },
 });
