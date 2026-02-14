@@ -33,6 +33,7 @@ type RootStackParamList = {
     stationId: string;
     locationName?: string;
     locationCoords?: { lat: number; lon: number };
+    isHighAltitudeFallback?: boolean;
   };
 };
 type Props = NativeStackScreenProps<RootStackParamList, 'Result'>;
@@ -327,7 +328,7 @@ function YearHistoryItem({ data, month, delay = 0 }: { data: YearlyData; month: 
 
 export default function ResultScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
-  const { stationId, locationName, locationCoords } = route.params;
+  const { stationId, locationName, locationCoords, isHighAltitudeFallback } = route.params;
   const [isLoading, setIsLoading] = useState(true);
   const [sunChanceResult, setSunChanceResult] = useState<SunChanceResult | null>(null);
   const [monthlyStats, setMonthlyStats] = useState<MonthlyStats[]>([]);
@@ -551,6 +552,16 @@ export default function ResultScreen({ navigation, route }: Props) {
           </View>
           <View style={styles.headerSpacer} />
         </View>
+
+        {/* High altitude fallback info banner */}
+        {isHighAltitudeFallback && (
+          <View style={styles.fallbackBanner}>
+            <Ionicons name="information-circle" size={16} color={colors.textMuted} />
+            <Text style={styles.fallbackBannerText}>
+              {t('result.highAltitudeFallback', { station: station?.name })}
+            </Text>
+          </View>
+        )}
 
         <Animated.ScrollView
           style={[styles.scroll, { opacity: fadeAnim }]}
@@ -1029,4 +1040,25 @@ const styles = StyleSheet.create({
   errorContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   errorText: { color: colors.error, fontSize: 18, marginBottom: spacing.md },
   errorButton: { color: colors.primary, fontSize: 16, fontWeight: '600' },
+
+  // ─── HIGH ALTITUDE FALLBACK BANNER ─────────────────────────────────────────
+  fallbackBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 193, 7, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 193, 7, 0.3)',
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.sm,
+    gap: spacing.sm,
+  },
+  fallbackBannerText: {
+    flex: 1,
+    fontSize: 12,
+    color: colors.textMuted,
+    lineHeight: 16,
+  },
 });

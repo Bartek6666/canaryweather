@@ -69,7 +69,8 @@
     "summaryWindy": "Möglicher starker Wind.",
     "summaryHot": "Heiße Temperaturen - trinken Sie viel.",
     "summaryMild": "Angenehme, milde Temperatur.",
-    "nearestAemetStation": "Nächste AEMET-Station"
+    "nearestAemetStation": "Nächste AEMET-Station",
+    "highAltitudeFallback": "Keine AEMET-Hochgebirgsstation verfügbar. Wetterdaten von {{station}}."
   },
   "months": {
     "january": "Januar",

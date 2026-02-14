@@ -41,6 +41,7 @@ type RootStackParamList = {
     stationId: string;
     locationName?: string;
     locationCoords?: { lat: number; lon: number };
+    isHighAltitudeFallback?: boolean;
   };
 };
 
@@ -245,6 +246,7 @@ export default function SearchScreen({ navigation }: Props) {
         stationId: nearest.stationId,
         locationName: city.name,
         locationCoords: city.coords,
+        isHighAltitudeFallback: nearest.isHighAltitudeFallback,
       });
     }
   }, [navigation]);

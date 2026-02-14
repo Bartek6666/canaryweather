@@ -327,40 +327,84 @@ export async function getMonthlyStats(stationId: string): Promise<MonthlyStats[]
 /**
  * Finds the nearest station to given coordinates
  * @param excludeHighAltitude If true (default), excludes high altitude stations (Izaña, Roque de los Muchachos)
- * @param forceHighAltitude If true, ONLY considers high altitude stations (for mountain peaks)
+ * @param forceHighAltitude If true, prefers high altitude stations (for mountain peaks), falls back to regular stations if none available
  */
 export function findNearestStation(
   lat: number,
   lon: number,
   excludeHighAltitude: boolean = true,
   forceHighAltitude: boolean = false
-): { stationId: string; distance: number; station: StationMapping } | null {
-  let nearestStation: string | null = null;
-  let minDistance = Infinity;
-
+): { stationId: string; distance: number; station: StationMapping; isHighAltitudeFallback?: boolean } | null {
   const stations = locationsMapping.stations as Record<string, StationMapping>;
 
+  let nearestHighAltitude: { id: string; distance: number } | null = null;
+  let nearestRegular: { id: string; distance: number } | null = null;
+
   for (const [stationId, station] of Object.entries(stations)) {
-    // For mountain peaks: ONLY use high altitude stations
-    if (forceHighAltitude && !station.isHighAltitude) {
-      continue;
-    }
-    // For regular locations: skip high altitude stations
-    if (excludeHighAltitude && station.isHighAltitude) {
-      continue;
-    }
     const distance = haversineDistance(lat, lon, station.latitude, station.longitude);
-    if (distance < minDistance) {
-      minDistance = distance;
-      nearestStation = stationId;
+
+    if (station.isHighAltitude) {
+      // Track nearest high altitude station
+      if (!nearestHighAltitude || distance < nearestHighAltitude.distance) {
+        nearestHighAltitude = { id: stationId, distance };
+      }
+    } else {
+      // Track nearest regular station
+      if (!nearestRegular || distance < nearestRegular.distance) {
+        nearestRegular = { id: stationId, distance };
+      }
     }
   }
 
-  if (nearestStation) {
+  // For mountain peaks: prefer high altitude station, fallback to regular if too far
+  // Fallback threshold: use regular station if high altitude is >3x farther and regular is <40km
+  const HIGH_ALT_FALLBACK_RATIO = 3;
+  const REGULAR_STATION_MAX_KM = 40;
+
+  if (forceHighAltitude) {
+    const shouldFallback = nearestHighAltitude && nearestRegular &&
+      nearestRegular.distance < REGULAR_STATION_MAX_KM &&
+      nearestHighAltitude.distance > nearestRegular.distance * HIGH_ALT_FALLBACK_RATIO;
+
+    if (nearestHighAltitude && !shouldFallback) {
+      return {
+        stationId: nearestHighAltitude.id,
+        distance: Math.round(nearestHighAltitude.distance * 100) / 100,
+        station: stations[nearestHighAltitude.id],
+      };
+    }
+    // Fallback to nearest regular station (e.g., Pico de las Nieves on Gran Canaria - no local high altitude station)
+    if (nearestRegular) {
+      console.log(`[Station] High altitude station too far (${nearestHighAltitude?.distance.toFixed(1)}km), using fallback: ${stations[nearestRegular.id].name} (${nearestRegular.distance.toFixed(1)}km)`);
+      return {
+        stationId: nearestRegular.id,
+        distance: Math.round(nearestRegular.distance * 100) / 100,
+        station: stations[nearestRegular.id],
+        isHighAltitudeFallback: true,
+      };
+    }
+    return null;
+  }
+
+  // For regular locations: exclude high altitude stations
+  if (excludeHighAltitude && nearestRegular) {
     return {
-      stationId: nearestStation,
-      distance: Math.round(minDistance * 100) / 100,
-      station: stations[nearestStation],
+      stationId: nearestRegular.id,
+      distance: Math.round(nearestRegular.distance * 100) / 100,
+      station: stations[nearestRegular.id],
+    };
+  }
+
+  // Include all stations
+  const nearest = nearestRegular && nearestHighAltitude
+    ? (nearestRegular.distance < nearestHighAltitude.distance ? nearestRegular : nearestHighAltitude)
+    : nearestRegular || nearestHighAltitude;
+
+  if (nearest) {
+    return {
+      stationId: nearest.id,
+      distance: Math.round(nearest.distance * 100) / 100,
+      station: stations[nearest.id],
     };
   }
 

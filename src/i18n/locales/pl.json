@@ -69,7 +69,8 @@
     "summaryWindy": "Możliwy silniejszy wiatr.",
     "summaryHot": "Upalne temperatury - pamiętaj o nawodnieniu.",
     "summaryMild": "Przyjemna, łagodna temperatura.",
-    "nearestAemetStation": "Najbliższa stacja AEMET"
+    "nearestAemetStation": "Najbliższa stacja AEMET",
+    "highAltitudeFallback": "Brak wysokogórskiej stacji AEMET. Dane pogodowe ze stacji {{station}}."
   },
   "months": {
     "january": "Styczeń",

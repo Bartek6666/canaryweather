@@ -1,5 +1,5 @@
 {
-  "version": "1.4.0",
+  "version": "1.5.0",
   "lastUpdated": "2026-02-14",
   "description": "AEMET weather stations mapping for Canary Islands with location aliases, cities database, and intelligent peak/town station selection - VERIFIED IDs",
   "stations": {
@@ -412,6 +412,9 @@
     {"name": "Güímar", "island": "Tenerife", "coords": {"lat": 28.3167, "lon": -16.4167}},
     {"name": "Tacoronte", "island": "Tenerife", "coords": {"lat": 28.4764, "lon": -16.4106}},
     {"name": "Vilaflor", "island": "Tenerife", "coords": {"lat": 28.1578, "lon": -16.6364}},
+    {"name": "Adeje", "island": "Tenerife", "coords": {"lat": 28.12, "lon": -16.72}},
+    {"name": "Arona", "island": "Tenerife", "coords": {"lat": 28.05, "lon": -16.71}},
+    {"name": "Santiago del Teide", "island": "Tenerife", "coords": {"lat": 28.23, "lon": -16.84}},
     {"name": "Teide", "island": "Tenerife", "coords": {"lat": 28.2724, "lon": -16.6427}, "isHighAltitude": true},
     {"name": "Pico del Teide", "island": "Tenerife", "coords": {"lat": 28.2724, "lon": -16.6427}, "isHighAltitude": true},
     {"name": "Pico Viejo", "island": "Tenerife", "coords": {"lat": 28.2704, "lon": -16.6660}, "isHighAltitude": true},
@@ -429,6 +432,10 @@
     {"name": "San Agustín", "island": "Gran Canaria", "coords": {"lat": 27.7700, "lon": -15.5500}},
     {"name": "Agaete", "island": "Gran Canaria", "coords": {"lat": 28.1003, "lon": -15.7014}},
     {"name": "Telde", "island": "Gran Canaria", "coords": {"lat": 27.9925, "lon": -15.4167}},
+    {"name": "Tejeda", "island": "Gran Canaria", "coords": {"lat": 27.99, "lon": -15.61}},
+    {"name": "Teror", "island": "Gran Canaria", "coords": {"lat": 28.05, "lon": -15.53}},
+    {"name": "Mogán", "island": "Gran Canaria", "coords": {"lat": 27.82, "lon": -15.76}},
+    {"name": "Pico de las Nieves", "island": "Gran Canaria", "coords": {"lat": 27.96, "lon": -15.57}, "isHighAltitude": true},
     {"name": "Corralejo", "island": "Fuerteventura", "coords": {"lat": 28.7300, "lon": -13.8678}},
     {"name": "Costa Calma", "island": "Fuerteventura", "coords": {"lat": 28.1586, "lon": -14.2278}},
     {"name": "Morro Jable", "island": "Fuerteventura", "coords": {"lat": 28.0514, "lon": -14.3514}},
