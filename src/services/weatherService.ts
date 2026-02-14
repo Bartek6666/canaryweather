@@ -986,7 +986,148 @@ export function mapWmoCode(code: number): WmoMapping {
   return WMO_CODE_MAP[code] ?? { condition: 'cloudy', labelKey: 'unknown' };
 }
 
-// ─── LIVE WEATHER (Open-Meteo API) ────────────────────────────────────────────
+// ─── AEMET API KEY ────────────────────────────────────────────────────────────
+
+const AEMET_API_KEY = process.env.EXPO_PUBLIC_AEMET_API_KEY || '';
+
+// ─── AEMET LIVE WEATHER (Primary source - official Spanish weather service) ───
+
+interface AemetObservation {
+  idema: string;      // Station ID
+  fint: string;       // Timestamp (ISO format)
+  ta?: number;        // Temperature (°C)
+  hr?: number;        // Relative humidity (%)
+  vv?: number;        // Wind speed (km/h) - average
+  vmax?: number;      // Wind gusts (km/h) - maximum
+  dv?: number;        // Wind direction (degrees)
+  prec?: number;      // Precipitation (mm)
+  vis?: number;       // Visibility (km)
+  pres?: number;      // Pressure (hPa)
+}
+
+/**
+ * Fetches live weather data directly from AEMET API
+ * Returns the most recent observation for a given station
+ * @param stationId AEMET station ID (e.g., "C430E" for Izaña)
+ */
+async function fetchAemetLiveWeather(
+  stationId: string
+): Promise<{ data: LiveWeatherData; timestamp: string } | null> {
+  if (!AEMET_API_KEY) {
+    console.warn('[AEMET] No API key configured');
+    return null;
+  }
+
+  const TIMEOUT_MS = 10000;
+
+  try {
+    // Step 1: Get data URL from AEMET API
+    const metaUrl = `https://opendata.aemet.es/opendata/api/observacion/convencional/datos/estacion/${stationId}`;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+    const metaResponse = await fetch(metaUrl, {
+      method: 'GET',
+      headers: {
+        'api_key': AEMET_API_KEY,
+        'Accept': 'application/json',
+      },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!metaResponse.ok) {
+      console.warn(`[AEMET] Meta request failed: ${metaResponse.status}`);
+      return null;
+    }
+
+    const metaData = await metaResponse.json();
+
+    if (!metaData.datos) {
+      console.warn('[AEMET] No data URL in response');
+      return null;
+    }
+
+    // Step 2: Fetch actual observation data
+    const controller2 = new AbortController();
+    const timeoutId2 = setTimeout(() => controller2.abort(), TIMEOUT_MS);
+
+    const dataResponse = await fetch(metaData.datos, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+      signal: controller2.signal,
+    });
+
+    clearTimeout(timeoutId2);
+
+    if (!dataResponse.ok) {
+      console.warn(`[AEMET] Data request failed: ${dataResponse.status}`);
+      return null;
+    }
+
+    const observations: AemetObservation[] = await dataResponse.json();
+
+    if (!observations || observations.length === 0) {
+      console.warn('[AEMET] No observations available');
+      return null;
+    }
+
+    // Get the most recent observation (last in array)
+    const latest = observations[observations.length - 1];
+
+    // Map precipitation to weather condition
+    let condition: WeatherCondition = 'sunny';
+    let labelKey = 'clearSky';
+    let weatherCode = 0;
+
+    if (latest.prec !== undefined && latest.prec > 0) {
+      condition = 'rainy';
+      labelKey = latest.prec > 5 ? 'heavyRain' : 'lightRain';
+      weatherCode = latest.prec > 5 ? 65 : 61;
+    } else if (latest.vis !== undefined && latest.vis < 1) {
+      condition = 'foggy';
+      labelKey = 'fog';
+      weatherCode = 45;
+    } else if (latest.hr !== undefined && latest.hr > 90) {
+      condition = 'cloudy';
+      labelKey = 'overcast';
+      weatherCode = 3;
+    } else if (latest.hr !== undefined && latest.hr > 70) {
+      condition = 'partly-sunny';
+      labelKey = 'partlyCloudy';
+      weatherCode = 2;
+    }
+
+    const weatherData: LiveWeatherData = {
+      temperature: latest.ta !== undefined ? Math.round(latest.ta) : 0,
+      humidity: latest.hr !== undefined ? Math.round(latest.hr) : 0,
+      windSpeed: latest.vv !== undefined ? Math.round(latest.vv) : 0,
+      weatherCode,
+      condition,
+      conditionLabelKey: labelKey,
+      timestamp: latest.fint,
+    };
+
+    console.log(`[AEMET] Live data: ${weatherData.temperature}°C, wind ${weatherData.windSpeed} km/h (${latest.fint})`);
+
+    return { data: weatherData, timestamp: latest.fint };
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        console.warn('[AEMET] Request timed out');
+      } else {
+        console.warn('[AEMET] Error:', error.message);
+      }
+    }
+    return null;
+  }
+}
+
+// ─── LIVE WEATHER (Open-Meteo API - Fallback) ─────────────────────────────────
 
 interface OpenMeteoResponse {
   current: {
@@ -1025,11 +1166,11 @@ export interface LiveWeatherResult {
 }
 
 /**
- * Fetches current weather data from Open-Meteo API (free, no API key required)
+ * Fetches current weather data - tries AEMET first (more accurate), then Open-Meteo as fallback
  * Falls back to cached data if network fails, then to mock data in dev mode
  * @param lat Latitude
  * @param lon Longitude
- * @param stationId Station ID for cache key
+ * @param stationId Station ID for cache key and AEMET lookup
  * @param forceRefresh If true, skip cache fallback on error (for pull-to-refresh)
  * @returns LiveWeatherResult with data and cache status, or null if all fails
  */
@@ -1055,6 +1196,20 @@ export async function fetchLiveWeather(
     }
   }
 
+  // ─── TRY AEMET FIRST (more accurate, official Spanish weather service) ───
+  if (stationId && AEMET_API_KEY) {
+    const aemetResult = await fetchAemetLiveWeather(stationId);
+    if (aemetResult) {
+      // Save to cache on success
+      await saveWeatherToCache(stationId, aemetResult.data);
+      saveToRateLimitCache(stationId, aemetResult.data);
+      console.log('[AEMET] Using official AEMET data');
+      return { data: aemetResult.data, isFromCache: false };
+    }
+    console.log('[AEMET] Failed, falling back to Open-Meteo');
+  }
+
+  // ─── FALLBACK TO OPEN-METEO ───────────────────────────────────────────────
   const TIMEOUT_MS = 10000; // 10 seconds timeout
 
   try {
