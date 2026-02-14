@@ -1,6 +1,6 @@
 {
-  "version": "1.1.0",
-  "lastUpdated": "2025-02-03",
+  "version": "1.2.0",
+  "lastUpdated": "2025-02-13",
   "description": "AEMET weather stations mapping for Canary Islands with location aliases - VERIFIED IDs",
   "stations": {
     "C449C": {
@@ -108,6 +108,21 @@
         "Callao Salvaje"
       ]
     },
+    "C446B": {
+      "name": "Vilaflor",
+      "island": "Tenerife",
+      "municipality": "Vilaflor de Chasna",
+      "latitude": 28.1578,
+      "longitude": -16.6364,
+      "altitude": 1400,
+      "isNorthern": false,
+      "aliases": [
+        "Vilaflor",
+        "Vilaflor de Chasna",
+        "La Escalona",
+        "Ifonche"
+      ]
+    },
     "C649I": {
       "name": "Gran Canaria Aeropuerto",
       "island": "Gran Canaria",
@@ -176,7 +191,9 @@
         "Tafira",
         "Santa Catalina",
         "Triana",
-        "Vegueta"
+        "Vegueta",
+        "Puerto de las Nieves",
+        "Agaete"
       ]
     },
     "C029O": {
@@ -213,6 +230,20 @@
         "Órzola",
         "Famara",
         "Caleta de Famara"
+      ]
+    },
+    "C022A": {
+      "name": "Arrecife",
+      "island": "Lanzarote",
+      "municipality": "Arrecife",
+      "latitude": 28.9630,
+      "longitude": -13.5477,
+      "altitude": 6,
+      "isNorthern": false,
+      "aliases": [
+        "Arrecife",
+        "Arrecife de Lanzarote",
+        "Puerto de Arrecife"
       ]
     },
     "C249I": {
@@ -256,6 +287,7 @@
         "Los Llanos de Aridane",
         "Tazacorte",
         "Puerto Naos",
+        "Puerto de Naos",
         "El Paso",
         "Fuencaliente"
       ]
@@ -292,7 +324,8 @@
         "Alajeró",
         "Hermigua",
         "Vallehermoso",
-        "Garajonay"
+        "Garajonay",
+        "Alojera"
       ]
     },
     "C929I": {
@@ -306,17 +339,20 @@
       "aliases": [
         "El Hierro",
         "Valverde",
+        "Villa de Valverde",
         "Frontera",
+        "La Frontera",
         "La Restinga",
         "El Pinar",
-        "Las Puntas"
+        "Las Puntas",
+        "La Caleta"
       ]
     }
   },
   "islands": {
     "Tenerife": {
       "mainStation": "C419X",
-      "stations": ["C449C", "C429I", "C447A", "C430E", "C459Z", "C419X"],
+      "stations": ["C449C", "C429I", "C447A", "C430E", "C459Z", "C419X", "C446B"],
       "backgroundImage": "tenerife_teide.jpg"
     },
     "Gran Canaria": {
@@ -326,7 +362,7 @@
     },
     "Lanzarote": {
       "mainStation": "C029O",
-      "stations": ["C029O", "C038N"],
+      "stations": ["C029O", "C038N", "C022A"],
       "backgroundImage": "lanzarote_timanfaya.jpg"
     },
     "Fuerteventura": {

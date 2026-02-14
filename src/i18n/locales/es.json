@@ -20,7 +20,7 @@
     "noResultsHint": "Intenta escribir el nombre de un resort o municipio en las Islas Canarias.",
     "stationsNearby": "Estaciones cercanas",
     "fromTarget": "del destino",
-    "footer": "Datos de 10 años • 17 estaciones AEMET",
+    "footer": "Datos de 10 años • 19 estaciones AEMET",
     "locationPermissionTitle": "Sin acceso",
     "locationPermissionMessage": "Activa la ubicación en ajustes.",
     "nearestStationTitle": "Estación más cercana",
@@ -31,8 +31,8 @@
     "offline": "SIN CONEXIÓN",
     "cached": "ARCHIVADO",
     "offlineData": "Datos archivados (offline)",
-    "noLiveData": "Sin datos en vivo",
-    "checkConnection": "Comprueba tu conexión a internet",
+    "noLiveData": "Datos de la estación no disponibles",
+    "checkConnection": "Inténtalo de nuevo en unos minutos",
     "calimaAlert": "Alerta: Calima",
     "calimaDesc": "Tormenta de polvo sahariano prevista. Posible reducción de visibilidad y temperaturas más altas.",
     "calimaInfoTitle": "¿Qué es la Calima?",
@@ -59,6 +59,11 @@
     "summaryVeryGood": "{{name}} ofrece muy buenas condiciones de sol.",
     "summaryModerate": "Condiciones moderadas - prepárate para tiempo variable.",
     "summaryPoor": "Más días nublados - considera otra fecha.",
+    "summarySunny": "Excelentes condiciones soleadas.",
+    "summaryCloudy": "Espera más nubes.",
+    "summaryWindy": "Posible viento fuerte.",
+    "summaryHot": "Temperaturas calurosas - mantente hidratado.",
+    "summaryMild": "Temperatura agradable y suave.",
     "nearestAemetStation": "Estación AEMET más cercana"
   },
   "months": {
@@ -97,6 +102,15 @@
     "laPalma": "La Palma",
     "laGomera": "La Gomera",
     "elHierro": "El Hierro"
+  },
+  "locationPrompt": {
+    "title": "El tiempo cerca de ti",
+    "description": "Permite el acceso a tu ubicación para mostrarte automáticamente el pronóstico de tu ubicación actual.",
+    "useLocation": "Usar ubicación",
+    "enterManually": "Introducir manualmente",
+    "tooFarTitle": "No estás en las Islas Canarias",
+    "tooFarMessage": "Parece que estás lejos de las Islas Canarias. Usa el buscador para encontrar tu destino.",
+    "tooFarButton": "Buscar destino"
   },
   "weather": {
     "sunny": "Soleado",

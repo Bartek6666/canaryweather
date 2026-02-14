@@ -20,16 +20,19 @@ import { BlurView } from 'expo-blur';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
 import { theme, colors, spacing, typography, glass, glassTokens, glassText, borderRadius, gradients, shadows } from '../constants/theme';
 import locationsMapping from '../constants/locations_mapping.json';
 import { findNearestStations, NearbyStation } from '../services/weatherService';
-import { GlassCard, HeroLogo, LanguageSwitcher } from '../components';
+import { GlassCard, HeroLogo, LanguageSwitcher, LocationPrompt } from '../components';
 
-// Satellite map background – place your image at assets/map_bg.jpg
-const MAP_BG_SOURCE = require('../../assets/map_bg.jpg');
+const LOCATION_PROMPT_KEY = 'location_prompt_dismissed';
+
+// Background image
+const MAP_BG_SOURCE = require('../../assets/grafika_wulkan_1.png');
 
 type RootStackParamList = {
   Search: undefined;
@@ -74,9 +77,15 @@ function searchStations(query: string): StationResult[] {
   for (const [id, station] of Object.entries(stations)) {
     let bestScore = 0;
     let matchedAlias: string | undefined;
+    // Search by station name
     bestScore = Math.max(bestScore, fuzzyMatch(query, station.name));
+    // Search by municipality
     const mScore = fuzzyMatch(query, station.municipality);
     if (mScore > bestScore) { bestScore = mScore; matchedAlias = station.municipality; }
+    // Search by island name (e.g., "Tenerife" shows all Tenerife stations)
+    const islandScore = fuzzyMatch(query, station.island);
+    if (islandScore > bestScore) { bestScore = islandScore; matchedAlias = station.island; }
+    // Search by aliases
     for (const alias of station.aliases) {
       const aScore = fuzzyMatch(query, alias);
       if (aScore > bestScore) { bestScore = aScore; matchedAlias = alias; }
@@ -121,9 +130,31 @@ export default function SearchScreen({ navigation }: Props) {
   const scrollViewRef = useRef<ScrollView>(null);
   const placesRef = useRef<View>(null);
   const shouldScrollToPlaces = useRef(false);
+  const scrollOffsetY = useRef(0);
+  const scrollViewPageY = useRef(0);
+
+  // Location prompt state
+  const [showLocationPrompt, setShowLocationPrompt] = useState(false);
+  const [isLocationPromptLoading, setIsLocationPromptLoading] = useState(false);
 
   useEffect(() => {
     Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }).start();
+  }, []);
+
+  // Check if location prompt should be shown on mount
+  useEffect(() => {
+    const checkLocationPrompt = async () => {
+      try {
+        const dismissed = await AsyncStorage.getItem(LOCATION_PROMPT_KEY);
+        if (!dismissed) {
+          // Small delay for better UX
+          setTimeout(() => setShowLocationPrompt(true), 800);
+        }
+      } catch (e) {
+        console.warn('Failed to check location prompt status:', e);
+      }
+    };
+    checkLocationPrompt();
   }, []);
 
   // Local search (instant, 150ms debounce)
@@ -229,6 +260,55 @@ export default function SearchScreen({ navigation }: Props) {
     finally { setIsLoadingLocation(false); }
   }, [handleSelectStation, t]);
 
+  // Location prompt handlers
+  const MAX_DISTANCE_KM = 150; // Max distance to consider user "near" Canary Islands
+
+  const handleLocationPromptUse = useCallback(async () => {
+    setIsLocationPromptLoading(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(t('search.locationPermissionTitle'), t('search.locationPermissionMessage'));
+        setIsLocationPromptLoading(false);
+        return;
+      }
+
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const nearest = findNearestStation(loc.coords.latitude, loc.coords.longitude);
+
+      // Save dismissal to AsyncStorage
+      await AsyncStorage.setItem(LOCATION_PROMPT_KEY, 'true');
+      setShowLocationPrompt(false);
+
+      if (nearest) {
+        // Check if user is too far from Canary Islands
+        if (nearest.distance > MAX_DISTANCE_KM) {
+          Alert.alert(
+            t('locationPrompt.tooFarTitle'),
+            t('locationPrompt.tooFarMessage'),
+            [{ text: t('locationPrompt.tooFarButton'), style: 'default' }]
+          );
+          return;
+        }
+        // Navigate directly to the nearest station
+        navigation.navigate('Result', { stationId: nearest.id });
+      }
+    } catch (e) {
+      Alert.alert(t('common.error'), t('search.locationError'));
+    } finally {
+      setIsLocationPromptLoading(false);
+    }
+  }, [navigation, t]);
+
+  const handleLocationPromptDismiss = useCallback(async () => {
+    try {
+      await AsyncStorage.setItem(LOCATION_PROMPT_KEY, 'true');
+    } catch (e) {
+      console.warn('Failed to save location prompt dismissal:', e);
+    }
+    setShowLocationPrompt(false);
+  }, []);
+
   // Islands with their top 3 popular destinations
   const islandsData = useMemo(() => [
     {
@@ -238,6 +318,7 @@ export default function SearchScreen({ navigation }: Props) {
         { name: 'Costa Adeje', stationId: 'C419X' },
         { name: 'Los Cristianos', stationId: 'C419X' },
         { name: 'Puerto de la Cruz', stationId: 'C459Z' },
+        { name: 'Santa Cruz de Tenerife', stationId: 'C449C' },
       ],
     },
     {
@@ -247,6 +328,7 @@ export default function SearchScreen({ navigation }: Props) {
         { name: 'Maspalomas', stationId: 'C689E' },
         { name: 'Playa del Inglés', stationId: 'C689E' },
         { name: 'Puerto Rico', stationId: 'C629X' },
+        { name: 'Puerto de las Nieves', stationId: 'C658L' },
       ],
     },
     {
@@ -255,7 +337,8 @@ export default function SearchScreen({ navigation }: Props) {
       places: [
         { name: 'Corralejo', stationId: 'C249I' },
         { name: 'Costa Calma', stationId: 'C249I' },
-        { name: 'Jandía', stationId: 'C249I' },
+        { name: 'Morro Jable', stationId: 'C249I' },
+        { name: 'Caleta de Fuste', stationId: 'C249I' },
       ],
     },
     {
@@ -265,6 +348,7 @@ export default function SearchScreen({ navigation }: Props) {
         { name: 'Puerto del Carmen', stationId: 'C029O' },
         { name: 'Playa Blanca', stationId: 'C029O' },
         { name: 'Costa Teguise', stationId: 'C029O' },
+        { name: 'Orzola', stationId: 'C038N' },
       ],
     },
     {
@@ -272,8 +356,9 @@ export default function SearchScreen({ navigation }: Props) {
       icon: 'pine-tree' as const,
       places: [
         { name: 'Los Cancajos', stationId: 'C139E' },
-        { name: 'Puerto Naos', stationId: 'C139E' },
+        { name: 'Puerto de Naos', stationId: 'C139E' },
         { name: 'Santa Cruz de La Palma', stationId: 'C139E' },
+        { name: 'Garafia', stationId: 'C101A' },
       ],
     },
     {
@@ -283,6 +368,7 @@ export default function SearchScreen({ navigation }: Props) {
         { name: 'Valle Gran Rey', stationId: 'C329B' },
         { name: 'Playa de Santiago', stationId: 'C329B' },
         { name: 'San Sebastián', stationId: 'C329B' },
+        { name: 'Alojera', stationId: 'C329B' },
       ],
     },
     {
@@ -290,8 +376,9 @@ export default function SearchScreen({ navigation }: Props) {
       icon: 'waves' as const,
       places: [
         { name: 'La Restinga', stationId: 'C929I' },
-        { name: 'Frontera', stationId: 'C929I' },
-        { name: 'Valverde', stationId: 'C929I' },
+        { name: 'La Frontera', stationId: 'C929I' },
+        { name: 'Villa de Valverde', stationId: 'C929I' },
+        { name: 'La Caleta', stationId: 'C929I' },
       ],
     },
   ], []);
@@ -307,21 +394,30 @@ export default function SearchScreen({ navigation }: Props) {
     shouldScrollToPlaces.current = true;
   }, [selectedIsland]);
 
+  const handleScroll = useCallback((event: { nativeEvent: { contentOffset: { y: number } } }) => {
+    scrollOffsetY.current = event.nativeEvent.contentOffset.y;
+  }, []);
+
+  const handleScrollViewLayout = useCallback(() => {
+    if (scrollViewRef.current) {
+      (scrollViewRef.current as any).measure((_x: number, _y: number, _w: number, _h: number, _px: number, pageY: number) => {
+        scrollViewPageY.current = pageY;
+      });
+    }
+  }, []);
+
   const handlePlacesLayout = useCallback(() => {
     if (shouldScrollToPlaces.current && placesRef.current && scrollViewRef.current) {
       shouldScrollToPlaces.current = false;
       setTimeout(() => {
-        placesRef.current?.measureLayout(
-          scrollViewRef.current as any,
-          (_x, y) => {
-            scrollViewRef.current?.scrollTo({
-              y: y - 80,
-              animated: true,
-            });
-          },
-          () => {}
-        );
-      }, 100);
+        (placesRef.current as any).measure((_x: number, _y: number, _w: number, _h: number, _px: number, pageY: number) => {
+          const targetY = scrollOffsetY.current + (pageY - scrollViewPageY.current) - 80;
+          scrollViewRef.current?.scrollTo({
+            y: Math.max(0, targetY),
+            animated: true,
+          });
+        });
+      }, 200);
     }
   }, []);
 
@@ -355,6 +451,9 @@ export default function SearchScreen({ navigation }: Props) {
               contentContainerStyle={styles.scrollContent}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
+              onScroll={handleScroll}
+              onLayout={handleScrollViewLayout}
+              scrollEventThrottle={16}
             >
               {/* FIGMA: STYLE_TARGET — Header (logo, title, subtitle) */}
               <View style={styles.header}>
@@ -366,7 +465,6 @@ export default function SearchScreen({ navigation }: Props) {
                   <HeroLogo size={90} />
                 </View>
                 <Text style={styles.title}>{t('search.title')}</Text>
-                <Text style={styles.subtitle}>{t('search.subtitle')}</Text>
               </View>
 
               {/* FIGMA: STYLE_TARGET — Search section (input, GPS button) */}
@@ -557,6 +655,14 @@ export default function SearchScreen({ navigation }: Props) {
           </Animated.View>
         </KeyboardAvoidingView>
       </SafeAreaView>
+
+      {/* Location Permission Prompt Modal */}
+      <LocationPrompt
+        visible={showLocationPrompt}
+        onUseLocation={handleLocationPromptUse}
+        onDismiss={handleLocationPromptDismiss}
+        isLoading={isLocationPromptLoading}
+      />
     </View>
   );
 }
@@ -580,18 +686,10 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.h1,
-    marginBottom: spacing.xs,
+    marginBottom: spacing.sm,
     textShadowColor: 'rgba(0, 0, 0, 0.25)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
-  },
-  subtitle: {
-    ...typography.body,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.15)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   // FIGMA: STYLE_TARGET — Search section
   searchSection: { marginBottom: spacing.lg },

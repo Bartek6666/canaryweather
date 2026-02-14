@@ -16,6 +16,34 @@ import locationsMapping from '../constants/locations_mapping.json';
 const CACHE_KEY_PREFIX = 'weather_cache_';
 const CACHE_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 
+// ─── IN-MEMORY RATE LIMIT CACHE (15 min) ──────────────────────────────────────
+
+const RATE_LIMIT_MS = 15 * 60 * 1000; // 15 minutes
+const inMemoryCache: Map<string, { data: LiveWeatherData; timestamp: number }> = new Map();
+
+/**
+ * Gets data from in-memory cache if not expired (15 min TTL)
+ * Prevents excessive API calls for the same station
+ */
+function getFromRateLimitCache(stationId: string): LiveWeatherData | null {
+  const cached = inMemoryCache.get(stationId);
+  if (!cached) return null;
+
+  if (Date.now() - cached.timestamp > RATE_LIMIT_MS) {
+    inMemoryCache.delete(stationId);
+    return null;
+  }
+
+  return cached.data;
+}
+
+/**
+ * Saves data to in-memory rate limit cache
+ */
+function saveToRateLimitCache(stationId: string, data: LiveWeatherData): void {
+  inMemoryCache.set(stationId, { data, timestamp: Date.now() });
+}
+
 interface CachedWeatherData {
   data: LiveWeatherData;
   timestamp: number;
@@ -355,6 +383,8 @@ export interface NearbyStation {
   name: string;
   island: string;
   distance: number;
+  latitude?: number;
+  longitude?: number;
 }
 
 /**
@@ -372,11 +402,324 @@ export function findNearestStations(
     name: station.name,
     island: station.island,
     distance: Math.round(haversineDistance(lat, lon, station.latitude, station.longitude) * 10) / 10,
+    latitude: station.latitude,
+    longitude: station.longitude,
   }));
 
   return withDistance
     .sort((a, b) => a.distance - b.distance)
     .slice(0, count);
+}
+
+// ─── INTELLIGENT INTERPOLATION ────────────────────────────────────────────────
+
+const SINGLE_STATION_THRESHOLD_KM = 5; // Use single station if closer than 5km
+
+/**
+ * Calculates inverse distance weights for interpolation
+ * Closer stations have higher weights
+ * @param distances Array of distances in km
+ * @returns Array of weights (sum = 1)
+ */
+function calculateDistanceWeights(distances: number[]): number[] {
+  // Use inverse distance weighting (IDW)
+  // Weight = 1 / distance^2 (squared for stronger locality)
+  const inverseDistances = distances.map(d => 1 / Math.pow(Math.max(d, 0.1), 2));
+  const sum = inverseDistances.reduce((a, b) => a + b, 0);
+  return inverseDistances.map(w => w / sum);
+}
+
+/**
+ * Interpolated weather result from multiple stations
+ */
+export interface InterpolatedWeatherResult {
+  data: LiveWeatherData;
+  stations: Array<{
+    stationId: string;
+    name: string;
+    distance: number;
+    weight: number;
+  }>;
+  isSingleStation: boolean;
+  isFromCache: boolean;
+}
+
+/**
+ * Fetches and interpolates live weather from nearest stations
+ * - If closest station < 5km: uses only that station
+ * - Otherwise: weighted average from 3 nearest stations
+ *
+ * @param targetLat Target latitude
+ * @param targetLon Target longitude
+ * @param forceRefresh Skip cache if true
+ */
+export async function fetchInterpolatedWeather(
+  targetLat: number,
+  targetLon: number,
+  forceRefresh: boolean = false
+): Promise<InterpolatedWeatherResult | null> {
+  // Find 3 nearest stations
+  const nearestStations = findNearestStations(targetLat, targetLon, 3);
+
+  if (nearestStations.length === 0) {
+    return null;
+  }
+
+  // Check if closest station is within threshold
+  const closestStation = nearestStations[0];
+  if (closestStation.distance < SINGLE_STATION_THRESHOLD_KM) {
+    // Use single station data
+    const result = await fetchLiveWeather(
+      closestStation.latitude!,
+      closestStation.longitude!,
+      closestStation.stationId,
+      forceRefresh
+    );
+
+    if (!result) return null;
+
+    return {
+      data: result.data,
+      stations: [{
+        stationId: closestStation.stationId,
+        name: closestStation.name,
+        distance: closestStation.distance,
+        weight: 1,
+      }],
+      isSingleStation: true,
+      isFromCache: result.isFromCache,
+    };
+  }
+
+  // Fetch weather from all 3 stations in parallel
+  const weatherPromises = nearestStations.map(station =>
+    fetchLiveWeather(
+      station.latitude!,
+      station.longitude!,
+      station.stationId,
+      forceRefresh
+    )
+  );
+
+  const results = await Promise.all(weatherPromises);
+
+  // Filter out failed requests
+  const validResults: Array<{ station: NearbyStation; data: LiveWeatherData; isFromCache: boolean }> = [];
+  results.forEach((result, index) => {
+    if (result) {
+      validResults.push({
+        station: nearestStations[index],
+        data: result.data,
+        isFromCache: result.isFromCache,
+      });
+    }
+  });
+
+  if (validResults.length === 0) {
+    return null;
+  }
+
+  // If only one station returned data, use it
+  if (validResults.length === 1) {
+    return {
+      data: validResults[0].data,
+      stations: [{
+        stationId: validResults[0].station.stationId,
+        name: validResults[0].station.name,
+        distance: validResults[0].station.distance,
+        weight: 1,
+      }],
+      isSingleStation: true,
+      isFromCache: validResults[0].isFromCache,
+    };
+  }
+
+  // Calculate weights based on distances
+  const distances = validResults.map(r => r.station.distance);
+  const weights = calculateDistanceWeights(distances);
+
+  // Interpolate numeric values
+  let temperature = 0;
+  let humidity = 0;
+  let windSpeed = 0;
+
+  validResults.forEach((result, index) => {
+    temperature += result.data.temperature * weights[index];
+    humidity += result.data.humidity * weights[index];
+    windSpeed += result.data.windSpeed * weights[index];
+  });
+
+  // For weather condition, use the one from the closest station
+  const closestResult = validResults[0];
+
+  const interpolatedData: LiveWeatherData = {
+    temperature: Math.round(temperature),
+    humidity: Math.round(humidity),
+    windSpeed: Math.round(windSpeed),
+    weatherCode: closestResult.data.weatherCode,
+    condition: closestResult.data.condition,
+    conditionLabelKey: closestResult.data.conditionLabelKey,
+    timestamp: new Date().toISOString(),
+  };
+
+  return {
+    data: interpolatedData,
+    stations: validResults.map((r, i) => ({
+      stationId: r.station.stationId,
+      name: r.station.name,
+      distance: r.station.distance,
+      weight: Math.round(weights[i] * 100) / 100,
+    })),
+    isSingleStation: false,
+    isFromCache: validResults.some(r => r.isFromCache),
+  };
+}
+
+/**
+ * Interpolated sun chance result from multiple stations
+ */
+export interface InterpolatedSunChanceResult {
+  sun_chance: number;
+  sunny_days: number;
+  total_days: number;
+  confidence: 'high' | 'medium' | 'low';
+  stations: Array<{
+    stationId: string;
+    name: string;
+    distance: number;
+    weight: number;
+    sunChance: number;
+  }>;
+  isSingleStation: boolean;
+}
+
+/**
+ * Calculates interpolated sun chance from nearest stations
+ * - If closest station < 5km: uses only that station
+ * - Otherwise: weighted average from 3 nearest stations
+ */
+export async function calculateInterpolatedSunChance(
+  targetLat: number,
+  targetLon: number,
+  month: number,
+  dayStart: number = 1,
+  dayEnd: number = 31
+): Promise<InterpolatedSunChanceResult | null> {
+  // Find 3 nearest stations
+  const nearestStations = findNearestStations(targetLat, targetLon, 3);
+
+  if (nearestStations.length === 0) {
+    return null;
+  }
+
+  // Check if closest station is within threshold
+  const closestStation = nearestStations[0];
+  if (closestStation.distance < SINGLE_STATION_THRESHOLD_KM) {
+    const result = await calculateSunChance(closestStation.stationId, month, dayStart, dayEnd);
+
+    return {
+      sun_chance: result.sun_chance,
+      sunny_days: result.sunny_days,
+      total_days: result.total_days,
+      confidence: result.confidence,
+      stations: [{
+        stationId: closestStation.stationId,
+        name: closestStation.name,
+        distance: closestStation.distance,
+        weight: 1,
+        sunChance: result.sun_chance,
+      }],
+      isSingleStation: true,
+    };
+  }
+
+  // Fetch sun chance from all 3 stations in parallel
+  const sunChancePromises = nearestStations.map(station =>
+    calculateSunChance(station.stationId, month, dayStart, dayEnd)
+  );
+
+  const results = await Promise.all(sunChancePromises);
+
+  // Filter out stations with no data
+  const validResults: Array<{ station: NearbyStation; data: SunChanceResult }> = [];
+  results.forEach((result, index) => {
+    if (result.total_days > 0) {
+      validResults.push({
+        station: nearestStations[index],
+        data: result,
+      });
+    }
+  });
+
+  if (validResults.length === 0) {
+    return {
+      sun_chance: 0,
+      sunny_days: 0,
+      total_days: 0,
+      confidence: 'low',
+      stations: [],
+      isSingleStation: false,
+    };
+  }
+
+  // If only one station has data, use it
+  if (validResults.length === 1) {
+    return {
+      sun_chance: validResults[0].data.sun_chance,
+      sunny_days: validResults[0].data.sunny_days,
+      total_days: validResults[0].data.total_days,
+      confidence: validResults[0].data.confidence,
+      stations: [{
+        stationId: validResults[0].station.stationId,
+        name: validResults[0].station.name,
+        distance: validResults[0].station.distance,
+        weight: 1,
+        sunChance: validResults[0].data.sun_chance,
+      }],
+      isSingleStation: true,
+    };
+  }
+
+  // Calculate weights based on distances
+  const distances = validResults.map(r => r.station.distance);
+  const weights = calculateDistanceWeights(distances);
+
+  // Interpolate sun chance
+  let interpolatedSunChance = 0;
+  let totalSunnyDays = 0;
+  let totalDays = 0;
+
+  validResults.forEach((result, index) => {
+    interpolatedSunChance += result.data.sun_chance * weights[index];
+    totalSunnyDays += result.data.sunny_days;
+    totalDays += result.data.total_days;
+  });
+
+  // Determine confidence based on total data and number of stations
+  let confidence: 'high' | 'medium' | 'low';
+  const avgDaysPerStation = totalDays / validResults.length;
+  if (avgDaysPerStation >= 50 && validResults.length >= 2) {
+    confidence = 'high';
+  } else if (avgDaysPerStation >= 20) {
+    confidence = 'medium';
+  } else {
+    confidence = 'low';
+  }
+
+  return {
+    sun_chance: Math.round(interpolatedSunChance),
+    sunny_days: Math.round(totalSunnyDays / validResults.length),
+    total_days: Math.round(totalDays / validResults.length),
+    confidence,
+    stations: validResults.map((r, i) => ({
+      stationId: r.station.stationId,
+      name: r.station.name,
+      distance: r.station.distance,
+      weight: Math.round(weights[i] * 100) / 100,
+      sunChance: r.data.sun_chance,
+    })),
+    isSingleStation: false,
+  };
 }
 
 /**
@@ -510,7 +853,7 @@ export async function getBestWeeksForStation(stationId: string): Promise<WeeklyB
   });
 
   // Calculate 7-day rolling averages for each week
-  const weeklyData: { start: number; sunChance: number; avgTmax: number }[] = [];
+  const weeklyData: { start: number; sunChance: number; avgTmax: number; score: number }[] = [];
 
   for (let startDay = 1; startDay <= 358; startDay += 7) {
     let totalSunny = 0;
@@ -529,17 +872,33 @@ export async function getBestWeeksForStation(stationId: string): Promise<WeeklyB
     }
 
     if (totalDays > 0) {
+      const sunChance = Math.round((totalSunny / totalDays) * 100);
+      const avgTmax = tmaxCount > 0 ? Math.round((tmaxSum / tmaxCount) * 10) / 10 : 0;
+
+      // Calculate weighted score
+      let score = sunChance * 1.5; // Sun chance is primary factor (weight: 1.5)
+
+      // Temperature bonus: ideal range 24-27°C gets max bonus
+      if (avgTmax >= 24 && avgTmax <= 27) {
+        score += 20; // Perfect temperature bonus
+      } else if (avgTmax >= 22 && avgTmax <= 29) {
+        score += 10; // Good temperature bonus
+      } else if (avgTmax < 20 || avgTmax > 32) {
+        score -= 10; // Too cold or too hot penalty
+      }
+
       weeklyData.push({
         start: startDay,
-        sunChance: Math.round((totalSunny / totalDays) * 100),
-        avgTmax: tmaxCount > 0 ? Math.round((tmaxSum / tmaxCount) * 10) / 10 : 0,
+        sunChance,
+        avgTmax,
+        score,
       });
     }
   }
 
-  // Sort by sun chance and get top 3
+  // Sort by score and get top 3
   const topWeeks = weeklyData
-    .sort((a, b) => b.sunChance - a.sunChance)
+    .sort((a, b) => b.score - a.score)
     .slice(0, 3);
 
   // Convert day of year to date range string
@@ -693,6 +1052,16 @@ export async function fetchLiveWeather(
     return { data: getMockWeatherData(), isFromCache: false };
   }
 
+  // Check in-memory rate limit cache first (15 min TTL)
+  // Skip if forceRefresh is true (pull-to-refresh)
+  if (stationId && !forceRefresh) {
+    const rateLimitCached = getFromRateLimitCache(stationId);
+    if (rateLimitCached) {
+      console.log('[RateLimit] Using cached data (< 15 min old)');
+      return { data: rateLimitCached, isFromCache: true };
+    }
+  }
+
   const TIMEOUT_MS = 10000; // 10 seconds timeout
 
   try {
@@ -755,6 +1124,7 @@ export async function fetchLiveWeather(
     // Save to cache on success
     if (stationId) {
       await saveWeatherToCache(stationId, weatherData);
+      saveToRateLimitCache(stationId, weatherData);
       console.log('[Cache] Weather data saved to cache');
     }
 

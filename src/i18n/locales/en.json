@@ -20,7 +20,7 @@
     "noResultsHint": "Try entering the name of a resort or municipality in the Canary Islands.",
     "stationsNearby": "Stations nearby",
     "fromTarget": "from target",
-    "footer": "Data from 10 years • 17 AEMET stations",
+    "footer": "Data from 10 years • 19 AEMET stations",
     "locationPermissionTitle": "No access",
     "locationPermissionMessage": "Enable location in settings.",
     "nearestStationTitle": "Nearest station",
@@ -31,8 +31,8 @@
     "offline": "OFFLINE",
     "cached": "CACHED",
     "offlineData": "Archived data (offline)",
-    "noLiveData": "No live data",
-    "checkConnection": "Check your internet connection",
+    "noLiveData": "Station data temporarily unavailable",
+    "checkConnection": "Please try again in a moment",
     "calimaAlert": "Alert: Calima",
     "calimaDesc": "Saharan dust storm forecasted. Reduced visibility and higher temperatures possible.",
     "calimaInfoTitle": "What is Calima?",
@@ -59,6 +59,11 @@
     "summaryVeryGood": "{{name}} offers very good sunny conditions.",
     "summaryModerate": "Moderate conditions - prepare for variable weather.",
     "summaryPoor": "More cloudy days - consider a different time.",
+    "summarySunny": "Excellent sunny conditions.",
+    "summaryCloudy": "Expect more clouds.",
+    "summaryWindy": "Possible strong winds.",
+    "summaryHot": "Hot temperatures - stay hydrated.",
+    "summaryMild": "Pleasant, mild temperature.",
     "nearestAemetStation": "Nearest AEMET station"
   },
   "months": {
@@ -97,6 +102,15 @@
     "laPalma": "La Palma",
     "laGomera": "La Gomera",
     "elHierro": "El Hierro"
+  },
+  "locationPrompt": {
+    "title": "Weather Near You",
+    "description": "Allow location access so we can automatically show you the forecast for your current location.",
+    "useLocation": "Use Location",
+    "enterManually": "Enter Manually",
+    "tooFarTitle": "You're not in the Canary Islands",
+    "tooFarMessage": "It looks like you're currently far from the Canary Islands. Use the search to find your destination.",
+    "tooFarButton": "Search destination"
   },
   "weather": {
     "sunny": "Sunny",

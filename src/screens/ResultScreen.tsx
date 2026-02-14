@@ -4,6 +4,7 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  Pressable,
   ActivityIndicator,
   Animated,
   ImageBackground,
@@ -16,7 +17,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
 import { colors, spacing, typography, glass, glassText, borderRadius, gradients, shadows, getSunChanceColor, liveCard, theme } from '../constants/theme';
-import { AlertCard, GlassCard, SunChanceGauge, WeatherIcon } from '../components';
+import { AlertCard, GlassCard, SunChanceGauge, WeatherIcon, WeatherEffects } from '../components';
 import locationsMapping from '../constants/locations_mapping.json';
 import { calculateSunChance, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult } from '../services/weatherService';
 import { supabase } from '../services/supabase';
@@ -192,11 +193,28 @@ function LiveWeatherCard({ data, isLoading, hasError, isFromCache = false }: Liv
 
 function BestTimeCard({ week, rank, delay = 0 }: { week: WeeklyBestPeriod; rank: number; delay?: number }) {
   const medalColors = [colors.medalGold, colors.medalSilver, colors.medalBronze];
+  const borderColors = [
+    { borderColor: colors.medalGold, shadowColor: colors.medalGold },
+    { borderColor: colors.medalSilver, shadowColor: colors.medalSilver },
+    { borderColor: colors.medalBronze, shadowColor: colors.medalBronze },
+  ];
   // Map sunChance to weather condition for proper icon rendering
   const weatherCondition: WeatherCondition = week.sunChance >= 70 ? 'sunny' : week.sunChance >= 40 ? 'partly-sunny' : 'cloudy';
 
   return (
-    <GlassCard style={styles.bestTimeCard} delay={delay}>
+    <GlassCard
+      style={[
+        styles.bestTimeCard,
+        {
+          borderColor: borderColors[rank].borderColor,
+          borderWidth: rank === 0 ? 2 : 1,
+          shadowColor: borderColors[rank].shadowColor,
+          shadowOpacity: rank === 0 ? 0.4 : 0.2,
+          shadowRadius: rank === 0 ? 8 : 4,
+        },
+      ]}
+      delay={delay}
+    >
       <View style={styles.bestTimeCardInner}>
         <View style={styles.bestTimeRank}>
           <MaterialCommunityIcons name="medal" size={24} color={medalColors[rank]} />
@@ -223,30 +241,80 @@ function BestTimeCard({ week, rank, delay = 0 }: { week: WeeklyBestPeriod; rank:
 function YearHistoryItem({ data, month, delay = 0 }: { data: YearlyData; month: number; delay?: number }) {
   const { t } = useTranslation();
   const sunChance = data.totalDays > 0 ? Math.round((data.sunnyDays / data.totalDays) * 100) : 0;
-  // Map sunChance to weather condition for proper icon rendering
-  const weatherCondition: WeatherCondition = sunChance >= 70 ? 'sunny' : sunChance >= 40 ? 'partly-sunny' : 'rainy';
-  const monthKey = MONTH_KEYS[month - 1];
+  const weatherCondition: WeatherCondition = sunChance >= 70 ? 'sunny' : sunChance >= 40 ? 'partly-sunny' : 'cloudy';
+  const pressAnim = useRef(new Animated.Value(1)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 300,
+      delay,
+      useNativeDriver: true,
+    }).start();
+  }, [delay]);
+
+  const handlePressIn = () => {
+    Animated.timing(pressAnim, {
+      toValue: 0.97,
+      duration: 100,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.timing(pressAnim, {
+      toValue: 1,
+      duration: 150,
+      useNativeDriver: true,
+    }).start();
+  };
 
   return (
-    <GlassCard style={styles.yearItem} variant="subtle" delay={delay}>
-      <View style={styles.yearItemInner}>
-        <View style={styles.yearItemLeft}>
-          <Text style={styles.yearItemYear}>{t(`months.${monthKey}`)} {data.year}</Text>
-          <Text style={styles.yearItemDays}>{data.sunnyDays}/{data.totalDays} {t('common.days')}</Text>
+    <Animated.View style={{ opacity: fadeAnim, transform: [{ scale: pressAnim }] }}>
+      <Pressable
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        style={({ pressed }) => [
+          styles.yearItem,
+          pressed && styles.yearItemPressed,
+        ]}
+      >
+        <View style={styles.yearItemInner}>
+          {/* Column 1: Year + Weather Icon */}
+          <View style={styles.yearCol1}>
+            <Text style={styles.yearItemYear}>{data.year}</Text>
+            <WeatherIcon condition={weatherCondition} size={20} showGlow={false} />
+          </View>
+
+          {/* Column 2: Sun Chance + Progress Bar */}
+          <View style={styles.yearCol2}>
+            <View style={styles.sunBarWrapper}>
+              <View style={styles.sunBarBackground}>
+                <LinearGradient
+                  colors={['rgba(255, 255, 255, 0.15)', '#FFD700']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={[styles.sunBarFill, { width: `${sunChance}%` }]}
+                />
+                {/* Glow effect */}
+                <View style={[styles.sunBarGlow, { width: `${sunChance}%` }]} />
+              </View>
+            </View>
+            <Text style={[styles.sunBarPercent, { color: getSunChanceColor(sunChance) }]}>{sunChance}%</Text>
+          </View>
+
+          {/* Column 3: Temperatures */}
+          <View style={styles.yearCol3}>
+            <View style={styles.tempRow}>
+              <Text style={styles.tempHigh}>{data.avgTmax.toFixed(0)}°</Text>
+              <Text style={styles.tempSeparator}>/</Text>
+              <Text style={styles.tempLow}>{data.avgTmin.toFixed(0)}°</Text>
+            </View>
+          </View>
         </View>
-        <View style={styles.yearItemCenter}>
-          <WeatherIcon condition={weatherCondition} size={22} showGlow={true} />
-          <Text style={[styles.yearItemChance, { color: getSunChanceColor(sunChance) }]}>{sunChance}%</Text>
-        </View>
-        <View style={styles.yearItemRight}>
-          <Text style={styles.yearItemTemp}>
-            <Text style={styles.tempHigh}>{data.avgTmax.toFixed(0)}°</Text>
-            <Text style={styles.tempSep}> / </Text>
-            <Text style={styles.tempLow}>{data.avgTmin.toFixed(0)}°</Text>
-          </Text>
-        </View>
-      </View>
-    </GlassCard>
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -396,13 +464,38 @@ export default function ResultScreen({ navigation, route }: Props) {
   }, [station, stationId]);
 
   const getSummary = () => {
-    const c = sunChanceResult?.sun_chance ?? 0;
+    const sunChance = sunChanceResult?.sun_chance ?? 0;
+    const windSpeed = liveData?.windSpeed ?? 0;
+    const avgTemp = currentStats?.avg_tmax ?? 0;
     const monthKey = MONTH_KEYS[selectedMonth - 1];
     const monthName = t(`months.${monthKey}`).toLowerCase();
-    if (c >= 80) return t('result.summaryExcellent', { name: station?.name, month: monthName });
-    if (c >= 60) return t('result.summaryVeryGood', { name: station?.name });
-    if (c >= 40) return t('result.summaryModerate');
-    return t('result.summaryPoor');
+
+    const parts: string[] = [];
+
+    // Sun condition
+    if (sunChance >= 80) {
+      parts.push(t('result.summaryExcellent', { name: station?.name, month: monthName }));
+    } else if (sunChance >= 60) {
+      parts.push(t('result.summarySunny'));
+    } else if (sunChance >= 40) {
+      parts.push(t('result.summaryModerate'));
+    } else {
+      parts.push(t('result.summaryCloudy'));
+    }
+
+    // Temperature condition
+    if (avgTemp >= 28) {
+      parts.push(t('result.summaryHot'));
+    } else if (avgTemp >= 18 && avgTemp < 28) {
+      parts.push(t('result.summaryMild'));
+    }
+
+    // Wind condition
+    if (windSpeed > 20) {
+      parts.push(t('result.summaryWindy'));
+    }
+
+    return parts.join(' ');
   };
 
   if (!station) return (
@@ -427,6 +520,9 @@ export default function ResultScreen({ navigation, route }: Props) {
         <LinearGradient colors={[...gradients.main]} style={[StyleSheet.absoluteFillObject, styles.bgGradientOverlay]} />
       </ImageBackground>
       <View style={styles.overlay} />
+
+      {/* Ambient Weather Background - subtle animated effects based on current weather */}
+      {liveData && <WeatherEffects condition={liveData.condition} />}
 
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         {/* FIGMA: STYLE_TARGET — Header bar (back button, title, island) */}
@@ -607,19 +703,106 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
-  // FIGMA: STYLE_TARGET — Year history item (glassmorphism)
-  yearItem: { marginBottom: spacing.sm },
-  yearItemInner: { flexDirection: 'row', alignItems: 'center', padding: spacing.md },
-  yearItemLeft: { flex: 1 },
-  yearItemYear: { ...typography.bodySmall, fontWeight: '600', color: glassText.primary },
-  yearItemDays: { ...typography.caption, fontSize: 11, marginTop: 2, color: glassText.secondary },
-  yearItemCenter: { alignItems: 'center', marginHorizontal: spacing.md },
-  yearItemChance: { fontSize: 13, fontWeight: '700', marginTop: spacing.xs },
-  yearItemRight: { alignItems: 'flex-end' },
-  yearItemTemp: { fontSize: 13, color: glassText.primary },
-  tempHigh: { color: colors.tempHot },
-  tempSep: { color: colors.textPrimary },
-  tempLow: { color: colors.tempCold },
+  // FIGMA: STYLE_TARGET — Year history item (glassmorphism timeline)
+  yearItem: {
+    marginBottom: spacing.sm,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+    overflow: 'hidden',
+  },
+  yearItemPressed: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: 'rgba(255, 215, 0, 0.3)',
+  },
+  yearItemInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+  },
+  // Column 1: Year + Icon
+  yearCol1: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: 70,
+    gap: spacing.xs,
+  },
+  yearItemYear: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: glassText.primary,
+    letterSpacing: -0.3,
+  },
+  // Column 2: Progress Bar + Percentage
+  yearCol2: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: spacing.md,
+  },
+  sunBarWrapper: {
+    flex: 1,
+    marginRight: spacing.sm,
+  },
+  sunBarBackground: {
+    height: 5,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 3,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  sunBarFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  sunBarGlow: {
+    position: 'absolute',
+    top: -2,
+    left: 0,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: 'transparent',
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  sunBarPercent: {
+    fontSize: 14,
+    fontWeight: '700',
+    minWidth: 42,
+    textAlign: 'right',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  // Column 3: Temperatures
+  yearCol3: {
+    alignItems: 'flex-end',
+    minWidth: 60,
+  },
+  tempRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  tempHigh: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.tempHot,
+  },
+  tempSeparator: {
+    fontSize: 13,
+    color: glassText.muted,
+    marginHorizontal: 2,
+  },
+  tempLow: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: colors.tempCold,
+  },
   // FIGMA: STYLE_TARGET — Summary card (glassmorphism)
   summaryContainer: { marginTop: spacing.lg },
   summaryInner: { padding: spacing.lg },

@@ -20,7 +20,7 @@
     "noResultsHint": "Versuchen Sie, den Namen eines Resorts oder einer Gemeinde auf den Kanarischen Inseln einzugeben.",
     "stationsNearby": "Stationen in der Nähe",
     "fromTarget": "vom Ziel",
-    "footer": "Daten aus 10 Jahren • 17 AEMET-Stationen",
+    "footer": "Daten aus 10 Jahren • 19 AEMET-Stationen",
     "locationPermissionTitle": "Kein Zugriff",
     "locationPermissionMessage": "Aktivieren Sie die Ortung in den Einstellungen.",
     "nearestStationTitle": "Nächste Station",
@@ -31,8 +31,8 @@
     "offline": "OFFLINE",
     "cached": "ARCHIV",
     "offlineData": "Archivierte Daten (offline)",
-    "noLiveData": "Keine Live-Daten",
-    "checkConnection": "Überprüfen Sie Ihre Internetverbindung",
+    "noLiveData": "Stationsdaten vorübergehend nicht verfügbar",
+    "checkConnection": "Bitte versuchen Sie es später erneut",
     "calimaAlert": "Warnung: Calima",
     "calimaDesc": "Saharastaub-Sturm prognostiziert. Eingeschränkte Sicht und höhere Temperaturen möglich.",
     "calimaInfoTitle": "Was ist Calima?",
@@ -59,6 +59,11 @@
     "summaryVeryGood": "{{name}} bietet sehr gute Sonnenbedingungen.",
     "summaryModerate": "Moderate Bedingungen - bereiten Sie sich auf wechselhaftes Wetter vor.",
     "summaryPoor": "Mehr bewölkte Tage - erwägen Sie einen anderen Zeitpunkt.",
+    "summarySunny": "Ausgezeichnete Sonnenbedingungen.",
+    "summaryCloudy": "Erwarten Sie mehr Wolken.",
+    "summaryWindy": "Möglicher starker Wind.",
+    "summaryHot": "Heiße Temperaturen - trinken Sie viel.",
+    "summaryMild": "Angenehme, milde Temperatur.",
     "nearestAemetStation": "Nächste AEMET-Station"
   },
   "months": {
@@ -97,6 +102,15 @@
     "laPalma": "La Palma",
     "laGomera": "La Gomera",
     "elHierro": "El Hierro"
+  },
+  "locationPrompt": {
+    "title": "Wetter in Ihrer Nähe",
+    "description": "Erlauben Sie den Standortzugriff, damit wir Ihnen automatisch die Vorhersage für Ihren aktuellen Standort anzeigen können.",
+    "useLocation": "Standort verwenden",
+    "enterManually": "Manuell eingeben",
+    "tooFarTitle": "Sie sind nicht auf den Kanarischen Inseln",
+    "tooFarMessage": "Es sieht so aus, als wären Sie weit von den Kanarischen Inseln entfernt. Nutzen Sie die Suche, um Ihr Reiseziel zu finden.",
+    "tooFarButton": "Reiseziel suchen"
   },
   "weather": {
     "sunny": "Sonnig",

@@ -20,7 +20,7 @@
     "noResultsHint": "Spróbuj wpisać nazwę kurortu lub gminy na Wyspach Kanaryjskich.",
     "stationsNearby": "Stacje w pobliżu",
     "fromTarget": "od celu",
-    "footer": "Dane z 10 lat • 17 stacji AEMET",
+    "footer": "Dane z 10 lat • 19 stacji AEMET",
     "locationPermissionTitle": "Brak dostępu",
     "locationPermissionMessage": "Włącz lokalizację w ustawieniach.",
     "nearestStationTitle": "Najbliższa stacja",
@@ -31,8 +31,8 @@
     "offline": "OFFLINE",
     "cached": "ARCHIWUM",
     "offlineData": "Dane archiwalne (offline)",
-    "noLiveData": "Brak danych live",
-    "checkConnection": "Sprawdź połączenie internetowe",
+    "noLiveData": "Dane stacji chwilowo niedostępne",
+    "checkConnection": "Spróbuj ponownie za chwilę",
     "calimaAlert": "Uwaga: Calima",
     "calimaDesc": "Prognozowana burza piaskowa z Sahary. Możliwe ograniczenie widoczności i wyższa temperatura.",
     "calimaInfoTitle": "Co to jest Calima?",
@@ -59,6 +59,11 @@
     "summaryVeryGood": "{{name}} oferuje bardzo dobre warunki słoneczne.",
     "summaryModerate": "Umiarkowane warunki - przygotuj się na zmienną aurę.",
     "summaryPoor": "Więcej pochmurnych dni - rozważ inny termin.",
+    "summarySunny": "Doskonałe warunki słoneczne.",
+    "summaryCloudy": "Spodziewaj się więcej chmur.",
+    "summaryWindy": "Możliwy silniejszy wiatr.",
+    "summaryHot": "Upalne temperatury - pamiętaj o nawodnieniu.",
+    "summaryMild": "Przyjemna, łagodna temperatura.",
     "nearestAemetStation": "Najbliższa stacja AEMET"
   },
   "months": {
@@ -97,6 +102,15 @@
     "laPalma": "La Palma",
     "laGomera": "La Gomera",
     "elHierro": "El Hierro"
+  },
+  "locationPrompt": {
+    "title": "Pogoda blisko Ciebie",
+    "description": "Zezwól na dostęp do lokalizacji, abyśmy mogli automatycznie pokazywać prognozę dla miejsca, w którym aktualnie jesteś.",
+    "useLocation": "Użyj lokalizacji",
+    "enterManually": "Wpiszę ręcznie",
+    "tooFarTitle": "Nie jesteś na Wyspach Kanaryjskich",
+    "tooFarMessage": "Wygląda na to, że jesteś daleko od Wysp Kanaryjskich. Użyj wyszukiwarki, aby znaleźć swój cel podróży.",
+    "tooFarButton": "Szukaj miejsca"
   },
   "weather": {
     "sunny": "Słonecznie",
