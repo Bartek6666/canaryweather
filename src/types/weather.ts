@@ -98,12 +98,22 @@ export interface IslandConfig {
   backgroundImage: string;
 }
 
+export interface City {
+  name: string;
+  island: Island;
+  coords: {
+    lat: number;
+    lon: number;
+  };
+}
+
 export interface LocationsMapping {
   version: string;
   lastUpdated: string;
   description: string;
   stations: Record<string, StationMapping>;
   islands: Record<Island, IslandConfig>;
+  cities: City[];
   altitudeCorrection: {
     description: string;
     lapseRate: number;

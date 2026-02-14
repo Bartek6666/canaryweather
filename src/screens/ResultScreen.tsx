@@ -27,7 +27,14 @@ import { MONTH_KEYS } from '../i18n';
 // Satellite map background – place your image at assets/map_bg.jpg
 const MAP_BG_SOURCE = require('../../assets/map_bg.jpg');
 
-type RootStackParamList = { Search: undefined; Result: { stationId: string; locationAlias?: string } };
+type RootStackParamList = {
+  Search: undefined;
+  Result: {
+    stationId: string;
+    locationName?: string;
+    locationCoords?: { lat: number; lon: number };
+  };
+};
 type Props = NativeStackScreenProps<RootStackParamList, 'Result'>;
 
 interface YearlyData { year: number; sunnyDays: number; totalDays: number; avgTmax: number; avgTmin: number; precipDays: number; }
@@ -320,7 +327,7 @@ function YearHistoryItem({ data, month, delay = 0 }: { data: YearlyData; month: 
 
 export default function ResultScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
-  const { stationId, locationAlias } = route.params;
+  const { stationId, locationName, locationCoords } = route.params;
   const [isLoading, setIsLoading] = useState(true);
   const [sunChanceResult, setSunChanceResult] = useState<SunChanceResult | null>(null);
   const [monthlyStats, setMonthlyStats] = useState<MonthlyStats[]>([]);
@@ -533,12 +540,12 @@ export default function ResultScreen({ navigation, route }: Props) {
           </TouchableOpacity>
           <View style={styles.headerTitle}>
             <Text style={styles.headerName}>
-              {locationAlias || station.name}
+              {locationName || station.name}
             </Text>
             <View style={styles.headerLocation}>
               <Ionicons name="location" size={14} color={colors.primary} />
               <Text style={styles.headerIsland}>
-                {locationAlias ? `${t('result.nearestAemetStation')} - ${station.name}` : station.island}
+                {locationName ? station.island : station.island}
               </Text>
             </View>
           </View>

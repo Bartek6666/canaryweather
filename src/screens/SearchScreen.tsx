@@ -26,8 +26,9 @@ import { useTranslation } from 'react-i18next';
 
 import { theme, colors, spacing, typography, glass, glassTokens, glassText, borderRadius, gradients, shadows } from '../constants/theme';
 import locationsMapping from '../constants/locations_mapping.json';
-import { findNearestStations, NearbyStation } from '../services/weatherService';
+import { findNearestStations, findNearestStation as findNearestStationService, NearbyStation } from '../services/weatherService';
 import { GlassCard, HeroLogo, LanguageSwitcher, LocationPrompt } from '../components';
+import { City } from '../types/weather';
 
 const LOCATION_PROMPT_KEY = 'location_prompt_dismissed';
 
@@ -36,7 +37,11 @@ const MAP_BG_SOURCE = require('../../assets/grafika_wulkan_1.png');
 
 type RootStackParamList = {
   Search: undefined;
-  Result: { stationId: string; locationAlias?: string };
+  Result: {
+    stationId: string;
+    locationName?: string;
+    locationCoords?: { lat: number; lon: number };
+  };
 };
 
 type SearchScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Search'>;
@@ -45,16 +50,14 @@ interface Props {
   navigation: SearchScreenNavigationProp;
 }
 
-interface StationResult {
-  id: string;
+interface CityResult {
   name: string;
   island: string;
-  municipality: string;
-  matchedAlias?: string;
+  coords: { lat: number; lon: number };
   score: number;
 }
 
-type SearchMode = 'local' | 'geocode' | 'no_results' | 'idle';
+type SearchMode = 'cities' | 'geocode' | 'no_results' | 'idle';
 
 const { width, height } = Dimensions.get('window');
 
@@ -70,61 +73,42 @@ function fuzzyMatch(query: string, target: string): number {
   return 0;
 }
 
-function searchStations(query: string): StationResult[] {
+// Search cities from the cities database
+function searchCities(query: string): CityResult[] {
   if (!query || query.length < 2) return [];
-  const stations = locationsMapping.stations as Record<string, any>;
-  const results: StationResult[] = [];
-  for (const [id, station] of Object.entries(stations)) {
+  const cities = locationsMapping.cities as City[];
+  const results: CityResult[] = [];
+
+  for (const city of cities) {
     let bestScore = 0;
-    let matchedAlias: string | undefined;
-    // Search by station name
-    bestScore = Math.max(bestScore, fuzzyMatch(query, station.name));
-    // Search by municipality
-    const mScore = fuzzyMatch(query, station.municipality);
-    if (mScore > bestScore) { bestScore = mScore; matchedAlias = station.municipality; }
-    // Search by island name (e.g., "Tenerife" shows all Tenerife stations)
-    const islandScore = fuzzyMatch(query, station.island);
-    if (islandScore > bestScore) { bestScore = islandScore; matchedAlias = station.island; }
-    // Search by aliases
-    for (const alias of station.aliases) {
-      const aScore = fuzzyMatch(query, alias);
-      if (aScore > bestScore) { bestScore = aScore; matchedAlias = alias; }
-    }
+    // Search by city name
+    bestScore = Math.max(bestScore, fuzzyMatch(query, city.name));
+    // Search by island name
+    const islandScore = fuzzyMatch(query, city.island);
+    if (islandScore > bestScore) bestScore = islandScore;
+
     if (bestScore > 30) {
-      results.push({ id, name: station.name, island: station.island, municipality: station.municipality, matchedAlias: matchedAlias !== station.name ? matchedAlias : undefined, score: bestScore });
+      results.push({
+        name: city.name,
+        island: city.island,
+        coords: city.coords,
+        score: bestScore,
+      });
     }
   }
-  return results.sort((a, b) => b.score - a.score).slice(0, 8);
-}
-
-function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a = Math.sin(dLat / 2) ** 2 + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-function findNearestStation(lat: number, lon: number) {
-  const stations = locationsMapping.stations as Record<string, any>;
-  let nearestId: string | null = null;
-  let minDistance = Infinity;
-  for (const [id, station] of Object.entries(stations)) {
-    const d = haversineDistance(lat, lon, station.latitude, station.longitude);
-    if (d < minDistance) { minDistance = d; nearestId = id; }
-  }
-  return nearestId ? { id: nearestId, distance: Math.round(minDistance * 10) / 10 } : null;
+  return results.sort((a, b) => b.score - a.score).slice(0, 5);
 }
 
 export default function SearchScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<StationResult[]>([]);
+  const [cityResults, setCityResults] = useState<CityResult[]>([]);
   const [geocodeResults, setGeocodeResults] = useState<NearbyStation[]>([]);
   const [searchMode, setSearchMode] = useState<SearchMode>('idle');
   const [isGeocodingLoading, setIsGeocodingLoading] = useState(false);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [geocodeQuery, setGeocodeQuery] = useState('');
+  const [geocodeCoords, setGeocodeCoords] = useState<{ lat: number; lon: number } | null>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const geocodeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -157,14 +141,14 @@ export default function SearchScreen({ navigation }: Props) {
     checkLocationPrompt();
   }, []);
 
-  // Local search (instant, 150ms debounce)
+  // City search (instant, 150ms debounce)
   useEffect(() => {
     const timer = setTimeout(() => {
-      const localResults = searchStations(searchQuery);
-      setSearchResults(localResults);
+      const results = searchCities(searchQuery);
+      setCityResults(results);
 
-      if (localResults.length > 0) {
-        setSearchMode('local');
+      if (results.length > 0) {
+        setSearchMode('cities');
         setGeocodeResults([]);
         setIsGeocodingLoading(false);
         if (geocodeTimerRef.current) {
@@ -186,14 +170,14 @@ export default function SearchScreen({ navigation }: Props) {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Geocoding fallback (500ms debounce, fires only when no local results)
+  // Geocoding fallback (500ms debounce, fires only when no city results)
   useEffect(() => {
     if (geocodeTimerRef.current) {
       clearTimeout(geocodeTimerRef.current);
       geocodeTimerRef.current = null;
     }
 
-    if (searchQuery.length < 3 || searchResults.length > 0) {
+    if (searchQuery.length < 3 || cityResults.length > 0) {
       setIsGeocodingLoading(false);
       return;
     }
@@ -208,6 +192,7 @@ export default function SearchScreen({ navigation }: Props) {
           if (nearby.length > 0 && nearby[0].distance <= 150) {
             setGeocodeResults(nearby);
             setGeocodeQuery(searchQuery);
+            setGeocodeCoords({ lat: latitude, lon: longitude });
             setSearchMode('geocode');
           } else {
             setGeocodeResults([]);
@@ -231,15 +216,59 @@ export default function SearchScreen({ navigation }: Props) {
         geocodeTimerRef.current = null;
       }
     };
-  }, [searchQuery, searchResults.length]);
+  }, [searchQuery, cityResults.length]);
 
-  const handleSelectStation = useCallback((stationId: string, alias?: string) => {
+  // Handle city selection - find nearest station and navigate
+  const handleSelectCity = useCallback((city: CityResult) => {
     Keyboard.dismiss();
     setSearchQuery('');
-    setSearchResults([]);
+    setCityResults([]);
     setGeocodeResults([]);
     setSearchMode('idle');
-    navigation.navigate('Result', { stationId, locationAlias: alias || undefined });
+
+    // Find nearest station to the city coordinates
+    const nearest = findNearestStationService(city.coords.lat, city.coords.lon);
+    if (nearest) {
+      navigation.navigate('Result', {
+        stationId: nearest.stationId,
+        locationName: city.name,
+        locationCoords: city.coords,
+      });
+    }
+  }, [navigation]);
+
+  // Handle selection from geocode results
+  const handleSelectGeocodeResult = useCallback((station: NearbyStation) => {
+    Keyboard.dismiss();
+    setSearchQuery('');
+    setCityResults([]);
+    setGeocodeResults([]);
+    setSearchMode('idle');
+
+    navigation.navigate('Result', {
+      stationId: station.stationId,
+      locationName: geocodeQuery,
+      locationCoords: geocodeCoords || undefined,
+    });
+  }, [navigation, geocodeQuery, geocodeCoords]);
+
+  // Handle quick place selection from popular destinations
+  const handleSelectPlace = useCallback((stationId: string, placeName: string) => {
+    Keyboard.dismiss();
+    setSearchQuery('');
+    setCityResults([]);
+    setGeocodeResults([]);
+    setSearchMode('idle');
+
+    // Find the city in our database to get coordinates
+    const cities = locationsMapping.cities as City[];
+    const city = cities.find(c => c.name === placeName);
+
+    navigation.navigate('Result', {
+      stationId,
+      locationName: placeName,
+      locationCoords: city?.coords,
+    });
   }, [navigation]);
 
   const handleGetLocation = useCallback(async () => {
@@ -248,17 +277,27 @@ export default function SearchScreen({ navigation }: Props) {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') { Alert.alert(t('search.locationPermissionTitle'), t('search.locationPermissionMessage')); return; }
       const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      const nearest = findNearestStation(loc.coords.latitude, loc.coords.longitude);
+      const nearest = findNearestStationService(loc.coords.latitude, loc.coords.longitude);
       if (nearest) {
-        const station = (locationsMapping.stations as Record<string, any>)[nearest.id];
-        Alert.alert(t('search.nearestStationTitle'), `${station.name} (${station.island})\n${nearest.distance} ${t('common.km')}`, [
-          { text: t('common.cancel'), style: 'cancel' },
-          { text: t('common.select'), onPress: () => handleSelectStation(nearest.id) },
-        ]);
+        Alert.alert(
+          t('search.nearestStationTitle'),
+          `${t('search.yourLocation')}\n${nearest.distance} ${t('common.km')} ${t('search.fromNearestStation')}`,
+          [
+            { text: t('common.cancel'), style: 'cancel' },
+            {
+              text: t('common.select'),
+              onPress: () => navigation.navigate('Result', {
+                stationId: nearest.stationId,
+                locationName: t('search.myLocationLabel'),
+                locationCoords: { lat: loc.coords.latitude, lon: loc.coords.longitude },
+              }),
+            },
+          ]
+        );
       }
     } catch { Alert.alert(t('common.error'), t('search.locationError')); }
     finally { setIsLoadingLocation(false); }
-  }, [handleSelectStation, t]);
+  }, [navigation, t]);
 
   // Location prompt handlers
   const MAX_DISTANCE_KM = 150; // Max distance to consider user "near" Canary Islands
@@ -274,7 +313,7 @@ export default function SearchScreen({ navigation }: Props) {
       }
 
       const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      const nearest = findNearestStation(loc.coords.latitude, loc.coords.longitude);
+      const nearest = findNearestStationService(loc.coords.latitude, loc.coords.longitude);
 
       // Save dismissal to AsyncStorage
       await AsyncStorage.setItem(LOCATION_PROMPT_KEY, 'true');
@@ -290,8 +329,12 @@ export default function SearchScreen({ navigation }: Props) {
           );
           return;
         }
-        // Navigate directly to the nearest station
-        navigation.navigate('Result', { stationId: nearest.id });
+        // Navigate directly to the nearest station with user's location
+        navigation.navigate('Result', {
+          stationId: nearest.stationId,
+          locationName: t('search.myLocationLabel'),
+          locationCoords: { lat: loc.coords.latitude, lon: loc.coords.longitude },
+        });
       }
     } catch (e) {
       Alert.alert(t('common.error'), t('search.locationError'));
@@ -421,7 +464,7 @@ export default function SearchScreen({ navigation }: Props) {
     }
   }, []);
 
-  const hasAnyResults = searchResults.length > 0 || geocodeResults.length > 0;
+  const hasAnyResults = cityResults.length > 0 || geocodeResults.length > 0;
 
   return (
     <View style={styles.container}>
@@ -491,29 +534,27 @@ export default function SearchScreen({ navigation }: Props) {
                       onChangeText={setSearchQuery}
                     />
                     {searchQuery.length > 0 && (
-                      <TouchableOpacity onPress={() => { setSearchQuery(''); setGeocodeResults([]); setSearchMode('idle'); }}>
+                      <TouchableOpacity onPress={() => { setSearchQuery(''); setCityResults([]); setGeocodeResults([]); setSearchMode('idle'); }}>
                         <Ionicons name="close-circle" size={20} color={colors.textMuted} />
                       </TouchableOpacity>
                     )}
                   </View>
                 </View>
 
-                {/* Local results */}
-                {searchMode === 'local' && searchResults.length > 0 && (
+                {/* City autocomplete results */}
+                {searchMode === 'cities' && cityResults.length > 0 && (
                   <View style={styles.resultsContainer}>
-                    {searchResults.map((item) => (
+                    {cityResults.map((city, index) => (
                       <TouchableOpacity
-                        key={item.id}
+                        key={`${city.name}-${index}`}
                         style={styles.resultItem}
-                        onPress={() => handleSelectStation(item.id)}
+                        onPress={() => handleSelectCity(city)}
                       >
                         <View style={styles.resultItemContent}>
                           <Ionicons name="location" size={20} color={colors.primary} />
                           <View style={styles.resultItemCenter}>
-                            <Text style={styles.resultItemName}>{item.name}</Text>
-                            <Text style={styles.resultItemDetail}>
-                              {item.island}{item.matchedAlias && ` \u2022 "${item.matchedAlias}"`}
-                            </Text>
+                            <Text style={styles.resultItemName}>{city.name}</Text>
+                            <Text style={styles.resultItemDetail}>{city.island}</Text>
                           </View>
                           <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
                         </View>
@@ -522,27 +563,27 @@ export default function SearchScreen({ navigation }: Props) {
                   </View>
                 )}
 
-                {/* Geocode results */}
+                {/* Geocode results - show when city not found in database */}
                 {searchMode === 'geocode' && geocodeResults.length > 0 && (
                   <View style={styles.resultsContainer}>
                     <View style={styles.geocodeHeader}>
                       <Ionicons name="compass" size={16} color={colors.primary} />
                       <Text style={styles.geocodeHeaderText}>
-                        {t('search.stationsNearby')} „{geocodeQuery}"
+                        {t('search.weatherNearby')} „{geocodeQuery}"
                       </Text>
                     </View>
-                    {geocodeResults.map((item) => (
+                    {geocodeResults.slice(0, 1).map((item) => (
                       <TouchableOpacity
                         key={item.stationId}
                         style={styles.resultItem}
-                        onPress={() => handleSelectStation(item.stationId, geocodeQuery)}
+                        onPress={() => handleSelectGeocodeResult(item)}
                       >
                         <View style={styles.resultItemContent}>
-                          <Ionicons name="navigate-circle" size={22} color={colors.rain} />
+                          <Ionicons name="navigate-circle" size={22} color={colors.primary} />
                           <View style={styles.resultItemCenter}>
-                            <Text style={styles.resultItemName}>{item.name}</Text>
+                            <Text style={styles.resultItemName}>{geocodeQuery}</Text>
                             <Text style={styles.resultItemDetail}>
-                              {item.island} \u2022 {item.distance} {t('common.km')} {t('search.fromTarget')}
+                              {item.island} • {t('search.weatherFromArea')}
                             </Text>
                           </View>
                           <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
@@ -630,7 +671,7 @@ export default function SearchScreen({ navigation }: Props) {
                             <TouchableOpacity
                               key={place.name}
                               activeOpacity={0.8}
-                              onPress={() => handleSelectStation(place.stationId, place.name)}
+                              onPress={() => handleSelectPlace(place.stationId, place.name)}
                             >
                               <GlassCard style={styles.placeItem} variant="subtle" delay={200 + index * 100}>
                                 <View style={styles.placeItemInner}>
