@@ -957,6 +957,18 @@ export async function getBestWeeksForStation(stationId: string): Promise<WeeklyB
   });
 }
 
+// ─── DAY/NIGHT DETECTION ──────────────────────────────────────────────────────
+
+/**
+ * Checks if current time is nighttime (between 20:00 and 07:00)
+ * Uses simple hour-based heuristic suitable for Canary Islands
+ */
+function isNightTime(): boolean {
+  const now = new Date();
+  const hour = now.getHours();
+  return hour >= 20 || hour < 7;
+}
+
 // ─── WMO WEATHER CODE MAPPING ─────────────────────────────────────────────────
 
 interface WmoMapping {
@@ -1025,9 +1037,23 @@ const WMO_CODE_MAP: Record<number, WmoMapping> = {
 
 /**
  * Maps WMO weather code to condition and labelKey
+ * @param code WMO weather code
+ * @param isNight Whether it's currently nighttime (affects sunny -> clear-night mapping)
  */
-export function mapWmoCode(code: number): WmoMapping {
-  return WMO_CODE_MAP[code] ?? { condition: 'cloudy', labelKey: 'unknown' };
+export function mapWmoCode(code: number, isNight: boolean = false): WmoMapping {
+  const mapping = WMO_CODE_MAP[code] ?? { condition: 'cloudy', labelKey: 'unknown' };
+
+  // Convert sunny conditions to night variants when it's dark
+  if (isNight) {
+    if (mapping.condition === 'sunny') {
+      return { condition: 'clear-night', labelKey: 'clearNight' };
+    }
+    if (mapping.condition === 'partly-sunny') {
+      return { condition: 'partly-cloudy-night', labelKey: 'partlyCloudyNight' };
+    }
+  }
+
+  return mapping;
 }
 
 // ─── AEMET API KEY ────────────────────────────────────────────────────────────
@@ -1124,8 +1150,9 @@ async function fetchAemetLiveWeather(
     const latest = observations[observations.length - 1];
 
     // Map precipitation to weather condition
-    let condition: WeatherCondition = 'sunny';
-    let labelKey = 'clearSky';
+    const isNight = isNightTime();
+    let condition: WeatherCondition = isNight ? 'clear-night' : 'sunny';
+    let labelKey = isNight ? 'clearNight' : 'clearSky';
     let weatherCode = 0;
 
     if (latest.prec !== undefined && latest.prec > 0) {
@@ -1141,8 +1168,8 @@ async function fetchAemetLiveWeather(
       labelKey = 'overcast';
       weatherCode = 3;
     } else if (latest.hr !== undefined && latest.hr > 70) {
-      condition = 'partly-sunny';
-      labelKey = 'partlyCloudy';
+      condition = isNight ? 'partly-cloudy-night' : 'partly-sunny';
+      labelKey = isNight ? 'partlyCloudyNight' : 'partlyCloudy';
       weatherCode = 2;
     }
 
@@ -1301,7 +1328,7 @@ export async function fetchLiveWeather(
       return __DEV__ ? { data: getMockWeatherData(), isFromCache: false } : null;
     }
 
-    const { condition, labelKey } = mapWmoCode(data.current.weather_code);
+    const { condition, labelKey } = mapWmoCode(data.current.weather_code, isNightTime());
 
     const weatherData: LiveWeatherData = {
       temperature: Math.round(data.current.temperature_2m),

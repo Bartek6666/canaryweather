@@ -134,6 +134,8 @@
     "snowy": "Nieve",
     "foggy": "Niebla",
     "clearSky": "Cielo despejado",
+    "clearNight": "Noche despejada",
+    "partlyCloudyNight": "Noche parcialmente nublada",
     "mainlyClear": "Mayormente despejado",
     "partlyCloudy": "Parcialmente nublado",
     "overcast": "Nublado",

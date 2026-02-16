@@ -134,6 +134,8 @@
     "snowy": "Snowy",
     "foggy": "Foggy",
     "clearSky": "Clear sky",
+    "clearNight": "Clear night",
+    "partlyCloudyNight": "Partly cloudy night",
     "mainlyClear": "Mainly clear",
     "partlyCloudy": "Partly cloudy",
     "overcast": "Overcast",

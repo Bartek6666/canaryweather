@@ -134,6 +134,8 @@
     "snowy": "Śnieg",
     "foggy": "Mgliście",
     "clearSky": "Bezchmurnie",
+    "clearNight": "Bezchmurna noc",
+    "partlyCloudyNight": "Częściowo pochmurna noc",
     "mainlyClear": "Przeważnie słonecznie",
     "partlyCloudy": "Częściowo słonecznie",
     "overcast": "Pochmurno",

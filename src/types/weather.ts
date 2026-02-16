@@ -157,7 +157,7 @@ export interface AemetDailyData {
 }
 
 // Live weather data from Open-Meteo API
-export type WeatherCondition = 'sunny' | 'partly-sunny' | 'cloudy' | 'rainy' | 'stormy' | 'snowy' | 'foggy';
+export type WeatherCondition = 'sunny' | 'partly-sunny' | 'cloudy' | 'rainy' | 'stormy' | 'snowy' | 'foggy' | 'clear-night' | 'partly-cloudy-night';
 
 export interface LiveWeatherData {
   temperature: number;

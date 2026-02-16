@@ -14,6 +14,8 @@ interface WeatherIconConfig {
 
 // Sun color constant - warm yellow
 const SUN_COLOR = '#FFCC00';
+// Moon color constant - soft silver/blue
+const MOON_COLOR = '#E8E8F0';
 
 const WEATHER_ICON_MAP: Record<WeatherCondition, WeatherIconConfig> = {
   sunny: {
@@ -44,6 +46,14 @@ const WEATHER_ICON_MAP: Record<WeatherCondition, WeatherIconConfig> = {
   foggy: {
     icon: 'cloud',
     glowColor: '#94A3B8', // Muted gray glow for fog
+  },
+  'clear-night': {
+    icon: 'moon',
+    glowColor: MOON_COLOR, // Soft silver glow for clear night
+  },
+  'partly-cloudy-night': {
+    icon: 'cloudy-night',
+    glowColor: MOON_COLOR,
   },
 };
 
@@ -187,8 +197,10 @@ export function WeatherIcon({
   // Icon opacity - lower for small parameter icons
   const iconOpacity = isSmall ? 0.6 : 1;
 
-  // Use warm yellow for sunny icon, white for others
-  const iconColor = condition === 'sunny' ? SUN_COLOR : '#FFFFFF';
+  // Use warm yellow for sunny icon, silver for night, white for others
+  const iconColor = condition === 'sunny' ? SUN_COLOR
+    : (condition === 'clear-night' || condition === 'partly-cloudy-night') ? MOON_COLOR
+    : '#FFFFFF';
 
   return (
     <View style={[styles.container, glowStyle, style]}>
