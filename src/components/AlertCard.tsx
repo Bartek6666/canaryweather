@@ -139,6 +139,31 @@ export function AlertCard({ type = 'calima', visible = true }: AlertCardProps) {
               {/* What is Calima */}
               <Text style={styles.modalText}>{t('result.calimaInfoWhat')}</Text>
 
+              {/* Symptoms Section */}
+              <View style={styles.modalSection}>
+                <View style={styles.sectionHeader}>
+                  <Ionicons name="eye-outline" size={20} color={ALERT_ICON_COLOR} />
+                  <Text style={styles.sectionTitle}>{t('result.calimaInfoSymptoms')}</Text>
+                </View>
+
+                {/* Atmosphere subsection */}
+                <Text style={styles.subsectionTitle}>{t('result.calimaInfoAtmosphere')}</Text>
+                <Text style={styles.modalList}>{t('result.calimaInfoAtmosphereList')}</Text>
+
+                {/* Meteo subsection */}
+                <Text style={styles.subsectionTitle}>{t('result.calimaInfoMeteo')}</Text>
+                <Text style={styles.modalList}>{t('result.calimaInfoMeteoList')}</Text>
+              </View>
+
+              {/* When does it occur */}
+              <View style={styles.modalSection}>
+                <View style={styles.sectionHeader}>
+                  <Ionicons name="calendar-outline" size={20} color="#9B59B6" />
+                  <Text style={styles.sectionTitle}>{t('result.calimaInfoWhen')}</Text>
+                </View>
+                <Text style={styles.modalList}>{t('result.calimaInfoWhenDesc')}</Text>
+              </View>
+
               {/* Dangers */}
               <View style={styles.modalSection}>
                 <View style={styles.sectionHeader}>
@@ -312,6 +337,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#FFFFFF',
     marginLeft: spacing.sm,
+  },
+  subsectionTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
   },
   modalList: {
     fontSize: 14,
