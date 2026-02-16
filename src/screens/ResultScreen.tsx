@@ -549,6 +549,12 @@ export default function ResultScreen({ navigation, route }: Props) {
                 {locationName ? station.island : station.island}
               </Text>
             </View>
+            <View style={styles.headerStation}>
+              <Ionicons name="radio-outline" size={12} color={colors.textMuted} />
+              <Text style={styles.headerStationText}>
+                {t('result.nearestAemetStation')}: {station.name}
+              </Text>
+            </View>
           </View>
           <View style={styles.headerSpacer} />
         </View>
@@ -679,6 +685,8 @@ const styles = StyleSheet.create({
   headerName: { ...typography.h2 },
   headerLocation: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
   headerIsland: { ...typography.bodySmall, marginLeft: spacing.xs },
+  headerStation: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
+  headerStationText: { fontSize: 12, color: colors.textMuted, marginLeft: spacing.xs },
   headerSpacer: { width: 44 },
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: spacing.lg },
