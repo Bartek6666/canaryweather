@@ -820,8 +820,10 @@ function toRad(deg: number): number {
 export interface WeeklyBestPeriod {
   weekStart: number; // day of year (1-365)
   weekEnd: number;
-  monthName: string;
-  dateRange: string;
+  startDay: number; // day of month (1-31)
+  startMonth: number; // month index (0-11)
+  endDay: number; // day of month (1-31)
+  endMonth: number; // month index (0-11)
   sunChance: number;
   avgTmax: number;
 }
@@ -938,10 +940,7 @@ export async function getBestWeeksForStation(stationId: string): Promise<WeeklyB
     .sort((a, b) => b.score - a.score)
     .slice(0, 3);
 
-  // Convert day of year to date range string
-  const monthNames = ['sty', 'lut', 'mar', 'kwi', 'maj', 'cze', 'lip', 'sie', 'wrz', 'paź', 'lis', 'gru'];
-  const fullMonthNames = ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień'];
-
+  // Convert day of year to raw date components (formatting done in UI layer)
   return topWeeks.map((week) => {
     const startDate = new Date(2024, 0, week.start);
     const endDate = new Date(2024, 0, week.start + 6);
@@ -949,8 +948,10 @@ export async function getBestWeeksForStation(stationId: string): Promise<WeeklyB
     return {
       weekStart: week.start,
       weekEnd: week.start + 6,
-      monthName: fullMonthNames[startDate.getMonth()],
-      dateRange: `${startDate.getDate()} ${monthNames[startDate.getMonth()]} - ${endDate.getDate()} ${monthNames[endDate.getMonth()]}`,
+      startDay: startDate.getDate(),
+      startMonth: startDate.getMonth(),
+      endDay: endDate.getDate(),
+      endMonth: endDate.getMonth(),
       sunChance: week.sunChance,
       avgTmax: week.avgTmax,
     };

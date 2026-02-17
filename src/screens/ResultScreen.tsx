@@ -200,6 +200,7 @@ function LiveWeatherCard({ data, isLoading, hasError, isFromCache = false }: Liv
 
 
 function BestTimeCard({ week, rank, delay = 0 }: { week: WeeklyBestPeriod; rank: number; delay?: number }) {
+  const { t } = useTranslation();
   const medalColors = [colors.medalGold, colors.medalSilver, colors.medalBronze];
   const borderColors = [
     { borderColor: colors.medalGold, shadowColor: colors.medalGold },
@@ -208,6 +209,12 @@ function BestTimeCard({ week, rank, delay = 0 }: { week: WeeklyBestPeriod; rank:
   ];
   // Map sunChance to weather condition for proper icon rendering
   const weatherCondition: WeatherCondition = week.sunChance >= 70 ? 'sunny' : week.sunChance >= 40 ? 'partly-sunny' : 'cloudy';
+
+  // Format date range using i18n (e.g., "15 jan - 21 jan")
+  const startMonthShort = t(`monthsShort.${MONTH_KEYS[week.startMonth]}`).toLowerCase();
+  const endMonthShort = t(`monthsShort.${MONTH_KEYS[week.endMonth]}`).toLowerCase();
+  const dateRange = `${week.startDay} ${startMonthShort} - ${week.endDay} ${endMonthShort}`;
+  const monthName = t(`months.${MONTH_KEYS[week.startMonth]}`);
 
   return (
     <GlassCard
@@ -228,8 +235,8 @@ function BestTimeCard({ week, rank, delay = 0 }: { week: WeeklyBestPeriod; rank:
           <MaterialCommunityIcons name="medal" size={24} color={medalColors[rank]} />
         </View>
         <View style={styles.bestTimeContent}>
-          <Text style={styles.bestTimeDate}>{week.dateRange}</Text>
-          <Text style={styles.bestTimeMonth}>{week.monthName}</Text>
+          <Text style={styles.bestTimeDate}>{dateRange}</Text>
+          <Text style={styles.bestTimeMonth}>{monthName}</Text>
         </View>
         <View style={styles.bestTimeStats}>
           <View style={styles.bestTimeStat}>
