@@ -125,6 +125,16 @@
     "tooFarMessage": "Es sieht so aus, als wären Sie weit von den Kanarischen Inseln entfernt. Nutzen Sie die Suche, um Ihr Reiseziel zu finden.",
     "tooFarButton": "Reiseziel suchen"
   },
+  "onboarding": {
+    "welcome_title": "Statistik, nicht nur Vorhersage",
+    "welcome_text": "Canary Weather: Ihre analytische Vorhersage für die Kanarischen Inseln. Suchen Sie nicht nur nach Wetter, suchen Sie nach Sonne. Wir analysieren 10 Jahre historischer Wetterdaten, um Ihnen die Orte mit der höchsten Chance auf klaren Himmel zu zeigen.",
+    "start_button": "Starten"
+  },
+  "sun_chance": {
+    "title": "Was ist Sun Chance?",
+    "description": "Es ist ein Indikator basierend auf harten Daten. Wir analysieren Messungen der letzten 10 Jahre für diesen spezifischen Ort und diese Uhrzeit, um die tatsächliche Wahrscheinlichkeit eines klaren Himmels zu bestimmen. Es sind historische Statistiken, die die Live-Vorhersage ergänzen.",
+    "close": "Verstanden"
+  },
   "weather": {
     "sunny": "Sonnig",
     "cloudy": "Bewölkt",

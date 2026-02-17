@@ -125,6 +125,16 @@
     "tooFarMessage": "It looks like you're currently far from the Canary Islands. Use the search to find your destination.",
     "tooFarButton": "Search destination"
   },
+  "onboarding": {
+    "welcome_title": "Statistics, not just a forecast",
+    "welcome_text": "Canary Weather: Your analytical forecast for the Canary Islands. Don't just look for weather, look for the sun. We analyze 10 years of historical weather data to show you places with the highest chance of clear skies.",
+    "start_button": "Get Started"
+  },
+  "sun_chance": {
+    "title": "What is Sun Chance?",
+    "description": "It's an indicator based on hard data. We analyze measurements from the last 10 years for this specific location and hour to determine the real probability of clear skies. It's historical statistics complementing the live forecast.",
+    "close": "Got it"
+  },
   "weather": {
     "sunny": "Sunny",
     "cloudy": "Cloudy",

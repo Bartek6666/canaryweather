@@ -125,6 +125,16 @@
     "tooFarMessage": "Parece que estás lejos de las Islas Canarias. Usa el buscador para encontrar tu destino.",
     "tooFarButton": "Buscar destino"
   },
+  "onboarding": {
+    "welcome_title": "Estadísticas, no solo pronóstico",
+    "welcome_text": "Canary Weather: Tu pronóstico analítico para las Islas Canarias. No busques solo el tiempo, busca el sol. Analizamos 10 años de datos meteorológicos históricos para mostrarte los lugares con mayor probabilidad de cielos despejados.",
+    "start_button": "Comenzar"
+  },
+  "sun_chance": {
+    "title": "¿Qué es Sun Chance?",
+    "description": "Es un indicador basado en datos reales. Analizamos las mediciones de los últimos 10 años para esta ubicación y hora específicas para determinar la probabilidad real de cielos despejados. Son estadísticas históricas que complementan el pronóstico en vivo.",
+    "close": "Entendido"
+  },
   "weather": {
     "sunny": "Soleado",
     "cloudy": "Nublado",

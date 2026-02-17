@@ -5,17 +5,22 @@ import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { SearchScreen } from './src/screens';
 import ResultScreen from './src/screens/ResultScreen';
+import OnboardingScreen from './src/screens/OnboardingScreen';
 import { theme } from './src/constants/theme';
 import { loadSavedLanguage } from './src/i18n';
+
+const ONBOARDING_KEY = 'hasSeenOnboarding';
 
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync();
 
 // Navigation types
 export type RootStackParamList = {
+  Onboarding: undefined;
   Search: undefined;
   Result: { stationId: string; locationAlias?: string };
 };
@@ -24,12 +29,17 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function App() {
   const [appIsReady, setAppIsReady] = useState(false);
+  const [hasSeenOnboarding, setHasSeenOnboarding] = useState<boolean | null>(null);
 
   useEffect(() => {
     async function prepare() {
       try {
         // Load saved language preference
         await loadSavedLanguage();
+
+        // Check if user has seen onboarding
+        const onboardingStatus = await AsyncStorage.getItem(ONBOARDING_KEY);
+        setHasSeenOnboarding(onboardingStatus === 'true');
 
         // Add any other async loading here:
         // - Fonts: await Font.loadAsync({ ... })
@@ -40,6 +50,7 @@ export default function App() {
         await new Promise(resolve => setTimeout(resolve, 1000));
       } catch (e) {
         console.warn('Error loading app resources:', e);
+        setHasSeenOnboarding(false);
       } finally {
         setAppIsReady(true);
       }
@@ -55,7 +66,7 @@ export default function App() {
     }
   }, [appIsReady]);
 
-  if (!appIsReady) {
+  if (!appIsReady || hasSeenOnboarding === null) {
     return null;
   }
 
@@ -64,13 +75,14 @@ export default function App() {
       <NavigationContainer>
         <StatusBar style="light" />
         <Stack.Navigator
-          initialRouteName="Search"
+          initialRouteName={hasSeenOnboarding ? 'Search' : 'Onboarding'}
           screenOptions={{
             headerShown: false,
             contentStyle: { backgroundColor: theme.colors.background },
             animation: 'slide_from_right',
           }}
         >
+          <Stack.Screen name="Onboarding" component={OnboardingScreen} />
           <Stack.Screen name="Search" component={SearchScreen} />
           <Stack.Screen name="Result" component={ResultScreen} />
         </Stack.Navigator>

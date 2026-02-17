@@ -17,7 +17,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
 import { colors, spacing, typography, glass, glassText, borderRadius, gradients, shadows, getSunChanceColor, liveCard, theme } from '../constants/theme';
-import { AlertCard, GlassCard, SunChanceGauge, WeatherIcon, WeatherEffects } from '../components';
+import { AlertCard, GlassCard, SunChanceGauge, SunChanceModal, WeatherIcon, WeatherEffects } from '../components';
 import locationsMapping from '../constants/locations_mapping.json';
 import { calculateSunChance, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult } from '../services/weatherService';
 import { supabase } from '../services/supabase';
@@ -346,6 +346,9 @@ export default function ResultScreen({ navigation, route }: Props) {
   // Calima alert state (connected to Open-Meteo Air Quality API)
   const [calimaStatus, setCalimaStatus] = useState<CalimaStatus | null>(null);
 
+  // Sun Chance info modal state
+  const [showSunChanceModal, setShowSunChanceModal] = useState(false);
+
   // Pull-to-refresh state
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -585,7 +588,12 @@ export default function ResultScreen({ navigation, route }: Props) {
 
         {/* Sun Chance Gauge - show loading state or actual data, hide when offline with no data */}
         {(isLoading || (sunChanceResult && sunChanceResult.total_days > 0)) && (
-          <SunChanceGauge percentage={sunChanceResult?.sun_chance ?? 0} confidence={sunChanceResult?.confidence ?? 'low'} isLoading={isLoading} />
+          <SunChanceGauge
+            percentage={sunChanceResult?.sun_chance ?? 0}
+            confidence={sunChanceResult?.confidence ?? 'low'}
+            isLoading={isLoading}
+            onInfoPress={() => setShowSunChanceModal(true)}
+          />
         )}
 
         {sunChanceResult && sunChanceResult.total_days > 0 && !isLoading && (
@@ -668,6 +676,12 @@ export default function ResultScreen({ navigation, route }: Props) {
         <View style={styles.bottomSpacer} />
       </Animated.ScrollView>
       </SafeAreaView>
+
+      {/* Sun Chance Info Modal */}
+      <SunChanceModal
+        visible={showSunChanceModal}
+        onClose={() => setShowSunChanceModal(false)}
+      />
     </View>
   );
 }

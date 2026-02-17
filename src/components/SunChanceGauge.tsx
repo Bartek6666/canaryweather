@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, Text, Animated, Easing } from 'react-native';
+import { View, StyleSheet, Text, Animated, Easing, TouchableOpacity } from 'react-native';
 import Svg, { Circle, G } from 'react-native-svg';
 import { useTranslation } from 'react-i18next';
+import { Ionicons } from '@expo/vector-icons';
 
 import { colors, typography, spacing, glassText } from '../constants/theme';
 import { GlassCard } from './GlassCard';
@@ -10,6 +11,7 @@ interface SunChanceGaugeProps {
   percentage: number;
   confidence: 'high' | 'medium' | 'low';
   isLoading?: boolean;
+  onInfoPress?: () => void;
 }
 
 // Gauge dimensions
@@ -55,7 +57,7 @@ const interpolateColor = (t: number): string => {
   return `rgb(${r}, ${g}, ${b})`;
 };
 
-export function SunChanceGauge({ percentage, confidence, isLoading = false }: SunChanceGaugeProps) {
+export function SunChanceGauge({ percentage, confidence, isLoading = false, onInfoPress }: SunChanceGaugeProps) {
   const { t } = useTranslation();
   const progressAnim = useRef(new Animated.Value(0)).current;
   const [displayedPercentage, setDisplayedPercentage] = useState(0);
@@ -256,7 +258,22 @@ export function SunChanceGauge({ percentage, confidence, isLoading = false }: Su
             <Text style={[styles.percentageText, { color: getPercentageColor(percentage) }]}>
               {displayedPercentage}%
             </Text>
-            <Text style={styles.label}>{t('result.sunChance')}</Text>
+            <TouchableOpacity
+              style={styles.labelRow}
+              onPress={onInfoPress}
+              activeOpacity={onInfoPress ? 0.7 : 1}
+              disabled={!onInfoPress}
+            >
+              <Text style={styles.label}>{t('result.sunChance')}</Text>
+              {onInfoPress && (
+                <Ionicons
+                  name="information-circle-outline"
+                  size={16}
+                  color={glassText.secondary}
+                  style={styles.infoIcon}
+                />
+              )}
+            </TouchableOpacity>
             <Text style={styles.confidence}>{confidenceLabels[calculatedConfidence]}</Text>
           </View>
         </View>
@@ -300,15 +317,23 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
   },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: spacing.xs,
+  },
   label: {
     fontSize: 14,
     fontWeight: '600',
     color: glassText.secondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    marginTop: spacing.xs,
     textAlign: 'center',
     maxWidth: 160,
+  },
+  infoIcon: {
+    marginLeft: 4,
   },
   confidence: {
     fontSize: 14,

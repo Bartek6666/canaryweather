@@ -163,5 +163,15 @@
     "thunderstormHail": "Burza z gradem",
     "severeThunderstorm": "Silna burza z gradem",
     "unknown": "Nieznane"
+  },
+  "onboarding": {
+    "welcome_title": "Statystyka, nie tylko prognoza",
+    "welcome_text": "Canary Weather: Twoja analityczna prognoza dla Wysp Kanaryjskich. Nie szukaj pogody, szukaj słońca. Sprawdzamy 10 lat pogodowych danych statystycznych, aby wskazać Ci miejsca z najwyższą szansą na bezchmurne niebo.",
+    "start_button": "Rozpocznij"
+  },
+  "sun_chance": {
+    "title": "Czym jest Sun Chance?",
+    "description": "To wskaźnik oparty na twardych danych. Analizujemy pomiary z ostatnich 10 lat dla tej konkretnej lokalizacji i godziny, aby określić realne prawdopodobieństwo bezchmurnego nieba. To statystyka historyczna, która uzupełnia prognozę live.",
+    "close": "Rozumiem"
   }
 }
