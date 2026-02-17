@@ -56,6 +56,7 @@
     "humidity": "Humidity",
     "wind": "Wind",
     "sunChance": "Chance of sun",
+    "sunChanceIn": "Sun chance in {{month}}",
     "confidenceHigh": "High confidence",
     "confidenceMedium": "Medium confidence",
     "confidenceLow": "Low confidence",

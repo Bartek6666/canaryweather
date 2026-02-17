@@ -336,6 +336,7 @@ export default function ResultScreen({ navigation, route }: Props) {
   const [bestWeeks, setBestWeeks] = useState<WeeklyBestPeriod[]>([]);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scrollViewRef = useRef<any>(null);
 
   // Live weather state
   const [liveData, setLiveData] = useState<LiveWeatherData | null>(null);
@@ -348,6 +349,18 @@ export default function ResultScreen({ navigation, route }: Props) {
 
   // Sun Chance info modal state
   const [showSunChanceModal, setShowSunChanceModal] = useState(false);
+
+  // Handle month selection with scroll to Sun Chance gauge
+  const handleMonthSelect = useCallback((month: number) => {
+    setSelectedMonth(month);
+    // Scroll to top to show Sun Chance gauge (it's the first element)
+    setTimeout(() => {
+      if (scrollViewRef.current) {
+        const scrollView = scrollViewRef.current.getScrollResponder?.() || scrollViewRef.current;
+        scrollView.scrollTo?.({ y: 0, animated: true });
+      }
+    }, 150);
+  }, []);
 
   // Pull-to-refresh state
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -573,6 +586,7 @@ export default function ResultScreen({ navigation, route }: Props) {
         )}
 
         <Animated.ScrollView
+          ref={scrollViewRef}
           style={[styles.scroll, { opacity: fadeAnim }]}
           contentContainerStyle={styles.scrollContent}
           refreshControl={
@@ -593,6 +607,7 @@ export default function ResultScreen({ navigation, route }: Props) {
             confidence={sunChanceResult?.confidence ?? 'low'}
             isLoading={isLoading}
             onInfoPress={() => setShowSunChanceModal(true)}
+            selectedMonth={selectedMonth}
           />
         )}
 
@@ -623,7 +638,7 @@ export default function ResultScreen({ navigation, route }: Props) {
         {/* FIGMA: STYLE_TARGET — Month selector chips */}
         <View style={styles.monthSelector}>
           {MONTH_KEYS.map((monthKey, i) => (
-            <TouchableOpacity key={i} style={[styles.monthBtn, selectedMonth === i + 1 && styles.monthBtnActive]} onPress={() => setSelectedMonth(i + 1)}>
+            <TouchableOpacity key={i} style={[styles.monthBtn, selectedMonth === i + 1 && styles.monthBtnActive]} onPress={() => handleMonthSelect(i + 1)}>
               <Text style={[styles.monthBtnText, selectedMonth === i + 1 && styles.monthBtnTextActive]}>{t(`monthsShort.${monthKey}`)}</Text>
             </TouchableOpacity>
           ))}

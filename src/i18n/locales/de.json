@@ -56,6 +56,7 @@
     "humidity": "Luftfeuchtigkeit",
     "wind": "Wind",
     "sunChance": "Chance auf Sonne",
+    "sunChanceIn": "Sonnenchance im {{month}}",
     "confidenceHigh": "Hohe Sicherheit",
     "confidenceMedium": "Mittlere Sicherheit",
     "confidenceLow": "Geringe Sicherheit",

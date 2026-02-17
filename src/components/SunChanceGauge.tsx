@@ -12,6 +12,7 @@ interface SunChanceGaugeProps {
   confidence: 'high' | 'medium' | 'low';
   isLoading?: boolean;
   onInfoPress?: () => void;
+  selectedMonth?: number;
 }
 
 // Gauge dimensions
@@ -57,7 +58,12 @@ const interpolateColor = (t: number): string => {
   return `rgb(${r}, ${g}, ${b})`;
 };
 
-export function SunChanceGauge({ percentage, confidence, isLoading = false, onInfoPress }: SunChanceGaugeProps) {
+const MONTH_KEYS = [
+  'january', 'february', 'march', 'april', 'may', 'june',
+  'july', 'august', 'september', 'october', 'november', 'december'
+];
+
+export function SunChanceGauge({ percentage, confidence, isLoading = false, onInfoPress, selectedMonth }: SunChanceGaugeProps) {
   const { t } = useTranslation();
   const progressAnim = useRef(new Animated.Value(0)).current;
   const [displayedPercentage, setDisplayedPercentage] = useState(0);
@@ -68,6 +74,14 @@ export function SunChanceGauge({ percentage, confidence, isLoading = false, onIn
     medium: t('result.confidenceMedium'),
     low: t('result.confidenceLow'),
   };
+
+  // Get month-specific translation key (e.g., "sunChanceInJanuary")
+  const monthKey = selectedMonth ? MONTH_KEYS[selectedMonth - 1] : MONTH_KEYS[new Date().getMonth()];
+  const capitalizedMonthKey = monthKey.charAt(0).toUpperCase() + monthKey.slice(1);
+  const sunChanceMonthKey = `result.sunChanceIn${capitalizedMonthKey}`;
+
+  // Use month-specific key if available (for Polish grammar), fallback to generic
+  const sunChanceLabel = t(sunChanceMonthKey, { defaultValue: '' }) || t('result.sunChanceIn', { month: t(`months.${monthKey}`) });
 
   useEffect(() => {
     if (!isLoading) {
@@ -228,6 +242,22 @@ export function SunChanceGauge({ percentage, confidence, isLoading = false, onIn
 
   return (
     <GlassCard style={styles.container}>
+      {/* Info button - top right corner */}
+      {onInfoPress && (
+        <TouchableOpacity
+          style={styles.infoButton}
+          onPress={onInfoPress}
+          activeOpacity={0.7}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Ionicons
+            name="information-circle"
+            size={28}
+            color={glassText.secondary}
+          />
+        </TouchableOpacity>
+      )}
+
       <View style={styles.gaugeWrapper}>
         <View style={styles.svgContainer}>
           <Svg
@@ -258,22 +288,7 @@ export function SunChanceGauge({ percentage, confidence, isLoading = false, onIn
             <Text style={[styles.percentageText, { color: getPercentageColor(percentage) }]}>
               {displayedPercentage}%
             </Text>
-            <TouchableOpacity
-              style={styles.labelRow}
-              onPress={onInfoPress}
-              activeOpacity={onInfoPress ? 0.7 : 1}
-              disabled={!onInfoPress}
-            >
-              <Text style={styles.label}>{t('result.sunChance')}</Text>
-              {onInfoPress && (
-                <Ionicons
-                  name="information-circle-outline"
-                  size={16}
-                  color={glassText.secondary}
-                  style={styles.infoIcon}
-                />
-              )}
-            </TouchableOpacity>
+            <Text style={styles.label}>{sunChanceLabel}</Text>
             <Text style={styles.confidence}>{confidenceLabels[calculatedConfidence]}</Text>
           </View>
         </View>
@@ -288,6 +303,15 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  infoButton: {
+    position: 'absolute',
+    top: spacing.md,
+    right: spacing.md,
+    zIndex: 10,
+    padding: spacing.xs,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   gaugeWrapper: {
     flex: 1,
@@ -317,12 +341,6 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
   },
-  labelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: spacing.xs,
-  },
   label: {
     fontSize: 14,
     fontWeight: '600',
@@ -331,9 +349,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     textAlign: 'center',
     maxWidth: 160,
-  },
-  infoIcon: {
-    marginLeft: 4,
+    marginTop: spacing.xs,
   },
   confidence: {
     fontSize: 14,
