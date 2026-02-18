@@ -6,10 +6,12 @@ import * as SplashScreen from 'expo-splash-screen';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { SearchScreen } from './src/screens';
 import ResultScreen from './src/screens/ResultScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
+import { OfflineIndicator } from './src/components/OfflineIndicator';
 import { theme } from './src/constants/theme';
 import { loadSavedLanguage } from './src/i18n';
 
@@ -71,22 +73,25 @@ export default function App() {
   }
 
   return (
-    <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
-      <NavigationContainer>
-        <StatusBar style="light" />
-        <Stack.Navigator
-          initialRouteName={hasSeenOnboarding ? 'Search' : 'Onboarding'}
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: theme.colors.background },
-            animation: 'slide_from_right',
-          }}
-        >
-          <Stack.Screen name="Onboarding" component={OnboardingScreen} />
-          <Stack.Screen name="Search" component={SearchScreen} />
-          <Stack.Screen name="Result" component={ResultScreen} />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </View>
+    <SafeAreaProvider>
+      <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+        <NavigationContainer>
+          <StatusBar style="light" />
+          <Stack.Navigator
+            initialRouteName={hasSeenOnboarding ? 'Search' : 'Onboarding'}
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: theme.colors.background },
+              animation: 'slide_from_right',
+            }}
+          >
+            <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+            <Stack.Screen name="Search" component={SearchScreen} />
+            <Stack.Screen name="Result" component={ResultScreen} />
+          </Stack.Navigator>
+        </NavigationContainer>
+        <OfflineIndicator />
+      </View>
+    </SafeAreaProvider>
   );
 }
