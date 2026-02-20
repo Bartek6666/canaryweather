@@ -1018,13 +1018,55 @@ export async function getBestWeeksForStation(stationId: string): Promise<WeeklyB
 // ─── DAY/NIGHT DETECTION ──────────────────────────────────────────────────────
 
 /**
- * Checks if current time is nighttime (between 20:00 and 07:00)
- * Uses simple hour-based heuristic suitable for Canary Islands
+ * Approximate sunset hours for Canary Islands by month (local time)
+ * Based on Atlantic/Canary timezone (UTC+0 winter, UTC+1 summer)
+ */
+const CANARY_SUNSET_HOURS: Record<number, number> = {
+  1: 18.25,  // January: ~18:15
+  2: 18.75,  // February: ~18:45
+  3: 19.25,  // March: ~19:15
+  4: 20.25,  // April: ~20:15 (after DST)
+  5: 20.75,  // May: ~20:45
+  6: 21.25,  // June: ~21:15
+  7: 21.25,  // July: ~21:15
+  8: 20.75,  // August: ~20:45
+  9: 20.0,   // September: ~20:00
+  10: 19.25, // October: ~19:15
+  11: 18.25, // November: ~18:15
+  12: 18.0,  // December: ~18:00
+};
+
+const CANARY_SUNRISE_HOURS: Record<number, number> = {
+  1: 7.75,   // January: ~07:45
+  2: 7.5,    // February: ~07:30
+  3: 7.0,    // March: ~07:00
+  4: 7.25,   // April: ~07:15 (after DST)
+  5: 7.0,    // May: ~07:00
+  6: 7.0,    // June: ~07:00
+  7: 7.25,   // July: ~07:15
+  8: 7.5,    // August: ~07:30
+  9: 7.75,   // September: ~07:45
+  10: 8.0,   // October: ~08:00
+  11: 7.5,   // November: ~07:30
+  12: 7.75,  // December: ~07:45
+};
+
+/**
+ * Checks if current time is nighttime in Canary Islands
+ * Uses month-based sunrise/sunset approximations for accuracy
  */
 function isNightTime(): boolean {
   const now = new Date();
-  const hour = now.getHours();
-  return hour >= 20 || hour < 7;
+
+  // Convert to Canary Islands time (Atlantic/Canary)
+  const canaryTime = new Date(now.toLocaleString('en-US', { timeZone: 'Atlantic/Canary' }));
+  const hour = canaryTime.getHours() + canaryTime.getMinutes() / 60;
+  const month = canaryTime.getMonth() + 1;
+
+  const sunrise = CANARY_SUNRISE_HOURS[month] ?? 7;
+  const sunset = CANARY_SUNSET_HOURS[month] ?? 19;
+
+  return hour < sunrise || hour >= sunset;
 }
 
 // ─── WMO WEATHER CODE MAPPING ─────────────────────────────────────────────────
