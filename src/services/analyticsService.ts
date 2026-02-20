@@ -21,7 +21,8 @@ export type SearchType =
   | 'geocode'           // Geocode fallback selection
   | 'popular'           // Popular destination click
   | 'island_expand'     // Island section expansion
-  | 'gps';              // GPS location request
+  | 'gps'               // GPS location request
+  | 'result_view';      // Weather result screen view
 
 export interface SearchAnalyticsEvent {
   searchQuery?: string;
@@ -268,5 +269,18 @@ export function trackGpsSelect(params: {
     selectedStationId: params.stationId,
     selectedIsland: params.island,
     selectedLocationName: params.locationName ?? 'GPS Location',
+  });
+}
+
+export function trackResultView(params: {
+  locationName: string;
+  island: string;
+  stationId: string;
+}): void {
+  trackSearchEvent({
+    searchType: 'result_view',
+    selectedLocationName: params.locationName,
+    selectedIsland: params.island,
+    selectedStationId: params.stationId,
   });
 }

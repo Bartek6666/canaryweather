@@ -21,6 +21,7 @@ import { AlertCard, GlassCard, SunChanceGauge, SunChanceModal, WeatherIcon, Weat
 import locationsMapping from '../constants/locations_mapping.json';
 import { calculateSunChanceWithFallback, SunChanceWithFallback, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult } from '../services/weatherService';
 import { supabase } from '../services/supabase';
+import { trackResultView } from '../services/analyticsService';
 import { SunChanceResult, MonthlyStats, LiveWeatherData, WeatherCondition } from '../types';
 import { MONTH_KEYS } from '../i18n';
 
@@ -418,6 +419,17 @@ export default function ResultScreen({ navigation, route }: Props) {
   }, [stationId]);
 
   useEffect(() => { Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start(); }, []);
+
+  // Track result view for analytics
+  useEffect(() => {
+    if (station && locationName) {
+      trackResultView({
+        locationName: locationName,
+        island: station.island,
+        stationId: stationId,
+      });
+    }
+  }, [stationId, locationName, station]);
 
   // Fetch live weather data from Open-Meteo
   useEffect(() => {
