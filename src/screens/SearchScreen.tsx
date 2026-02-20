@@ -29,6 +29,7 @@ import locationsMapping from '../constants/locations_mapping.json';
 import { findNearestStations, findNearestStation as findNearestStationService, NearbyStation } from '../services/weatherService';
 import { GlassCard, HeroLogo, LanguageSwitcher, LocationPrompt } from '../components';
 import { City } from '../types/weather';
+import { useSearchAnalytics } from '../hooks/useSearchAnalytics';
 
 const LOCATION_PROMPT_KEY = 'location_prompt_dismissed';
 
@@ -109,6 +110,14 @@ function searchCities(query: string): CityResult[] {
 
 export default function SearchScreen({ navigation }: Props) {
   const { t } = useTranslation();
+  const {
+    startSearchTimer,
+    trackAutocomplete,
+    trackGeocode,
+    trackPopular,
+    trackIsland,
+    trackGps,
+  } = useSearchAnalytics();
   const [searchQuery, setSearchQuery] = useState('');
   const [cityResults, setCityResults] = useState<CityResult[]>([]);
   const [geocodeResults, setGeocodeResults] = useState<NearbyStation[]>([]);
@@ -152,6 +161,10 @@ export default function SearchScreen({ navigation }: Props) {
   // City search (instant, 150ms debounce)
   useEffect(() => {
     const timer = setTimeout(() => {
+      // Start timer when user begins typing
+      if (searchQuery.length === 1) {
+        startSearchTimer();
+      }
       const results = searchCities(searchQuery);
       setCityResults(results);
 
@@ -227,20 +240,32 @@ export default function SearchScreen({ navigation }: Props) {
   }, [searchQuery, cityResults.length]);
 
   // Handle city selection - find nearest station and navigate
-  const handleSelectCity = useCallback((city: CityResult) => {
+  const handleSelectCity = useCallback((city: CityResult, index: number) => {
     Keyboard.dismiss();
+
+    // Find nearest station first to get stationId for analytics
+    const isHighAltitude = city.isHighAltitude === true;
+    const excludeHighAltitude = !isHighAltitude;
+    const forceHighAltitude = isHighAltitude;
+    const nearest = findNearestStationService(city.coords.lat, city.coords.lon, excludeHighAltitude, forceHighAltitude);
+
+    // Track analytics before clearing state
+    if (nearest) {
+      trackAutocomplete({
+        query: searchQuery,
+        locationName: city.name,
+        island: city.island,
+        stationId: nearest.stationId,
+        resultCount: cityResults.length,
+        resultPosition: index + 1,
+      });
+    }
+
     setSearchQuery('');
     setCityResults([]);
     setGeocodeResults([]);
     setSearchMode('idle');
 
-    // Find nearest station to the city coordinates
-    // For high altitude locations (Teide, Roque de los Muchachos): FORCE high altitude stations only
-    // For regular towns: exclude high altitude stations
-    const isHighAltitude = city.isHighAltitude === true;
-    const excludeHighAltitude = !isHighAltitude;
-    const forceHighAltitude = isHighAltitude;
-    const nearest = findNearestStationService(city.coords.lat, city.coords.lon, excludeHighAltitude, forceHighAltitude);
     if (nearest) {
       navigation.navigate('Result', {
         stationId: nearest.stationId,
@@ -249,11 +274,20 @@ export default function SearchScreen({ navigation }: Props) {
         isHighAltitudeFallback: nearest.isHighAltitudeFallback,
       });
     }
-  }, [navigation]);
+  }, [navigation, searchQuery, cityResults.length, trackAutocomplete]);
 
   // Handle selection from geocode results
   const handleSelectGeocodeResult = useCallback((station: NearbyStation) => {
     Keyboard.dismiss();
+
+    // Track analytics
+    trackGeocode({
+      query: geocodeQuery,
+      locationName: geocodeQuery,
+      island: station.island,
+      stationId: station.stationId,
+    });
+
     setSearchQuery('');
     setCityResults([]);
     setGeocodeResults([]);
@@ -264,11 +298,19 @@ export default function SearchScreen({ navigation }: Props) {
       locationName: geocodeQuery,
       locationCoords: geocodeCoords || undefined,
     });
-  }, [navigation, geocodeQuery, geocodeCoords]);
+  }, [navigation, geocodeQuery, geocodeCoords, trackGeocode]);
 
   // Handle quick place selection from popular destinations
-  const handleSelectPlace = useCallback((stationId: string, placeName: string) => {
+  const handleSelectPlace = useCallback((stationId: string, placeName: string, islandName: string) => {
     Keyboard.dismiss();
+
+    // Track analytics
+    trackPopular({
+      locationName: placeName,
+      island: islandName,
+      stationId,
+    });
+
     setSearchQuery('');
     setCityResults([]);
     setGeocodeResults([]);
@@ -283,7 +325,7 @@ export default function SearchScreen({ navigation }: Props) {
       locationName: placeName,
       locationCoords: city?.coords,
     });
-  }, [navigation]);
+  }, [navigation, trackPopular]);
 
   const handleGetLocation = useCallback(async () => {
     setIsLoadingLocation(true);
@@ -300,18 +342,26 @@ export default function SearchScreen({ navigation }: Props) {
             { text: t('common.cancel'), style: 'cancel' },
             {
               text: t('common.select'),
-              onPress: () => navigation.navigate('Result', {
-                stationId: nearest.stationId,
-                locationName: t('search.myLocationLabel'),
-                locationCoords: { lat: loc.coords.latitude, lon: loc.coords.longitude },
-              }),
+              onPress: () => {
+                // Track GPS selection
+                trackGps({
+                  stationId: nearest.stationId,
+                  island: nearest.station.island,
+                  locationName: t('search.myLocationLabel'),
+                });
+                navigation.navigate('Result', {
+                  stationId: nearest.stationId,
+                  locationName: t('search.myLocationLabel'),
+                  locationCoords: { lat: loc.coords.latitude, lon: loc.coords.longitude },
+                });
+              },
             },
           ]
         );
       }
     } catch { Alert.alert(t('common.error'), t('search.locationError')); }
     finally { setIsLoadingLocation(false); }
-  }, [navigation, t]);
+  }, [navigation, t, trackGps]);
 
   // Location prompt handlers
   const MAX_DISTANCE_KM = 150; // Max distance to consider user "near" Canary Islands
@@ -343,6 +393,14 @@ export default function SearchScreen({ navigation }: Props) {
           );
           return;
         }
+
+        // Track GPS selection from prompt
+        trackGps({
+          stationId: nearest.stationId,
+          island: nearest.station.island,
+          locationName: t('search.myLocationLabel'),
+        });
+
         // Navigate directly to the nearest station with user's location
         navigation.navigate('Result', {
           stationId: nearest.stationId,
@@ -355,7 +413,7 @@ export default function SearchScreen({ navigation }: Props) {
     } finally {
       setIsLocationPromptLoading(false);
     }
-  }, [navigation, t]);
+  }, [navigation, t, trackGps]);
 
   const handleLocationPromptDismiss = useCallback(async () => {
     try {
@@ -447,9 +505,13 @@ export default function SearchScreen({ navigation }: Props) {
       setSelectedIsland(null);
       return;
     }
+
+    // Track island expansion
+    trackIsland(t(`islands.${islandKey}`));
+
     setSelectedIsland(islandKey);
     shouldScrollToPlaces.current = true;
-  }, [selectedIsland]);
+  }, [selectedIsland, trackIsland, t]);
 
   const handleScroll = useCallback((event: { nativeEvent: { contentOffset: { y: number } } }) => {
     scrollOffsetY.current = event.nativeEvent.contentOffset.y;
@@ -562,7 +624,7 @@ export default function SearchScreen({ navigation }: Props) {
                       <TouchableOpacity
                         key={`${city.name}-${index}`}
                         style={styles.resultItem}
-                        onPress={() => handleSelectCity(city)}
+                        onPress={() => handleSelectCity(city, index)}
                       >
                         <View style={styles.resultItemContent}>
                           <Ionicons name="location" size={20} color={colors.primary} />
@@ -685,7 +747,7 @@ export default function SearchScreen({ navigation }: Props) {
                             <TouchableOpacity
                               key={place.name}
                               activeOpacity={0.8}
-                              onPress={() => handleSelectPlace(place.stationId, place.name)}
+                              onPress={() => handleSelectPlace(place.stationId, place.name, t(`islands.${selectedIsland}`))}
                             >
                               <GlassCard style={styles.placeItem} variant="subtle" delay={200 + index * 100}>
                                 <View style={styles.placeItemInner}>

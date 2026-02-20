@@ -1,6 +1,6 @@
 {
-  "version": "1.5.0",
-  "lastUpdated": "2026-02-14",
+  "version": "1.6.0",
+  "lastUpdated": "2026-02-19",
   "description": "AEMET weather stations mapping for Canary Islands with location aliases, cities database, and intelligent peak/town station selection - VERIFIED IDs",
   "stations": {
     "C449C": {
@@ -571,7 +571,20 @@
     {"name": "Las Puntas", "island": "El Hierro", "coords": {"lat": 27.7667, "lon": -18.0167}},
     {"name": "Tigaday", "island": "El Hierro", "coords": {"lat": 27.7500, "lon": -18.0333}},
     {"name": "Sabinosa", "island": "El Hierro", "coords": {"lat": 27.7500, "lon": -18.1000}},
-    {"name": "El Golfo", "island": "El Hierro", "coords": {"lat": 27.7667, "lon": -18.0500}}
+    {"name": "El Golfo", "island": "El Hierro", "coords": {"lat": 27.7667, "lon": -18.0500}},
+    {"name": "Taibique", "island": "El Hierro", "coords": {"lat": 27.71, "lon": -17.99}},
+    {"name": "Masca", "island": "Tenerife", "coords": {"lat": 28.3053, "lon": -16.8399}},
+    {"name": "Teno", "island": "Tenerife", "coords": {"lat": 28.3422, "lon": -16.9223}},
+    {"name": "Punta de Teno", "island": "Tenerife", "coords": {"lat": 28.3422, "lon": -16.9223}},
+    {"name": "La Pared", "island": "Fuerteventura", "coords": {"lat": 28.2137, "lon": -14.2144}},
+    {"name": "Los Molinos", "island": "Fuerteventura", "coords": {"lat": 28.50, "lon": -14.07}},
+    {"name": "Puertito de Los Molinos", "island": "Fuerteventura", "coords": {"lat": 28.50, "lon": -14.07}},
+    {"name": "Puerto Lajas", "island": "Fuerteventura", "coords": {"lat": 28.5387, "lon": -13.8394}},
+    {"name": "Pozo Negro", "island": "Fuerteventura", "coords": {"lat": 28.3167, "lon": -13.8833}},
+    {"name": "Las Playitas", "island": "Fuerteventura", "coords": {"lat": 28.2291, "lon": -13.9838}},
+    {"name": "Giniginamar", "island": "Fuerteventura", "coords": {"lat": 28.2011, "lon": -14.0747}},
+    {"name": "Tarajalejo", "island": "Fuerteventura", "coords": {"lat": 28.1913, "lon": -14.1184}},
+    {"name": "La Lajita", "island": "Fuerteventura", "coords": {"lat": 28.1834, "lon": -14.1520}}
   ],
   "altitudeCorrection": {
     "description": "Temperature decreases by 0.6°C per 100m of elevation difference",
