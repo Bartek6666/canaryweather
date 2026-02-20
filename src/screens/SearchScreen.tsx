@@ -131,8 +131,7 @@ export default function SearchScreen({ navigation }: Props) {
   const scrollViewRef = useRef<ScrollView>(null);
   const placesRef = useRef<View>(null);
   const shouldScrollToPlaces = useRef(false);
-  const scrollOffsetY = useRef(0);
-  const scrollViewPageY = useRef(0);
+  const placesLayoutY = useRef(0);
 
   // Location prompt state
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
@@ -513,30 +512,17 @@ export default function SearchScreen({ navigation }: Props) {
     shouldScrollToPlaces.current = true;
   }, [selectedIsland, trackIsland, t]);
 
-  const handleScroll = useCallback((event: { nativeEvent: { contentOffset: { y: number } } }) => {
-    scrollOffsetY.current = event.nativeEvent.contentOffset.y;
-  }, []);
+  const handlePlacesLayout = useCallback((event: { nativeEvent: { layout: { y: number } } }) => {
+    placesLayoutY.current = event.nativeEvent.layout.y;
 
-  const handleScrollViewLayout = useCallback(() => {
-    if (scrollViewRef.current) {
-      (scrollViewRef.current as any).measure((_x: number, _y: number, _w: number, _h: number, _px: number, pageY: number) => {
-        scrollViewPageY.current = pageY;
-      });
-    }
-  }, []);
-
-  const handlePlacesLayout = useCallback(() => {
-    if (shouldScrollToPlaces.current && placesRef.current && scrollViewRef.current) {
+    if (shouldScrollToPlaces.current && scrollViewRef.current) {
       shouldScrollToPlaces.current = false;
-      setTimeout(() => {
-        (placesRef.current as any).measure((_x: number, _y: number, _w: number, _h: number, _px: number, pageY: number) => {
-          const targetY = scrollOffsetY.current + (pageY - scrollViewPageY.current) - 80;
-          scrollViewRef.current?.scrollTo({
-            y: Math.max(0, targetY),
-            animated: true,
-          });
-        });
-      }, 200);
+      // Scroll to places container with some padding at top
+      const targetY = placesLayoutY.current - 100;
+      scrollViewRef.current.scrollTo({
+        y: Math.max(0, targetY),
+        animated: true,
+      });
     }
   }, []);
 
@@ -570,9 +556,6 @@ export default function SearchScreen({ navigation }: Props) {
               contentContainerStyle={styles.scrollContent}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
-              onScroll={handleScroll}
-              onLayout={handleScrollViewLayout}
-              scrollEventThrottle={16}
             >
               {/* FIGMA: STYLE_TARGET — Header (logo, title, subtitle) */}
               <View style={styles.header}>
