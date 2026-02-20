@@ -1265,6 +1265,7 @@ interface OpenMeteoResponse {
     relative_humidity_2m: number;
     weather_code: number;
     wind_speed_10m: number;
+    is_day: number; // 1 = day, 0 = night
   };
 }
 
@@ -1342,7 +1343,7 @@ export async function fetchLiveWeather(
   const TIMEOUT_MS = 10000; // 10 seconds timeout
 
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=auto`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,is_day&timezone=auto`;
 
     // Create AbortController for timeout
     const controller = new AbortController();
@@ -1386,7 +1387,9 @@ export async function fetchLiveWeather(
       return __DEV__ ? { data: getMockWeatherData(), isFromCache: false } : null;
     }
 
-    const { condition, labelKey } = mapWmoCode(data.current.weather_code, isNightTime());
+    // Use is_day from API (1 = day, 0 = night) - more accurate than local time heuristic
+    const isNight = data.current.is_day === 0;
+    const { condition, labelKey } = mapWmoCode(data.current.weather_code, isNight);
 
     const weatherData: LiveWeatherData = {
       temperature: Math.round(data.current.temperature_2m),
