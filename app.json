@@ -2,7 +2,7 @@
   "expo": {
     "name": "Canary Weather",
     "slug": "canaryweather",
-    "version": "1.2.1",
+    "version": "1.2.2",
     "runtimeVersion": {
       "policy": "appVersion"
     },
