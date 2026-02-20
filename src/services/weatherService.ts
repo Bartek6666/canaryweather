@@ -1069,6 +1069,41 @@ function isNightTime(): boolean {
   return hour < sunrise || hour >= sunset;
 }
 
+/**
+ * Refreshes day/night condition based on current time
+ * Used when returning cached data to ensure icons match current time of day
+ */
+function refreshDayNightCondition(data: LiveWeatherData): LiveWeatherData {
+  const isNight = isNightTime();
+  let { condition, conditionLabelKey } = data;
+
+  // Convert day conditions to night if it's currently night
+  if (isNight) {
+    if (condition === 'sunny') {
+      condition = 'clear-night';
+      conditionLabelKey = 'clearNight';
+    } else if (condition === 'partly-sunny') {
+      condition = 'partly-cloudy-night';
+      conditionLabelKey = 'partlyCloudyNight';
+    }
+  } else {
+    // Convert night conditions to day if it's currently day
+    if (condition === 'clear-night') {
+      condition = 'sunny';
+      conditionLabelKey = 'clearSky';
+    } else if (condition === 'partly-cloudy-night') {
+      condition = 'partly-sunny';
+      conditionLabelKey = 'partlyCloudy';
+    }
+  }
+
+  // Return updated data if condition changed, otherwise return original
+  if (condition !== data.condition) {
+    return { ...data, condition, conditionLabelKey };
+  }
+  return data;
+}
+
 // ─── WMO WEATHER CODE MAPPING ─────────────────────────────────────────────────
 
 interface WmoMapping {
@@ -1364,7 +1399,7 @@ export async function fetchLiveWeather(
     const rateLimitCached = getFromRateLimitCache(stationId);
     if (rateLimitCached) {
       console.log('[RateLimit] Using cached data (< 15 min old)');
-      return { data: rateLimitCached, isFromCache: true };
+      return { data: refreshDayNightCondition(rateLimitCached), isFromCache: true };
     }
   }
 
@@ -1408,7 +1443,7 @@ export async function fetchLiveWeather(
         const cached = await getWeatherFromCache(stationId);
         if (cached) {
           console.log('[Cache] Using cached weather data (API error)');
-          return { data: cached, isFromCache: true };
+          return { data: refreshDayNightCondition(cached), isFromCache: true };
         }
       }
       return __DEV__ ? { data: getMockWeatherData(), isFromCache: false } : null;
@@ -1423,7 +1458,7 @@ export async function fetchLiveWeather(
         const cached = await getWeatherFromCache(stationId);
         if (cached) {
           console.log('[Cache] Using cached weather data (no API data)');
-          return { data: cached, isFromCache: true };
+          return { data: refreshDayNightCondition(cached), isFromCache: true };
         }
       }
       return __DEV__ ? { data: getMockWeatherData(), isFromCache: false } : null;
@@ -1465,7 +1500,7 @@ export async function fetchLiveWeather(
       const cached = await getWeatherFromCache(stationId);
       if (cached) {
         console.log('[Cache] Using cached weather data (network error)');
-        return { data: cached, isFromCache: true };
+        return { data: refreshDayNightCondition(cached), isFromCache: true };
       }
     }
 
