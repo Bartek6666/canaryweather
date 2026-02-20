@@ -36,7 +36,7 @@
     "live": "EN VIVO",
     "offline": "SIN CONEXIÓN",
     "cached": "ARCHIVADO",
-    "offlineData": "Datos archivados (offline)",
+    "offlineData": "Última actualización: {{time}} - desliza para actualizar",
     "noLiveData": "Datos de la estación no disponibles",
     "checkConnection": "Inténtalo de nuevo en unos minutos",
     "calimaAlert": "Alerta: Calima",
@@ -61,7 +61,7 @@
     "confidenceHigh": "Alta confianza",
     "confidenceMedium": "Confianza media",
     "confidenceLow": "Baja confianza",
-    "basedOnDays": "Basado en {{count}} días de datos meteorológicos históricos",
+    "basedOnDays": "Basado en datos meteorológicos históricos de la estación {{station}}",
     "avgMax": "Prom. Máx",
     "avgMin": "Prom. Mín",
     "last10Years": "Últimos 10 años",
@@ -69,7 +69,7 @@
     "bestTimeToVisit": "Mejor época para visitar",
     "top3Weeks": "Top 3 semanas más soleadas del año",
     "stationNotFound": "Estación no encontrada",
-    "summaryExcellent": "¡{{name}} en {{month}} es una elección excelente!",
+    "summaryExcellent": "¡{{name}} – una elección excelente!",
     "summaryVeryGood": "{{name}} ofrece muy buenas condiciones de sol.",
     "summaryModerate": "Condiciones moderadas - prepárate para tiempo variable.",
     "summaryPoor": "Más días nublados - considera otra fecha.",
@@ -79,7 +79,8 @@
     "summaryHot": "Temperaturas calurosas - mantente hidratado.",
     "summaryMild": "Temperatura agradable y suave.",
     "nearestAemetStation": "Estación AEMET más cercana",
-    "highAltitudeFallback": "No hay estación AEMET de alta montaña disponible. Datos meteorológicos de {{station}}."
+    "highAltitudeFallback": "No hay estación AEMET de alta montaña disponible. Datos meteorológicos de {{station}}.",
+    "dataFromStation": "Datos de la estación {{station}}"
   },
   "months": {
     "january": "Enero",

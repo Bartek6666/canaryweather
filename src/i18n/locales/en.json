@@ -36,7 +36,7 @@
     "live": "LIVE",
     "offline": "OFFLINE",
     "cached": "CACHED",
-    "offlineData": "Archived data (offline)",
+    "offlineData": "Last update: {{time}} - pull to refresh",
     "noLiveData": "Station data temporarily unavailable",
     "checkConnection": "Please try again in a moment",
     "calimaAlert": "Alert: Calima",
@@ -61,7 +61,7 @@
     "confidenceHigh": "High confidence",
     "confidenceMedium": "Medium confidence",
     "confidenceLow": "Low confidence",
-    "basedOnDays": "Based on {{count}} days of historical weather data",
+    "basedOnDays": "Based on historical weather data from {{station}} station",
     "avgMax": "Avg. Max",
     "avgMin": "Avg. Min",
     "last10Years": "Last 10 years",
@@ -69,7 +69,7 @@
     "bestTimeToVisit": "Best time to visit",
     "top3Weeks": "Top 3 sunniest weeks of the year",
     "stationNotFound": "Station not found",
-    "summaryExcellent": "{{name}} in {{month}} is an excellent choice!",
+    "summaryExcellent": "{{name}} – an excellent choice!",
     "summaryVeryGood": "{{name}} offers very good sunny conditions.",
     "summaryModerate": "Moderate conditions - prepare for variable weather.",
     "summaryPoor": "More cloudy days - consider a different time.",
@@ -79,7 +79,8 @@
     "summaryHot": "Hot temperatures - stay hydrated.",
     "summaryMild": "Pleasant, mild temperature.",
     "nearestAemetStation": "Nearest AEMET station",
-    "highAltitudeFallback": "No AEMET high-altitude station available. Weather data from {{station}}."
+    "highAltitudeFallback": "No AEMET high-altitude station available. Weather data from {{station}}.",
+    "dataFromStation": "Data from {{station}} station"
   },
   "months": {
     "january": "January",

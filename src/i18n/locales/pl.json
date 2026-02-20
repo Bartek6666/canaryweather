@@ -36,7 +36,7 @@
     "live": "LIVE",
     "offline": "OFFLINE",
     "cached": "ARCHIWUM",
-    "offlineData": "Dane archiwalne (offline)",
+    "offlineData": "Ostatnia aktualizacja: {{time}} - pociągnij, aby odświeżyć",
     "noLiveData": "Dane stacji chwilowo niedostępne",
     "checkConnection": "Spróbuj ponownie za chwilę",
     "calimaAlert": "Uwaga: Calima",
@@ -73,7 +73,7 @@
     "confidenceHigh": "Wysoka pewność",
     "confidenceMedium": "Średnia pewność",
     "confidenceLow": "Niska pewność",
-    "basedOnDays": "Na podstawie {{count}} dni historycznych danych pogodowych",
+    "basedOnDays": "Na podstawie historycznych danych pogodowych ze stacji {{station}}",
     "avgMax": "Średnia max",
     "avgMin": "Średnia min",
     "last10Years": "Ostatnie 10 lat",
@@ -81,7 +81,7 @@
     "bestTimeToVisit": "Najlepszy moment na wyjazd",
     "top3Weeks": "Top 3 najbardziej słoneczne tygodnie w roku",
     "stationNotFound": "Stacja nie znaleziona",
-    "summaryExcellent": "{{name}} w {{month}} to doskonały wybór!",
+    "summaryExcellent": "{{name}} – doskonały wybór!",
     "summaryVeryGood": "{{name}} oferuje bardzo dobre warunki słoneczne.",
     "summaryModerate": "Umiarkowane warunki - przygotuj się na zmienną aurę.",
     "summaryPoor": "Więcej pochmurnych dni - rozważ inny termin.",
@@ -91,7 +91,8 @@
     "summaryHot": "Upalne temperatury - pamiętaj o nawodnieniu.",
     "summaryMild": "Przyjemna, łagodna temperatura.",
     "nearestAemetStation": "Najbliższa stacja AEMET",
-    "highAltitudeFallback": "Brak stacji wysokogórskiej AEMET. Dane pogodowe ze stacji {{station}}."
+    "highAltitudeFallback": "Brak stacji wysokogórskiej AEMET. Dane pogodowe ze stacji {{station}}.",
+    "dataFromStation": "Dane ze stacji {{station}}"
   },
   "months": {
     "january": "Styczeń",

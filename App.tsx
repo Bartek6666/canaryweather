@@ -11,7 +11,6 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SearchScreen } from './src/screens';
 import ResultScreen from './src/screens/ResultScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
-import { OfflineIndicator } from './src/components/OfflineIndicator';
 import { theme } from './src/constants/theme';
 import { loadSavedLanguage } from './src/i18n';
 
@@ -90,7 +89,6 @@ export default function App() {
             <Stack.Screen name="Result" component={ResultScreen} />
           </Stack.Navigator>
         </NavigationContainer>
-        <OfflineIndicator />
       </View>
     </SafeAreaProvider>
   );

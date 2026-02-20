@@ -224,6 +224,63 @@ export async function calculateSunChance(
 }
 
 /**
+ * Result with fallback station info
+ */
+export interface SunChanceWithFallback {
+  result: SunChanceResult;
+  fallbackStation?: {
+    stationId: string;
+    name: string;
+    distance: number;
+  };
+}
+
+/**
+ * Calculates sun chance with automatic fallback to nearest station with data
+ * If the requested station has no data, finds the nearest station that does
+ */
+export async function calculateSunChanceWithFallback(
+  stationId: string,
+  stationLat: number,
+  stationLon: number,
+  month: number,
+  dayStart: number = 1,
+  dayEnd: number = 31
+): Promise<SunChanceWithFallback> {
+  // First try the requested station
+  const result = await calculateSunChance(stationId, month, dayStart, dayEnd);
+
+  // If we have data, return it
+  if (result.total_days > 0) {
+    return { result };
+  }
+
+  // No data - find nearest stations and try each until we find one with data
+  const nearestStations = findNearestStations(stationLat, stationLon, 5, true);
+
+  for (const station of nearestStations) {
+    // Skip the original station
+    if (station.stationId === stationId) continue;
+
+    const fallbackResult = await calculateSunChance(station.stationId, month, dayStart, dayEnd);
+
+    if (fallbackResult.total_days > 0) {
+      return {
+        result: fallbackResult,
+        fallbackStation: {
+          stationId: station.stationId,
+          name: station.name,
+          distance: station.distance,
+        },
+      };
+    }
+  }
+
+  // No station has data - return empty result
+  return { result };
+}
+
+/**
  * Gets monthly statistics for a station
  */
 export async function getMonthlyStats(stationId: string): Promise<MonthlyStats[]> {

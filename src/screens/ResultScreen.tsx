@@ -19,13 +19,27 @@ import { useTranslation } from 'react-i18next';
 import { colors, spacing, typography, glass, glassText, borderRadius, gradients, shadows, getSunChanceColor, liveCard, theme } from '../constants/theme';
 import { AlertCard, GlassCard, SunChanceGauge, SunChanceModal, WeatherIcon, WeatherEffects } from '../components';
 import locationsMapping from '../constants/locations_mapping.json';
-import { calculateSunChance, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult } from '../services/weatherService';
+import { calculateSunChanceWithFallback, SunChanceWithFallback, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult } from '../services/weatherService';
 import { supabase } from '../services/supabase';
 import { SunChanceResult, MonthlyStats, LiveWeatherData, WeatherCondition } from '../types';
 import { MONTH_KEYS } from '../i18n';
 
 // Satellite map background – place your image at assets/map_bg.jpg
 const MAP_BG_SOURCE = require('../../assets/map_bg.jpg');
+
+/**
+ * Formats timestamp to human-readable time (HH:MM)
+ */
+function formatCacheTime(timestamp: string | undefined): string {
+  if (!timestamp) return '--:--';
+  try {
+    const date = new Date(timestamp);
+    if (isNaN(date.getTime())) return '--:--';
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  } catch {
+    return '--:--';
+  }
+}
 
 type RootStackParamList = {
   Search: undefined;
@@ -190,7 +204,9 @@ function LiveWeatherCard({ data, isLoading, hasError, isFromCache = false }: Liv
         <View style={styles.cacheIndicator}>
           <View style={styles.cacheIndicatorInner}>
             <Ionicons name="time-outline" size={12} color={colors.textMuted} />
-            <Text style={styles.cacheIndicatorText}>{t('result.offlineData')}</Text>
+            <Text style={styles.cacheIndicatorText}>
+              {t('result.offlineData', { time: formatCacheTime(data?.timestamp) })}
+            </Text>
           </View>
         </View>
       )}
@@ -338,6 +354,7 @@ export default function ResultScreen({ navigation, route }: Props) {
   const { stationId, locationName, locationCoords, isHighAltitudeFallback } = route.params;
   const [isLoading, setIsLoading] = useState(true);
   const [sunChanceResult, setSunChanceResult] = useState<SunChanceResult | null>(null);
+  const [sunChanceFallback, setSunChanceFallback] = useState<SunChanceWithFallback['fallbackStation'] | null>(null);
   const [monthlyStats, setMonthlyStats] = useState<MonthlyStats[]>([]);
   const [yearlyData, setYearlyData] = useState<YearlyData[]>([]);
   const [bestWeeks, setBestWeeks] = useState<WeeklyBestPeriod[]>([]);
@@ -410,19 +427,26 @@ export default function ResultScreen({ navigation, route }: Props) {
       setIsLoadingLive(true);
       setLiveError(false);
 
-      const result = await fetchLiveWeather(station.latitude, station.longitude, stationId);
+      try {
+        const result = await fetchLiveWeather(station.latitude, station.longitude, stationId);
 
-      if (result) {
-        setLiveData(result.data);
-        setIsFromCache(result.isFromCache);
-        setLiveError(false);
-      } else {
+        if (result) {
+          setLiveData(result.data);
+          setIsFromCache(result.isFromCache);
+          setLiveError(false);
+        } else {
+          setLiveData(null);
+          setIsFromCache(false);
+          setLiveError(true);
+        }
+      } catch (e) {
+        console.error('[LiveWeather] Error fetching data:', e);
         setLiveData(null);
         setIsFromCache(false);
         setLiveError(true);
+      } finally {
+        setIsLoadingLive(false);
       }
-
-      setIsLoadingLive(false);
     };
 
     loadLiveWeather();
@@ -437,8 +461,13 @@ export default function ResultScreen({ navigation, route }: Props) {
     if (!station) return;
 
     const loadCalimaStatus = async () => {
-      const status = await fetchCalimaStatus(station.latitude, station.longitude);
-      setCalimaStatus(status);
+      try {
+        const status = await fetchCalimaStatus(station.latitude, station.longitude);
+        setCalimaStatus(status);
+      } catch (e) {
+        console.error('[Calima] Error fetching status:', e);
+        setCalimaStatus(null);
+      }
     };
 
     loadCalimaStatus();
@@ -450,19 +479,23 @@ export default function ResultScreen({ navigation, route }: Props) {
 
   useEffect(() => {
     (async () => {
+      if (!station) return;
       setIsLoading(true);
+      setSunChanceFallback(null);
       try {
-        const [sc, stats, yearly, weeks] = await Promise.all([
-          calculateSunChance(stationId, selectedMonth),
+        const [scWithFallback, stats, yearly, weeks] = await Promise.all([
+          calculateSunChanceWithFallback(stationId, station.latitude, station.longitude, selectedMonth),
           getMonthlyStats(stationId),
           fetchYearlyData(selectedMonth),
           getBestWeeksForStation(stationId),
         ]);
-        setSunChanceResult(sc); setMonthlyStats(stats); setYearlyData(yearly); setBestWeeks(weeks);
+        setSunChanceResult(scWithFallback.result);
+        setSunChanceFallback(scWithFallback.fallbackStation || null);
+        setMonthlyStats(stats); setYearlyData(yearly); setBestWeeks(weeks);
       } catch (e) { console.error(e); }
       finally { setIsLoading(false); }
     })();
-  }, [stationId, selectedMonth, fetchYearlyData]);
+  }, [stationId, station, selectedMonth, fetchYearlyData]);
 
   const currentStats = useMemo(() => monthlyStats.find(s => s.month === selectedMonth), [monthlyStats, selectedMonth]);
 
@@ -498,14 +531,13 @@ export default function ResultScreen({ navigation, route }: Props) {
     const sunChance = sunChanceResult?.sun_chance ?? 0;
     const windSpeed = liveData?.windSpeed ?? 0;
     const avgTemp = currentStats?.avg_tmax ?? 0;
-    const monthKey = MONTH_KEYS[selectedMonth - 1];
-    const monthName = t(`months.${monthKey}`).toLowerCase();
+    const displayName = locationName || station?.name;
 
     const parts: string[] = [];
 
     // Sun condition
     if (sunChance >= 80) {
-      parts.push(t('result.summaryExcellent', { name: station?.name, month: monthName }));
+      parts.push(t('result.summaryExcellent', { name: displayName }));
     } else if (sunChance >= 60) {
       parts.push(t('result.summarySunny'));
     } else if (sunChance >= 40) {
@@ -619,7 +651,13 @@ export default function ResultScreen({ navigation, route }: Props) {
         )}
 
         {sunChanceResult && sunChanceResult.total_days > 0 && !isLoading && (
-          <View style={styles.statsInfo}><Text style={styles.statsText}>{t('result.basedOnDays', { count: sunChanceResult.total_days })}</Text></View>
+          <View style={styles.statsInfo}>
+            <Text style={styles.statsText}>
+              {t('result.basedOnDays', {
+                station: sunChanceFallback?.name || station?.name
+              })}
+            </Text>
+          </View>
         )}
 
         {/* FIGMA: STYLE_TARGET — Temperature cards row (only when we have data) */}
@@ -747,7 +785,7 @@ const styles = StyleSheet.create({
   monthBtnText: { fontSize: 13, fontWeight: '600', color: colors.textSecondary },
   monthBtnTextActive: { color: colors.textPrimary, fontWeight: '700' },
   statsInfo: { alignItems: 'center', marginBottom: spacing.sm },
-  statsText: { ...typography.bodySmall },
+  statsText: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', lineHeight: 20 },
   tempCards: { flexDirection: 'row', marginBottom: spacing.lg, gap: spacing.sm },
   // FIGMA: STYLE_TARGET — Temperature card (glassmorphism)
   tempCard: { flex: 1 },
