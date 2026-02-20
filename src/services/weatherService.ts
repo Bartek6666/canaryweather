@@ -1052,16 +1052,39 @@ const CANARY_SUNRISE_HOURS: Record<number, number> = {
 };
 
 /**
+ * Gets current hour and month in Canary Islands timezone
+ * Uses Intl.DateTimeFormat for reliable cross-platform timezone conversion
+ */
+function getCanaryTime(): { hour: number; month: number } {
+  const now = new Date();
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Atlantic/Canary',
+    hour: 'numeric',
+    minute: 'numeric',
+    month: 'numeric',
+    hour12: false,
+  });
+
+  const parts = formatter.formatToParts(now);
+  let hour = 0;
+  let minute = 0;
+  let month = 1;
+
+  for (const part of parts) {
+    if (part.type === 'hour') hour = parseInt(part.value, 10);
+    if (part.type === 'minute') minute = parseInt(part.value, 10);
+    if (part.type === 'month') month = parseInt(part.value, 10);
+  }
+
+  return { hour: hour + minute / 60, month };
+}
+
+/**
  * Checks if current time is nighttime in Canary Islands
  * Uses month-based sunrise/sunset approximations for accuracy
  */
 function isNightTime(): boolean {
-  const now = new Date();
-
-  // Convert to Canary Islands time (Atlantic/Canary)
-  const canaryTime = new Date(now.toLocaleString('en-US', { timeZone: 'Atlantic/Canary' }));
-  const hour = canaryTime.getHours() + canaryTime.getMinutes() / 60;
-  const month = canaryTime.getMonth() + 1;
+  const { hour, month } = getCanaryTime();
 
   const sunrise = CANARY_SUNRISE_HOURS[month] ?? 7;
   const sunset = CANARY_SUNSET_HOURS[month] ?? 19;
