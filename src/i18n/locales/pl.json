@@ -26,7 +26,7 @@
     "weatherNearby": "Pogoda dla",
     "weatherFromArea": "Dane z okolicy",
     "fromTarget": "od celu",
-    "footer": "Dane z 10 lat • 19 stacji AEMET",
+    "footer": "Sprawdzamy dane pogodowe z 10 lat - 19 stacji AEMET",
     "locationPermissionTitle": "Brak dostępu",
     "locationPermissionMessage": "Włącz lokalizację w ustawieniach.",
     "nearestStationTitle": "Najbliższa stacja",
