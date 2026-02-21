@@ -517,8 +517,9 @@ export default function SearchScreen({ navigation }: Props) {
 
     if (shouldScrollToPlaces.current && scrollViewRef.current) {
       shouldScrollToPlaces.current = false;
-      // Scroll to places container with some padding at top
-      const targetY = placesLayoutY.current - 100;
+      // Scroll to show the full places card with minimal padding at top
+      // Small padding (20px) ensures the card is fully visible
+      const targetY = placesLayoutY.current - 20;
       scrollViewRef.current.scrollTo({
         y: Math.max(0, targetY),
         animated: true,
