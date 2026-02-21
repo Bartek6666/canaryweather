@@ -771,9 +771,6 @@ export default function SearchScreen({ navigation }: Props) {
                 </View>
               )}
 
-              <View style={styles.footer}>
-                <Text style={styles.footerText}>{t('search.footer')}</Text>
-              </View>
               </View>
             </ScrollView>
           </Animated.View>
@@ -968,8 +965,8 @@ const styles = StyleSheet.create({
   },
   placeItem: {
     width: ((Dimensions.get('window').width - spacing.lg * 2 - spacing.sm * 4) / 2) * 0.95,
-    aspectRatio: 1.4,
-    marginBottom: spacing.xs,
+    aspectRatio: 1.15,
+    marginBottom: spacing.sm,
   },
   placeItemInner: {
     flex: 1,
@@ -984,6 +981,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: spacing.xs,
   },
-  footer: { alignItems: 'center', marginTop: spacing.xl, paddingBottom: spacing.xl - spacing.xs },
-  footerText: { ...typography.bodySmall, color: colors.textMuted },
 });
