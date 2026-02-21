@@ -1307,12 +1307,15 @@ async function fetchAemetLiveWeather(
     // Get the most recent observation (last in array)
     const latest = observations[observations.length - 1];
 
-    // Map precipitation to weather condition
+    // Default condition (will be overwritten by Open-Meteo in hybrid mode)
+    // Only detect rain/fog from AEMET measurements as fallback
     const isNight = isNightTime();
     let condition: WeatherCondition = isNight ? 'clear-night' : 'sunny';
     let labelKey = isNight ? 'clearNight' : 'clearSky';
     let weatherCode = 0;
 
+    // Only use AEMET for rain detection (precipitation sensor) and fog (visibility)
+    // Cloud cover is NOT detected here - Open-Meteo provides accurate satellite data
     if (latest.prec !== undefined && latest.prec > 0) {
       condition = 'rainy';
       labelKey = latest.prec > 5 ? 'heavyRain' : 'lightRain';
@@ -1321,15 +1324,9 @@ async function fetchAemetLiveWeather(
       condition = 'foggy';
       labelKey = 'fog';
       weatherCode = 45;
-    } else if (latest.hr !== undefined && latest.hr > 90) {
-      condition = 'cloudy';
-      labelKey = 'overcast';
-      weatherCode = 3;
-    } else if (latest.hr !== undefined && latest.hr > 70) {
-      condition = isNight ? 'partly-cloudy-night' : 'partly-sunny';
-      labelKey = isNight ? 'partlyCloudyNight' : 'partlyCloudy';
-      weatherCode = 2;
     }
+    // NOTE: Removed humidity-based cloud detection (hr > 70/90) - was inaccurate
+    // High humidity does NOT indicate cloud cover, especially at night in Canary Islands
 
     const weatherData: LiveWeatherData = {
       temperature: latest.ta !== undefined ? Math.round(latest.ta) : 0,
@@ -1367,6 +1364,67 @@ interface OpenMeteoResponse {
     wind_speed_10m: number;
     is_day: number; // 1 = day, 0 = night
   };
+}
+
+// ─── OPEN-METEO CONDITION FETCH ───────────────────────────────────────────────
+
+interface OpenMeteoConditionResult {
+  weatherCode: number;
+  condition: WeatherCondition;
+  conditionLabelKey: string;
+  isNight: boolean;
+}
+
+/**
+ * Fetches weather condition from Open-Meteo API
+ * Used to get accurate cloud cover/condition data (satellite-based)
+ */
+async function fetchOpenMeteoCondition(lat: number, lon: number): Promise<OpenMeteoConditionResult | null> {
+  const TIMEOUT_MS = 8000;
+
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=weather_code,is_day&timezone=auto`;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      console.warn(`[Open-Meteo Condition] API error: ${response.status}`);
+      return null;
+    }
+
+    const data: OpenMeteoResponse = await response.json();
+
+    if (!data.current) {
+      console.warn('[Open-Meteo Condition] No current data');
+      return null;
+    }
+
+    const isNight = data.current.is_day === 0;
+    const { condition, labelKey } = mapWmoCode(data.current.weather_code, isNight);
+
+    return {
+      weatherCode: data.current.weather_code,
+      condition,
+      conditionLabelKey: labelKey,
+      isNight,
+    };
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.warn('[Open-Meteo Condition] Request timed out');
+    } else {
+      console.warn('[Open-Meteo Condition] Error:', error);
+    }
+    return null;
+  }
 }
 
 // Mock data for development/testing when API is unavailable
@@ -1426,15 +1484,32 @@ export async function fetchLiveWeather(
     }
   }
 
-  // ─── TRY AEMET FIRST (more accurate, official Spanish weather service) ───
+  // ─── HYBRID APPROACH: AEMET for measurements + Open-Meteo for condition ───
   if (stationId && AEMET_API_KEY) {
     const aemetResult = await fetchAemetLiveWeather(stationId);
     if (aemetResult) {
+      // Fetch accurate weather condition from Open-Meteo (satellite-based)
+      const openMeteoCondition = await fetchOpenMeteoCondition(lat, lon);
+
+      let weatherData = aemetResult.data;
+
+      if (openMeteoCondition) {
+        // Merge: AEMET measurements + Open-Meteo condition
+        weatherData = {
+          ...aemetResult.data,
+          weatherCode: openMeteoCondition.weatherCode,
+          condition: openMeteoCondition.condition,
+          conditionLabelKey: openMeteoCondition.conditionLabelKey,
+        };
+        console.log('[Hybrid] AEMET measurements + Open-Meteo condition');
+      } else {
+        console.log('[AEMET] Using AEMET data (Open-Meteo condition unavailable)');
+      }
+
       // Save to cache on success
-      await saveWeatherToCache(stationId, aemetResult.data);
-      saveToRateLimitCache(stationId, aemetResult.data);
-      console.log('[AEMET] Using official AEMET data');
-      return { data: aemetResult.data, isFromCache: false };
+      await saveWeatherToCache(stationId, weatherData);
+      saveToRateLimitCache(stationId, weatherData);
+      return { data: weatherData, isFromCache: false };
     }
     console.log('[AEMET] Failed, falling back to Open-Meteo');
   }
