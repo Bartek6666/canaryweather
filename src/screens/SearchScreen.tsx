@@ -129,9 +129,9 @@ export default function SearchScreen({ navigation }: Props) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const geocodeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
+  const scrollContentRef = useRef<View>(null);
   const placesRef = useRef<View>(null);
   const shouldScrollToPlaces = useRef(false);
-  const placesLayoutY = useRef(0);
 
   // Location prompt state
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
@@ -512,18 +512,25 @@ export default function SearchScreen({ navigation }: Props) {
     shouldScrollToPlaces.current = true;
   }, [selectedIsland, trackIsland, t]);
 
-  const handlePlacesLayout = useCallback((event: { nativeEvent: { layout: { y: number } } }) => {
-    placesLayoutY.current = event.nativeEvent.layout.y;
-
-    if (shouldScrollToPlaces.current && scrollViewRef.current) {
+  const handlePlacesLayout = useCallback(() => {
+    if (shouldScrollToPlaces.current && placesRef.current && scrollContentRef.current) {
       shouldScrollToPlaces.current = false;
-      // Scroll to show the full places card with minimal padding at top
-      // Small padding (20px) ensures the card is fully visible
-      const targetY = placesLayoutY.current - 20;
-      scrollViewRef.current.scrollTo({
-        y: Math.max(0, targetY),
-        animated: true,
-      });
+
+      // Use measureLayout to get position relative to ScrollView content
+      (placesRef.current as any).measureLayout(
+        scrollContentRef.current,
+        (_x: number, y: number) => {
+          // Scroll so the places card starts near the top with small padding
+          scrollViewRef.current?.scrollTo({
+            y: Math.max(0, y - 16),
+            animated: true,
+          });
+        },
+        () => {
+          // Fallback: scroll to end if measureLayout fails
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        }
+      );
     }
   }, []);
 
@@ -558,6 +565,7 @@ export default function SearchScreen({ navigation }: Props) {
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
+              <View ref={scrollContentRef} collapsable={false}>
               {/* FIGMA: STYLE_TARGET — Header (logo, title, subtitle) */}
               <View style={styles.header}>
                 {/* Language Switcher - top right */}
@@ -751,6 +759,7 @@ export default function SearchScreen({ navigation }: Props) {
 
               <View style={styles.footer}>
                 <Text style={styles.footerText}>{t('search.footer')}</Text>
+              </View>
               </View>
             </ScrollView>
           </Animated.View>
