@@ -435,12 +435,12 @@ export default function ResultScreen({ navigation, route }: Props) {
   useEffect(() => {
     if (!station) return;
 
-    const loadLiveWeather = async () => {
+    const loadLiveWeather = async (forceRefresh: boolean = false) => {
       setIsLoadingLive(true);
       setLiveError(false);
 
       try {
-        const result = await fetchLiveWeather(station.latitude, station.longitude, stationId);
+        const result = await fetchLiveWeather(station.latitude, station.longitude, stationId, forceRefresh);
 
         if (result) {
           setLiveData(result.data);
@@ -461,10 +461,11 @@ export default function ResultScreen({ navigation, route }: Props) {
       }
     };
 
-    loadLiveWeather();
+    // Initial load - can use cache
+    loadLiveWeather(false);
 
-    // Refresh live data every 5 minutes
-    const interval = setInterval(loadLiveWeather, 5 * 60 * 1000);
+    // Auto-refresh every 5 minutes - always fetch fresh data (bypass cache)
+    const interval = setInterval(() => loadLiveWeather(true), 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, [station, stationId]);
 
