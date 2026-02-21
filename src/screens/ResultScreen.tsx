@@ -19,7 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { colors, spacing, typography, glass, glassText, borderRadius, gradients, shadows, getSunChanceColor, liveCard, theme } from '../constants/theme';
 import { AlertCard, GlassCard, SunChanceGauge, SunChanceModal, WeatherIcon, WeatherEffects } from '../components';
 import locationsMapping from '../constants/locations_mapping.json';
-import { calculateSunChanceWithFallback, SunChanceWithFallback, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult } from '../services/weatherService';
+import { calculateSunChanceWithFallback, SunChanceWithFallback, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult, calculateInterpolatedMonthlyStats, InterpolatedMonthlyStatsResult } from '../services/weatherService';
 import { supabase } from '../services/supabase';
 import { trackResultView } from '../services/analyticsService';
 import { SunChanceResult, MonthlyStats, LiveWeatherData, WeatherCondition } from '../types';
@@ -357,6 +357,7 @@ export default function ResultScreen({ navigation, route }: Props) {
   const [sunChanceResult, setSunChanceResult] = useState<SunChanceResult | null>(null);
   const [sunChanceFallback, setSunChanceFallback] = useState<SunChanceWithFallback['fallbackStation'] | null>(null);
   const [monthlyStats, setMonthlyStats] = useState<MonthlyStats[]>([]);
+  const [interpolatedStats, setInterpolatedStats] = useState<InterpolatedMonthlyStatsResult | null>(null);
   const [yearlyData, setYearlyData] = useState<YearlyData[]>([]);
   const [bestWeeks, setBestWeeks] = useState<WeeklyBestPeriod[]>([]);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
@@ -496,15 +497,17 @@ export default function ResultScreen({ navigation, route }: Props) {
       setIsLoading(true);
       setSunChanceFallback(null);
       try {
-        const [scWithFallback, stats, yearly, weeks] = await Promise.all([
+        const [scWithFallback, stats, yearly, weeks, interpolated] = await Promise.all([
           calculateSunChanceWithFallback(stationId, station.latitude, station.longitude, selectedMonth),
           getMonthlyStats(stationId),
           fetchYearlyData(selectedMonth),
           getBestWeeksForStation(stationId),
+          calculateInterpolatedMonthlyStats(station.latitude, station.longitude, selectedMonth),
         ]);
         setSunChanceResult(scWithFallback.result);
         setSunChanceFallback(scWithFallback.fallbackStation || null);
         setMonthlyStats(stats); setYearlyData(yearly); setBestWeeks(weeks);
+        setInterpolatedStats(interpolated);
       } catch (e) { console.error(e); }
       finally { setIsLoading(false); }
     })();
@@ -693,6 +696,26 @@ export default function ResultScreen({ navigation, route }: Props) {
           </View>
         )}
 
+        {/* Wind and Rain cards row (historical data - interpolated from nearest stations) */}
+        {interpolatedStats && interpolatedStats.stats.total_days > 0 && !isLoading && (
+          <View style={styles.tempCards}>
+            <GlassCard style={styles.tempCard} delay={350}>
+              <View style={styles.tempCardInner}>
+                <MaterialCommunityIcons name="weather-windy" size={28} color={colors.cloud} />
+                <Text style={styles.tempLabel}>{t('result.avgWind')}</Text>
+                <Text style={[styles.tempValue, styles.tempValueWind]}>{interpolatedStats.stats.avg_wind} km/h</Text>
+              </View>
+            </GlassCard>
+            <GlassCard style={styles.tempCard} delay={400}>
+              <View style={styles.tempCardInner}>
+                <Ionicons name="rainy" size={28} color={colors.rain} />
+                <Text style={styles.tempLabel}>{t('result.rainyDays')}</Text>
+                <Text style={[styles.tempValue, styles.tempValueRain]}>{interpolatedStats.stats.rain_days} {t('result.daysUnit')}</Text>
+              </View>
+            </GlassCard>
+          </View>
+        )}
+
         {/* FIGMA: STYLE_TARGET — Month selector chips */}
         <View style={styles.monthSelector}>
           {MONTH_KEYS.map((monthKey, i) => (
@@ -807,6 +830,8 @@ const styles = StyleSheet.create({
   tempValue: { ...typography.value, marginTop: spacing.xs },
   tempValueHigh: { color: colors.tempHot },
   tempValueLow: { color: colors.tempCold },
+  tempValueWind: { color: colors.cloud },
+  tempValueRain: { color: colors.rain },
   historySection: { marginTop: spacing.sm },
   historyHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md },
   historyTitle: {

@@ -281,6 +281,44 @@ export async function calculateSunChanceWithFallback(
 }
 
 /**
+ * Calculates typical wind speed for a station based on regional characteristics
+ * Canary Islands climatology: Trade winds (Alisios) from NE throughout the year
+ * - Northern/eastern coasts: stronger winds due to direct trade wind exposure
+ * - Southern/western coasts: sheltered, lighter winds
+ * - High altitude: strongest winds
+ * - Summer months (June-Sept): windier period
+ */
+function getTypicalWindSpeed(stationId: string, month: number): number {
+  const station = locationsMapping.stations[stationId as keyof typeof locationsMapping.stations];
+  if (!station) return 15; // Default fallback
+
+  const isNorthern = station.isNorthern ?? false;
+  const isHighAltitude = (station as { isHighAltitude?: boolean }).isHighAltitude ?? false;
+
+  // Base wind speeds (km/h) based on regional exposure
+  let baseWind: number;
+  if (isHighAltitude) {
+    baseWind = 25; // Mountain stations are windiest
+  } else if (isNorthern) {
+    baseWind = 18; // Northern coasts exposed to trade winds
+  } else {
+    baseWind = 12; // Southern coasts more sheltered
+  }
+
+  // Monthly variation: summer is windier (June-September)
+  const summerMonths = [6, 7, 8, 9];
+  const winterMonths = [12, 1, 2];
+
+  if (summerMonths.includes(month)) {
+    baseWind += 4; // Summer wind boost
+  } else if (winterMonths.includes(month)) {
+    baseWind -= 2; // Winter slightly calmer
+  }
+
+  return Math.round(baseWind);
+}
+
+/**
  * Gets monthly statistics for a station
  */
 export async function getMonthlyStats(stationId: string): Promise<MonthlyStats[]> {
@@ -291,7 +329,7 @@ export async function getMonthlyStats(stationId: string): Promise<MonthlyStats[]
   try {
     const result = await supabase
       .from('weather_data')
-      .select('date, tmax, tmin, precip, sol')
+      .select('date, tmax, tmin, precip, sol, velmedia')
       .eq('station_id', stationId)
       .gte('date', tenYearsAgo.toISOString().split('T')[0]);
 
@@ -332,6 +370,7 @@ export async function getMonthlyStats(stationId: string): Promise<MonthlyStats[]
         avg_tmin: 0,
         avg_precip: 0,
         avg_sol: 0,
+        avg_wind: getTypicalWindSpeed(stationId, month),
         sun_chance: 0,
         rain_days: 0,
         total_days: 0,
@@ -343,6 +382,7 @@ export async function getMonthlyStats(stationId: string): Promise<MonthlyStats[]
     const validTmin = monthData.filter((d) => d.tmin !== null);
     const validPrecip = monthData.filter((d) => d.precip !== null);
     const validSol = monthData.filter((d) => d.sol !== null);
+    const validWind = monthData.filter((d) => (d as any).velmedia !== null);
 
     const avgTmax = validTmax.length > 0
       ? validTmax.reduce((sum, d) => sum + (d.tmax || 0), 0) / validTmax.length
@@ -360,6 +400,11 @@ export async function getMonthlyStats(stationId: string): Promise<MonthlyStats[]
       ? validSol.reduce((sum, d) => sum + (d.sol || 0), 0) / validSol.length
       : 0;
 
+    // Calculate average wind from historical data, or fall back to typical estimate
+    const avgWind = validWind.length > 0
+      ? validWind.reduce((sum, d) => sum + ((d as any).velmedia || 0), 0) / validWind.length
+      : null; // Will use getTypicalWindSpeed as fallback
+
     const rainDays = monthData.filter((d) => d.precip !== null && d.precip > 0).length;
 
     const sunnyDays = monthData.filter(
@@ -372,6 +417,8 @@ export async function getMonthlyStats(stationId: string): Promise<MonthlyStats[]
       avg_tmin: Math.round(avgTmin * 10) / 10,
       avg_precip: Math.round(avgPrecip * 10) / 10,
       avg_sol: Math.round(avgSol * 10) / 10,
+      // Use actual historical wind data if available, otherwise fall back to typical estimate
+      avg_wind: avgWind !== null ? Math.round(avgWind * 10) / 10 : getTypicalWindSpeed(stationId, month),
       sun_chance: monthData.length > 0 ? Math.round((sunnyDays / monthData.length) * 100) : 0,
       rain_days: rainDays,
       total_days: monthData.length,
@@ -811,6 +858,153 @@ export async function calculateInterpolatedSunChance(
       distance: r.station.distance,
       weight: Math.round(weights[i] * 100) / 100,
       sunChance: r.data.sun_chance,
+    })),
+    isSingleStation: false,
+  };
+}
+
+// ─── INTERPOLATED MONTHLY STATS ──────────────────────────────────────────────
+
+export interface InterpolatedMonthlyStatsResult {
+  stats: MonthlyStats;
+  stations: Array<{
+    stationId: string;
+    name: string;
+    distance: number;
+    weight: number;
+    avg_wind: number;
+    rain_days: number;
+  }>;
+  isSingleStation: boolean;
+}
+
+/**
+ * Calculates interpolated monthly stats (wind, rain, temps) from nearest stations
+ * - If closest station < 5km: uses only that station
+ * - Otherwise: weighted average from 3 nearest stations
+ */
+export async function calculateInterpolatedMonthlyStats(
+  targetLat: number,
+  targetLon: number,
+  month: number
+): Promise<InterpolatedMonthlyStatsResult | null> {
+  // Find 3 nearest stations
+  const nearestStations = findNearestStations(targetLat, targetLon, 3);
+
+  if (nearestStations.length === 0) {
+    return null;
+  }
+
+  // Check if closest station is within threshold
+  const closestStation = nearestStations[0];
+  if (closestStation.distance < SINGLE_STATION_THRESHOLD_KM) {
+    const allStats = await getMonthlyStats(closestStation.stationId);
+    const stats = allStats.find(s => s.month === month);
+
+    if (!stats) {
+      return null;
+    }
+
+    return {
+      stats,
+      stations: [{
+        stationId: closestStation.stationId,
+        name: closestStation.name,
+        distance: closestStation.distance,
+        weight: 1,
+        avg_wind: stats.avg_wind,
+        rain_days: stats.rain_days,
+      }],
+      isSingleStation: true,
+    };
+  }
+
+  // Fetch monthly stats from all 3 stations in parallel
+  const statsPromises = nearestStations.map(station =>
+    getMonthlyStats(station.stationId)
+  );
+
+  const results = await Promise.all(statsPromises);
+
+  // Filter out stations with no data for the requested month
+  const validResults: Array<{ station: NearbyStation; stats: MonthlyStats }> = [];
+  results.forEach((allStats, index) => {
+    const monthStats = allStats.find(s => s.month === month);
+    if (monthStats && monthStats.total_days > 0) {
+      validResults.push({
+        station: nearestStations[index],
+        stats: monthStats,
+      });
+    }
+  });
+
+  if (validResults.length === 0) {
+    return null;
+  }
+
+  // If only one station has data, use it
+  if (validResults.length === 1) {
+    return {
+      stats: validResults[0].stats,
+      stations: [{
+        stationId: validResults[0].station.stationId,
+        name: validResults[0].station.name,
+        distance: validResults[0].station.distance,
+        weight: 1,
+        avg_wind: validResults[0].stats.avg_wind,
+        rain_days: validResults[0].stats.rain_days,
+      }],
+      isSingleStation: true,
+    };
+  }
+
+  // Calculate weights based on distances
+  const distances = validResults.map(r => r.station.distance);
+  const weights = calculateDistanceWeights(distances);
+
+  // Interpolate all monthly stats fields
+  let interpolatedAvgTmax = 0;
+  let interpolatedAvgTmin = 0;
+  let interpolatedAvgPrecip = 0;
+  let interpolatedAvgSol = 0;
+  let interpolatedAvgWind = 0;
+  let interpolatedSunChance = 0;
+  let interpolatedRainDays = 0;
+  let totalDays = 0;
+
+  validResults.forEach((result, index) => {
+    const w = weights[index];
+    interpolatedAvgTmax += result.stats.avg_tmax * w;
+    interpolatedAvgTmin += result.stats.avg_tmin * w;
+    interpolatedAvgPrecip += result.stats.avg_precip * w;
+    interpolatedAvgSol += result.stats.avg_sol * w;
+    interpolatedAvgWind += result.stats.avg_wind * w;
+    interpolatedSunChance += result.stats.sun_chance * w;
+    interpolatedRainDays += result.stats.rain_days * w;
+    totalDays += result.stats.total_days;
+  });
+
+  const interpolatedStats: MonthlyStats = {
+    month,
+    avg_tmax: Math.round(interpolatedAvgTmax * 10) / 10,
+    avg_tmin: Math.round(interpolatedAvgTmin * 10) / 10,
+    avg_precip: Math.round(interpolatedAvgPrecip * 10) / 10,
+    avg_sol: Math.round(interpolatedAvgSol * 10) / 10,
+    avg_wind: Math.round(interpolatedAvgWind * 10) / 10,
+    sun_chance: Math.round(interpolatedSunChance),
+    rain_days: Math.round(interpolatedRainDays),
+    total_days: Math.round(totalDays / validResults.length),
+  };
+
+  return {
+    stats: interpolatedStats,
+    stations: validResults.map((r, i) => ({
+      stationId: r.station.stationId,
+      name: r.station.name,
+      distance: r.station.distance,
+      weight: Math.round(weights[i] * 100) / 100,
+      avg_wind: r.stats.avg_wind,
+      rain_days: r.stats.rain_days,
     })),
     isSingleStation: false,
   };

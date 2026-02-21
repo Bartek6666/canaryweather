@@ -44,6 +44,7 @@ interface ProcessedWeatherData {
   tavg: number | null;
   precip: number | null;
   sol: number | null;
+  velmedia: number | null;  // Average wind speed (km/h)
   is_interpolated: boolean;
 }
 
@@ -57,7 +58,7 @@ interface FetchResult {
 // Configuration
 const CONFIG = {
   AEMET_BASE_URL: 'https://opendata.aemet.es/opendata/api',
-  API_KEY: process.env.AEMET_API_KEY || '',
+  API_KEY: process.env.EXPO_PUBLIC_AEMET_API_KEY || process.env.AEMET_API_KEY || '',
   DELAY_BETWEEN_YEARS_MS: 10000, // 10 seconds between API calls
   RETRY_DELAY_MS: 30000, // 30 seconds retry delay
   MAX_RETRIES: 3,
@@ -188,6 +189,7 @@ async function fetchPeriodData(
       tavg: parseAemetNumber(item.tmed),
       precip: parseAemetNumber(item.prec),
       sol: parseAemetNumber(item.sol),
+      velmedia: parseAemetNumber(item.velmedia),  // Average wind speed (km/h)
       is_interpolated: false,
     }));
 

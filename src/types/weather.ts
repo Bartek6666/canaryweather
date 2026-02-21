@@ -9,6 +9,7 @@ export interface WeatherData {
   tavg: number | null;
   precip: number | null;
   sol: number | null; // Sun hours
+  velmedia: number | null; // Average wind speed (km/h)
   is_interpolated: boolean;
   created_at?: string;
   updated_at?: string;
@@ -66,6 +67,7 @@ export interface MonthlyStats {
   avg_tmin: number;
   avg_precip: number;
   avg_sol: number;
+  avg_wind: number; // Average wind speed in km/h (typical for region)
   sun_chance: number;
   rain_days: number;
   total_days: number;

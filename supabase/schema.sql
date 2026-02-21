@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS weather_data (
     tavg DECIMAL(4,1),           -- Average temperature (°C)
     precip DECIMAL(5,1),         -- Precipitation (mm)
     sol DECIMAL(4,1),            -- Sun hours
+    velmedia DECIMAL(4,1),       -- Average wind speed (km/h)
     is_interpolated BOOLEAN DEFAULT FALSE,  -- True if data was interpolated
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
