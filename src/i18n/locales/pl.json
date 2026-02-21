@@ -36,7 +36,7 @@
     "live": "LIVE",
     "offline": "OFFLINE",
     "cached": "ARCHIWUM",
-    "offlineData": "Ostatnia aktualizacja: {{time}} - pociągnij, aby odświeżyć",
+    "offlineData": "Ostatnia aktualizacja: {{time}}. Przeciągnij, aby odświeżyć",
     "noLiveData": "Dane stacji chwilowo niedostępne",
     "checkConnection": "Spróbuj ponownie za chwilę",
     "calimaAlert": "Uwaga: Calima",

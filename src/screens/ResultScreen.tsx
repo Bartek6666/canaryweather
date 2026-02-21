@@ -1094,8 +1094,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   cacheIndicatorText: {
-    fontSize: 11,
-    color: colors.textMuted,
+    fontSize: 13,
+    color: colors.textSecondary,
     marginLeft: spacing.xs,
     fontWeight: '500',
   },
