@@ -22,7 +22,10 @@ export type SearchType =
   | 'popular'           // Popular destination click
   | 'island_expand'     // Island section expansion
   | 'gps'               // GPS location request
-  | 'result_view';      // Weather result screen view
+  | 'result_view'       // Weather result screen view
+  | 'wind_details_view' // Wind details screen view
+  | 'wind_stability_view' // Wind stability card view
+  | 'rain_details_view'; // Rain details screen view
 
 export interface SearchAnalyticsEvent {
   searchQuery?: string;
@@ -281,6 +284,36 @@ export function trackResultView(params: {
     searchType: 'result_view',
     selectedLocationName: params.locationName,
     selectedIsland: params.island,
+    selectedStationId: params.stationId,
+  });
+}
+
+export function trackWindDetailsView(params: {
+  stationId: string;
+}): void {
+  trackSearchEvent({
+    searchType: 'wind_details_view',
+    selectedStationId: params.stationId,
+  });
+}
+
+export function trackWindStabilityView(params: {
+  stationId: string;
+  stability: number;
+  month: number;
+}): void {
+  trackSearchEvent({
+    searchType: 'wind_stability_view',
+    selectedStationId: params.stationId,
+  });
+}
+
+export function trackRainDetailsView(params: {
+  stationId: string;
+  month: number;
+}): void {
+  trackSearchEvent({
+    searchType: 'rain_details_view',
     selectedStationId: params.stationId,
   });
 }

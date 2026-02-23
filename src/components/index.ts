@@ -5,5 +5,6 @@ export { LanguageSwitcher } from './LanguageSwitcher';
 export { LocationPrompt } from './LocationPrompt';
 export { SunChanceGauge } from './SunChanceGauge';
 export { SunChanceModal } from './SunChanceModal';
+export { TradeWindStabilityCard } from './TradeWindStabilityCard';
 export { WeatherEffects } from './WeatherEffects';
 export { WeatherIcon, ParameterIcon, getWeatherGlowColor, getWeatherIconName } from './WeatherIcon';

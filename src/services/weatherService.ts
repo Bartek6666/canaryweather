@@ -428,6 +428,604 @@ export async function getMonthlyStats(stationId: string): Promise<MonthlyStats[]
   return stats;
 }
 
+// ─── WIND STABILITY CALCULATION ───────────────────────────────────────────────
+
+export interface WindStabilityResult {
+  stability: number; // 0-100% (higher = more stable/consistent winds)
+  standardDeviation: number; // km/h
+  averageSpeed: number; // km/h
+  windRange: { min: number; max: number }; // Typical wind range (avg ± stdDev)
+  windyDays: number; // Days with wind > 20 km/h (per month average)
+  sampleCount: number; // Number of measurements
+  confidence: 'high' | 'medium' | 'low';
+}
+
+/**
+ * Calculates wind stability for a given station and month
+ * Based on standard deviation of wind speeds over the last 10 years
+ *
+ * Trade winds (Alisios) in Canary Islands are famously consistent,
+ * so high stability (low std dev) indicates reliable trade wind conditions
+ *
+ * @param stationId AEMET station ID
+ * @param month Month number (1-12)
+ * @returns WindStabilityResult with stability percentage and details
+ */
+export async function calculateWindStability(
+  stationId: string,
+  month: number
+): Promise<WindStabilityResult> {
+  const tenYearsAgo = new Date();
+  tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
+
+  let data;
+  try {
+    const result = await supabase
+      .from('weather_data')
+      .select('date, velmedia')
+      .eq('station_id', stationId)
+      .gte('date', tenYearsAgo.toISOString().split('T')[0]);
+
+    if (result.error) {
+      console.warn('[Offline] Cannot fetch wind stability data:', result.error.message);
+      return {
+        stability: 0,
+        standardDeviation: 0,
+        averageSpeed: 0,
+        windRange: { min: 0, max: 0 },
+        windyDays: 0,
+        sampleCount: 0,
+        confidence: 'low',
+      };
+    }
+    data = result.data;
+  } catch (e) {
+    console.warn('[Offline] Network error fetching wind stability data');
+    return {
+      stability: 0,
+      standardDeviation: 0,
+      averageSpeed: 0,
+      windRange: { min: 0, max: 0 },
+      windyDays: 0,
+      sampleCount: 0,
+      confidence: 'low',
+    };
+  }
+
+  if (!data || data.length === 0) {
+    return {
+      stability: 0,
+      standardDeviation: 0,
+      averageSpeed: 0,
+      windRange: { min: 0, max: 0 },
+      windyDays: 0,
+      sampleCount: 0,
+      confidence: 'low',
+    };
+  }
+
+  // Filter data for the specified month and valid wind readings
+  const monthData = data.filter((row) => {
+    const date = new Date(row.date);
+    const rowMonth = date.getMonth() + 1;
+    return rowMonth === month && row.velmedia !== null && row.velmedia > 0;
+  });
+
+  if (monthData.length === 0) {
+    return {
+      stability: 0,
+      standardDeviation: 0,
+      averageSpeed: 0,
+      windRange: { min: 0, max: 0 },
+      windyDays: 0,
+      sampleCount: 0,
+      confidence: 'low',
+    };
+  }
+
+  // Calculate mean wind speed
+  const windSpeeds = monthData.map((row) => row.velmedia as number);
+  const mean = windSpeeds.reduce((sum, speed) => sum + speed, 0) / windSpeeds.length;
+
+  // Calculate standard deviation
+  const squaredDifferences = windSpeeds.map((speed) => Math.pow(speed - mean, 2));
+  const variance = squaredDifferences.reduce((sum, sq) => sum + sq, 0) / windSpeeds.length;
+  const standardDeviation = Math.sqrt(variance);
+
+  // Convert standard deviation to stability percentage
+  // Trade winds typically have std dev of 3-8 km/h (very stable)
+  // Higher std dev means less predictable winds
+  // Formula: stability = 100 - (stdDev * 6), clamped to 0-100
+  // This gives: 0 km/h stdDev = 100%, ~8 km/h = 50%, ~16 km/h = 0%
+  const stability = Math.max(0, Math.min(100, Math.round(100 - standardDeviation * 6)));
+
+  // Calculate wind range (mean ± stdDev), clamped to minimum 0
+  const windRangeMin = Math.max(0, Math.round(mean - standardDeviation));
+  const windRangeMax = Math.round(mean + standardDeviation);
+
+  // Count windy days (wind > 20 km/h) and calculate average per year
+  const WINDY_THRESHOLD = 20;
+  const windyDaysTotal = windSpeeds.filter((speed) => speed > WINDY_THRESHOLD).length;
+  // Average windy days per month (data spans ~10 years)
+  const yearsOfData = 10;
+  const windyDaysPerMonth = Math.round(windyDaysTotal / yearsOfData);
+
+  // Determine confidence based on sample size
+  let confidence: 'high' | 'medium' | 'low';
+  if (monthData.length >= 200) {
+    confidence = 'high';
+  } else if (monthData.length >= 50) {
+    confidence = 'medium';
+  } else {
+    confidence = 'low';
+  }
+
+  return {
+    stability,
+    standardDeviation: Math.round(standardDeviation * 10) / 10,
+    averageSpeed: Math.round(mean * 10) / 10,
+    windRange: { min: windRangeMin, max: windRangeMax },
+    windyDays: windyDaysPerMonth,
+    sampleCount: monthData.length,
+    confidence,
+  };
+}
+
+// ─── RAIN STATISTICS CALCULATION ──────────────────────────────────────────────
+
+export interface RainStatsResult {
+  daysWithoutRain: number; // Percentage of days without rain (0-100)
+  totalRainyDays: number; // Count of rainy days (precip > 0.1mm)
+  totalDays: number; // Total days measured
+  averagePrecip: number; // Average precipitation (mm) on rainy days
+  sampleCount: number; // Number of measurements
+  confidence: 'high' | 'medium' | 'low';
+}
+
+/**
+ * Calculates rain statistics for a given station and month
+ * Based on 10 years of historical precipitation data
+ *
+ * A rainy day is defined as a day with precipitation > 0.1mm
+ * (standard meteorological threshold)
+ *
+ * @param stationId AEMET station ID
+ * @param month Month number (1-12)
+ * @returns RainStatsResult with dry day percentage and precipitation details
+ */
+export async function calculateRainStats(
+  stationId: string,
+  month: number
+): Promise<RainStatsResult> {
+  const tenYearsAgo = new Date();
+  tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
+
+  let data;
+  try {
+    const result = await supabase
+      .from('weather_data')
+      .select('date, precip')
+      .eq('station_id', stationId)
+      .gte('date', tenYearsAgo.toISOString().split('T')[0]);
+
+    if (result.error) {
+      console.warn('[Offline] Cannot fetch rain stats data:', result.error.message);
+      return {
+        daysWithoutRain: 0,
+        totalRainyDays: 0,
+        totalDays: 0,
+        averagePrecip: 0,
+        sampleCount: 0,
+        confidence: 'low',
+      };
+    }
+    data = result.data;
+  } catch (e) {
+    console.warn('[Offline] Network error fetching rain stats data');
+    return {
+      daysWithoutRain: 0,
+      totalRainyDays: 0,
+      totalDays: 0,
+      averagePrecip: 0,
+      sampleCount: 0,
+      confidence: 'low',
+    };
+  }
+
+  if (!data || data.length === 0) {
+    return {
+      daysWithoutRain: 0,
+      totalRainyDays: 0,
+      totalDays: 0,
+      averagePrecip: 0,
+      sampleCount: 0,
+      confidence: 'low',
+    };
+  }
+
+  // Filter data for the specified month with valid precip readings
+  const monthData = data.filter((row) => {
+    const date = new Date(row.date);
+    const rowMonth = date.getMonth() + 1;
+    return rowMonth === month && row.precip !== null;
+  });
+
+  if (monthData.length === 0) {
+    return {
+      daysWithoutRain: 0,
+      totalRainyDays: 0,
+      totalDays: 0,
+      averagePrecip: 0,
+      sampleCount: 0,
+      confidence: 'low',
+    };
+  }
+
+  // Rainy day threshold: > 0.1mm (standard meteorological definition)
+  const RAIN_THRESHOLD = 0.1;
+
+  const rainyDays = monthData.filter((row) => row.precip > RAIN_THRESHOLD);
+  const totalRainyDays = rainyDays.length;
+  const totalDays = monthData.length;
+
+  // Calculate percentage of days WITHOUT rain (positive messaging)
+  const daysWithoutRain = Math.round(((totalDays - totalRainyDays) / totalDays) * 100);
+
+  // Calculate average precipitation on rainy days only
+  const averagePrecip = totalRainyDays > 0
+    ? rainyDays.reduce((sum, row) => sum + (row.precip as number), 0) / totalRainyDays
+    : 0;
+
+  // Determine confidence based on sample size
+  let confidence: 'high' | 'medium' | 'low';
+  if (monthData.length >= 200) {
+    confidence = 'high';
+  } else if (monthData.length >= 50) {
+    confidence = 'medium';
+  } else {
+    confidence = 'low';
+  }
+
+  return {
+    daysWithoutRain,
+    totalRainyDays,
+    totalDays,
+    averagePrecip: Math.round(averagePrecip * 10) / 10,
+    sampleCount: monthData.length,
+    confidence,
+  };
+}
+
+export interface MonthlyRainComparison {
+  month: number;
+  rainyDays: number; // Average rainy days for this month
+  totalDays: number; // Days in month
+}
+
+/**
+ * Gets rain comparison data for all 12 months
+ * Returns average rainy days per month based on 10 years of data
+ */
+export async function getMonthlyRainComparison(
+  stationId: string
+): Promise<MonthlyRainComparison[]> {
+  const tenYearsAgo = new Date();
+  tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
+
+  try {
+    const { data, error } = await supabase
+      .from('weather_data')
+      .select('date, precip')
+      .eq('station_id', stationId)
+      .gte('date', tenYearsAgo.toISOString().split('T')[0]);
+
+    if (error || !data) {
+      console.warn('[Offline] Cannot fetch rain comparison data');
+      return [];
+    }
+
+    // Group by month and calculate average rainy days
+    const monthlyData: Map<number, { rainyDays: number; totalDays: number; years: Set<number> }> = new Map();
+
+    for (let m = 1; m <= 12; m++) {
+      monthlyData.set(m, { rainyDays: 0, totalDays: 0, years: new Set() });
+    }
+
+    const RAIN_THRESHOLD = 0.1;
+
+    for (const row of data) {
+      if (row.precip === null) continue;
+      const date = new Date(row.date);
+      const month = date.getMonth() + 1;
+      const year = date.getFullYear();
+      const entry = monthlyData.get(month)!;
+
+      entry.totalDays++;
+      entry.years.add(year);
+      if (row.precip > RAIN_THRESHOLD) {
+        entry.rainyDays++;
+      }
+    }
+
+    // Calculate averages (divide by number of years with data)
+    const result: MonthlyRainComparison[] = [];
+    for (let m = 1; m <= 12; m++) {
+      const entry = monthlyData.get(m)!;
+      const yearsCount = entry.years.size || 1;
+      result.push({
+        month: m,
+        rainyDays: Math.round(entry.rainyDays / yearsCount),
+        totalDays: Math.round(entry.totalDays / yearsCount),
+      });
+    }
+
+    return result;
+  } catch (e) {
+    console.warn('[Offline] Network error fetching rain comparison');
+    return [];
+  }
+}
+
+// ─── ISLAND RANKINGS ──────────────────────────────────────────────────────────
+
+export interface IslandRanking {
+  island: string;
+  value: number; // wind speed (km/h) or rainy days
+  stationCount: number;
+}
+
+/**
+ * Fetches all records from weather_data with pagination
+ * Supabase server limits responses to 1000 rows, so we need to paginate
+ */
+async function fetchAllWeatherData<T>(
+  selectColumns: string,
+  filters: { dateGte: string; notNullColumn?: string }
+): Promise<T[]> {
+  const PAGE_SIZE = 1000;
+  const allData: T[] = [];
+  let offset = 0;
+  let hasMore = true;
+
+  while (hasMore) {
+    let query = supabase
+      .from('weather_data')
+      .select(selectColumns)
+      .gte('date', filters.dateGte)
+      .order('date', { ascending: true })
+      .range(offset, offset + PAGE_SIZE - 1);
+
+    if (filters.notNullColumn) {
+      query = query.not(filters.notNullColumn, 'is', null);
+    }
+
+    const { data, error } = await query;
+
+    if (error || !data) {
+      console.warn('[Offline] Error fetching weather data page:', error?.message);
+      break;
+    }
+
+    allData.push(...(data as T[]));
+
+    if (data.length < PAGE_SIZE) {
+      hasMore = false;
+    } else {
+      offset += PAGE_SIZE;
+    }
+  }
+
+  return allData;
+}
+
+const RANKING_CACHE_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+/**
+ * Gets wind speed ranking by island for a specific month
+ * Returns islands sorted from windiest to calmest
+ */
+export async function getWindRankingByIsland(month: number): Promise<IslandRanking[]> {
+  // Check cache first
+  const cacheKey = `wind_ranking_v1_${month}`;
+  try {
+    const cached = await AsyncStorage.getItem(cacheKey);
+    if (cached) {
+      const { data, timestamp } = JSON.parse(cached);
+      if (Date.now() - timestamp < RANKING_CACHE_DURATION) {
+        return data;
+      }
+    }
+  } catch (e) {
+    // Cache read failed, continue with fetch
+  }
+
+  const tenYearsAgo = new Date();
+  tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
+
+  try {
+    // Get all station IDs grouped by island
+    const stationsByIsland: Map<string, string[]> = new Map();
+    const stations = locationsMapping.stations as Record<string, StationMapping>;
+
+    for (const [stationId, station] of Object.entries(stations)) {
+      // Skip high altitude stations for fair comparison
+      if ((station as any).isHighAltitude) continue;
+
+      const island = station.island;
+      if (!stationsByIsland.has(island)) {
+        stationsByIsland.set(island, []);
+      }
+      stationsByIsland.get(island)!.push(stationId);
+    }
+
+    // Fetch wind data for all stations with pagination
+    const data = await fetchAllWeatherData<{ station_id: string; date: string; velmedia: number }>(
+      'station_id, date, velmedia',
+      { dateGte: tenYearsAgo.toISOString().split('T')[0], notNullColumn: 'velmedia' }
+    );
+
+    if (data.length === 0) {
+      console.warn('[Offline] No wind ranking data available');
+      return [];
+    }
+
+    // Calculate average wind speed per island for the specified month
+    const islandStats: Map<string, { totalWind: number; count: number; stationCount: number }> = new Map();
+
+    for (const [island, stationIds] of stationsByIsland) {
+      islandStats.set(island, { totalWind: 0, count: 0, stationCount: stationIds.length });
+    }
+
+    for (const row of data) {
+      const date = new Date(row.date);
+      if (date.getMonth() + 1 !== month) continue;
+
+      const station = stations[row.station_id];
+      if (!station || (station as any).isHighAltitude) continue;
+
+      const island = station.island;
+      const stats = islandStats.get(island);
+      if (stats && row.velmedia !== null) {
+        stats.totalWind += row.velmedia;
+        stats.count++;
+      }
+    }
+
+    // Build ranking sorted by wind speed (descending)
+    const ranking: IslandRanking[] = [];
+    for (const [island, stats] of islandStats) {
+      if (stats.count > 0) {
+        ranking.push({
+          island,
+          value: Math.round((stats.totalWind / stats.count) * 10) / 10,
+          stationCount: stats.stationCount,
+        });
+      }
+    }
+
+    const sortedRanking = ranking.sort((a, b) => b.value - a.value);
+
+    // Save to cache
+    try {
+      await AsyncStorage.setItem(cacheKey, JSON.stringify({ data: sortedRanking, timestamp: Date.now() }));
+    } catch (e) {
+      // Cache write failed, continue
+    }
+
+    return sortedRanking;
+  } catch (e) {
+    console.warn('[Offline] Network error fetching wind ranking');
+    return [];
+  }
+}
+
+/**
+ * Gets rain ranking by island for a specific month
+ * Returns islands sorted from rainiest to driest
+ */
+export async function getRainRankingByIsland(month: number): Promise<IslandRanking[]> {
+  // Check cache first
+  const cacheKey = `rain_ranking_v1_${month}`;
+  try {
+    const cached = await AsyncStorage.getItem(cacheKey);
+    if (cached) {
+      const { data, timestamp } = JSON.parse(cached);
+      if (Date.now() - timestamp < RANKING_CACHE_DURATION) {
+        return data;
+      }
+    }
+  } catch (e) {
+    // Cache read failed, continue with fetch
+  }
+
+  const tenYearsAgo = new Date();
+  tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
+
+  try {
+    // Get all station IDs grouped by island
+    const stationsByIsland: Map<string, string[]> = new Map();
+    const stations = locationsMapping.stations as Record<string, StationMapping>;
+
+    for (const [stationId, station] of Object.entries(stations)) {
+      // Skip high altitude stations for fair comparison
+      if ((station as any).isHighAltitude) continue;
+
+      const island = station.island;
+      if (!stationsByIsland.has(island)) {
+        stationsByIsland.set(island, []);
+      }
+      stationsByIsland.get(island)!.push(stationId);
+    }
+
+    // Fetch precip data for all stations with pagination
+    const data = await fetchAllWeatherData<{ station_id: string; date: string; precip: number | null }>(
+      'station_id, date, precip',
+      { dateGte: tenYearsAgo.toISOString().split('T')[0] }
+    );
+
+    if (data.length === 0) {
+      console.warn('[Offline] No rain ranking data available');
+      return [];
+    }
+
+    const RAIN_THRESHOLD = 0.1;
+
+    // Calculate average rainy days per island for the specified month
+    const islandStats: Map<string, { rainyDays: number; totalDays: number; years: Set<number>; stationCount: number }> = new Map();
+
+    for (const [island, stationIds] of stationsByIsland) {
+      islandStats.set(island, { rainyDays: 0, totalDays: 0, years: new Set(), stationCount: stationIds.length });
+    }
+
+    for (const row of data) {
+      if (row.precip === null) continue;
+
+      const date = new Date(row.date);
+      if (date.getMonth() + 1 !== month) continue;
+
+      const station = stations[row.station_id];
+      if (!station || (station as any).isHighAltitude) continue;
+
+      const island = station.island;
+      const stats = islandStats.get(island);
+      if (stats) {
+        stats.totalDays++;
+        stats.years.add(date.getFullYear());
+        if (row.precip > RAIN_THRESHOLD) {
+          stats.rainyDays++;
+        }
+      }
+    }
+
+    // Build ranking sorted by rainy days (descending - rainiest first)
+    const ranking: IslandRanking[] = [];
+    for (const [island, stats] of islandStats) {
+      const yearsCount = stats.years.size || 1;
+      if (stats.totalDays > 0) {
+        ranking.push({
+          island,
+          value: Math.round(stats.rainyDays / yearsCount),
+          stationCount: stats.stationCount,
+        });
+      }
+    }
+
+    const sortedRanking = ranking.sort((a, b) => b.value - a.value);
+
+    // Save to cache
+    try {
+      await AsyncStorage.setItem(cacheKey, JSON.stringify({ data: sortedRanking, timestamp: Date.now() }));
+    } catch (e) {
+      // Cache write failed, continue
+    }
+
+    return sortedRanking;
+  } catch (e) {
+    console.warn('[Offline] Network error fetching rain ranking');
+    return [];
+  }
+}
+
 /**
  * Finds the nearest station to given coordinates
  * @param excludeHighAltitude If true (default), excludes high altitude stations (Izaña, Roque de los Muchachos)

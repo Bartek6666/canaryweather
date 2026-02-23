@@ -11,6 +11,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SearchScreen } from './src/screens';
 import ResultScreen from './src/screens/ResultScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
+import WindDetailsScreen from './src/screens/WindDetailsScreen';
+import RainDetailsScreen from './src/screens/RainDetailsScreen';
 import { theme } from './src/constants/theme';
 import { loadSavedLanguage } from './src/i18n';
 
@@ -23,7 +25,27 @@ SplashScreen.preventAutoHideAsync();
 export type RootStackParamList = {
   Onboarding: undefined;
   Search: undefined;
-  Result: { stationId: string; locationAlias?: string };
+  Result: {
+    stationId: string;
+    locationName?: string;
+    locationCoords?: { lat: number; lon: number };
+    isHighAltitudeFallback?: boolean;
+  };
+  WindDetails: {
+    stationId: string;
+    month: number;
+    stationName: string;
+    averageSpeed: number;
+    locationName?: string;
+    island: string;
+  };
+  RainDetails: {
+    stationId: string;
+    month: number;
+    stationName: string;
+    locationName?: string;
+    island: string;
+  };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -87,6 +109,8 @@ export default function App() {
             <Stack.Screen name="Onboarding" component={OnboardingScreen} />
             <Stack.Screen name="Search" component={SearchScreen} />
             <Stack.Screen name="Result" component={ResultScreen} />
+            <Stack.Screen name="WindDetails" component={WindDetailsScreen} />
+            <Stack.Screen name="RainDetails" component={RainDetailsScreen} />
           </Stack.Navigator>
         </NavigationContainer>
       </View>
