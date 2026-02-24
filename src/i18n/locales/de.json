@@ -54,6 +54,8 @@
     "calimaInfoDangersList": "• Verminderte Luftqualität und Sicht\n• Atemprobleme, besonders bei Asthmatikern\n• Augen- und Hautreizungen\n• Temperaturanstieg bis zu 10°C\n• Mögliche Flugstörungen",
     "calimaInfoSafety": "Wie schützt man sich?",
     "calimaInfoSafetyList": "• Zeit im Freien begrenzen\n• Fenster schließen und Klimaanlage nutzen\n• Viel Wasser trinken\n• Sonnenbrille tragen\n• Asthmatiker sollten Medikamente dabei haben\n• Intensive körperliche Aktivität vermeiden",
+    "coastalAlert": "Warnung: Hohe Wellen",
+    "coastalAlertDesc": "Küstenwarnung - gefährliche Seebedingungen erwartet.",
     "humidity": "Luftfeuchtigkeit",
     "wind": "Wind",
     "sunChance": "Chance auf Sonne",
@@ -235,5 +237,19 @@
     "thunderstormHail": "Gewitter mit Hagel",
     "severeThunderstorm": "Schweres Gewitter",
     "unknown": "Unbekannt"
+  },
+  "alerts": {
+    "coastalPhenomena": "Küstenphänomene",
+    "severityYellow": "Gelbe Warnung",
+    "severityOrange": "Orange Warnung",
+    "severityRed": "Rote Warnung",
+    "validityPeriod": "Gültigkeitszeitraum",
+    "from": "Von",
+    "to": "Bis",
+    "affectedArea": "Betroffenes Gebiet",
+    "officialAemetMessage": "Offizielle AEMET-Meldung",
+    "noDescriptionAvailable": "Keine detaillierte Beschreibung verfügbar.",
+    "dataSource": "Datenquelle: AEMET Meteoalerta",
+    "close": "Schließen"
   }
 }

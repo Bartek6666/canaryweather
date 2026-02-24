@@ -2484,3 +2484,201 @@ export async function fetchCalimaStatus(
     return null;
   }
 }
+
+// ─── COASTAL ALERTS (AEMET Meteoalerta API) ────────────────────────────────────
+
+import { CoastalAlert, AlertSeverity, AlertPhenomenon } from '../types';
+
+// AEMET zone codes for Canary Islands by island
+const AEMET_ZONE_CODES: Record<string, string> = {
+  'Tenerife': '610000',
+  'Gran Canaria': '350000',
+  'Lanzarote': '350000', // Eastern islands share code
+  'Fuerteventura': '350000',
+  'La Palma': '610000', // Western islands share code
+  'La Gomera': '610000',
+  'El Hierro': '610000',
+};
+
+// Note: Uses AEMET_API_KEY already defined above in this file
+
+/** Maps AEMET nivel to AlertSeverity */
+function mapAemetSeverity(nivel: string): AlertSeverity {
+  switch (nivel?.toLowerCase()) {
+    case 'rojo':
+    case 'red':
+      return 'red';
+    case 'naranja':
+    case 'orange':
+      return 'orange';
+    case 'amarillo':
+    case 'yellow':
+    default:
+      return 'yellow';
+  }
+}
+
+/** Maps AEMET event type to AlertPhenomenon */
+function mapAemetPhenomenon(eventType: string): AlertPhenomenon {
+  const type = eventType?.toLowerCase() || '';
+  if (type.includes('costero') || type.includes('coastal') || type.includes('olas') || type.includes('wave')) {
+    return 'coastal';
+  }
+  if (type.includes('viento') || type.includes('wind')) {
+    return 'wind';
+  }
+  if (type.includes('lluvia') || type.includes('rain') || type.includes('precipit')) {
+    return 'rain';
+  }
+  if (type.includes('tormenta') || type.includes('storm') || type.includes('thunder')) {
+    return 'thunderstorm';
+  }
+  if (type.includes('temperat') || type.includes('calor') || type.includes('frio')) {
+    return 'temperature';
+  }
+  if (type.includes('nieve') || type.includes('snow')) {
+    return 'snow';
+  }
+  return 'other';
+}
+
+/** AEMET Meteoalerta CAP response structure */
+interface AemetCapAlert {
+  idAviso: string;
+  nivel: string;
+  fenomeno: string;
+  descripcion?: string;
+  inicio: string;
+  fin: string;
+  zona?: string;
+  areaDesc?: string;
+}
+
+interface AemetMeteoalertaResponse {
+  datos: string; // URL to fetch actual alert data
+  estado: number;
+}
+
+/**
+ * Fetches coastal weather alerts from AEMET Meteoalerta API
+ * Filters for "Fenómenos Costeros" (coastal phenomena) - high waves, storm surge
+ *
+ * @param island Island name to filter alerts
+ * @returns Array of CoastalAlert or null if request fails
+ */
+export async function fetchCoastalAlerts(
+  island: string
+): Promise<CoastalAlert[] | null> {
+  const TIMEOUT_MS = 15000;
+
+  if (!AEMET_API_KEY) {
+    console.warn('[CoastalAlerts] AEMET API key not configured');
+    return null;
+  }
+
+  try {
+    // Step 1: Get the data URL from AEMET API
+    const zoneCode = AEMET_ZONE_CODES[island] || '610000';
+    const apiUrl = `https://opendata.aemet.es/opendata/api/avisos_cap/ultimoelaborado/area/${zoneCode}`;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+    const metaResponse = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'api_key': AEMET_API_KEY,
+      },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!metaResponse.ok) {
+      console.warn(`[CoastalAlerts] AEMET API error: ${metaResponse.status}`);
+      return null;
+    }
+
+    const metaData: AemetMeteoalertaResponse = await metaResponse.json();
+
+    if (metaData.estado !== 200 || !metaData.datos) {
+      console.warn('[CoastalAlerts] AEMET returned no data URL');
+      return null;
+    }
+
+    // Step 2: Fetch actual alert data from the datos URL
+    const dataController = new AbortController();
+    const dataTimeoutId = setTimeout(() => dataController.abort(), TIMEOUT_MS);
+
+    const dataResponse = await fetch(metaData.datos, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+      signal: dataController.signal,
+    });
+
+    clearTimeout(dataTimeoutId);
+
+    if (!dataResponse.ok) {
+      console.warn(`[CoastalAlerts] Failed to fetch alert data: ${dataResponse.status}`);
+      return null;
+    }
+
+    const alerts: AemetCapAlert[] = await dataResponse.json();
+
+    if (!Array.isArray(alerts)) {
+      console.warn('[CoastalAlerts] Invalid response format');
+      return null;
+    }
+
+    // Step 3: Filter for coastal phenomena and active alerts
+    const now = new Date();
+    const coastalAlerts = alerts
+      .filter((alert) => {
+        const phenomenon = mapAemetPhenomenon(alert.fenomeno);
+        const endTime = new Date(alert.fin);
+        // Only include coastal alerts that are still active
+        return phenomenon === 'coastal' && endTime > now;
+      })
+      .map((alert): CoastalAlert => ({
+        id: alert.idAviso || `aemet-${Date.now()}`,
+        severity: mapAemetSeverity(alert.nivel),
+        phenomenon: 'coastal',
+        headline: alert.fenomeno || 'Fenómenos Costeros',
+        description: alert.descripcion || '',
+        startTime: alert.inicio,
+        endTime: alert.fin,
+        areaName: alert.areaDesc || alert.zona || island,
+        eventCode: alert.fenomeno,
+      }));
+
+    // Sort by severity (red > orange > yellow)
+    const severityOrder: Record<AlertSeverity, number> = { red: 3, orange: 2, yellow: 1 };
+    coastalAlerts.sort((a, b) => severityOrder[b.severity] - severityOrder[a.severity]);
+
+    return coastalAlerts;
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        console.warn('[CoastalAlerts] Request timed out');
+      } else {
+        console.warn('[CoastalAlerts] Network error:', error.message);
+      }
+    }
+    return null;
+  }
+}
+
+/**
+ * Returns the most severe coastal alert for a location
+ * Use this to display a single alert card in the UI
+ */
+export async function fetchMostSevereCoastalAlert(
+  island: string
+): Promise<CoastalAlert | null> {
+  const alerts = await fetchCoastalAlerts(island);
+  if (!alerts || alerts.length === 0) return null;
+  return alerts[0]; // Already sorted by severity
+}

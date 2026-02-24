@@ -54,6 +54,8 @@
     "calimaInfoDangersList": "• Obniżona jakość powietrza i widoczność\n• Problemy oddechowe, szczególnie u astmatyków\n• Podrażnienie oczu i skóry\n• Wzrost temperatury nawet o 10°C\n• Możliwe zakłócenia w ruchu lotniczym",
     "calimaInfoSafety": "Jak się zachować?",
     "calimaInfoSafetyList": "• Ogranicz przebywanie na zewnątrz\n• Zamknij okna i używaj klimatyzacji\n• Pij dużo wody\n• Noś okulary przeciwsłoneczne\n• Osoby z astmą powinny mieć przy sobie leki\n• Unikaj intensywnego wysiłku fizycznego",
+    "coastalAlert": "Uwaga: Wysokie Fale",
+    "coastalAlertDesc": "Ostrzeżenie o zagrożeniu wybrzeża - spodziewane niebezpieczne warunki na morzu.",
     "humidity": "Wilgotność",
     "wind": "Wiatr",
     "sunChance": "Szansa na słońce",
@@ -261,5 +263,19 @@
     "title": "Czym jest Sun Chance?",
     "description": "To wskaźnik oparty na twardych danych. Analizujemy pomiary z ostatnich 10 lat dla tej konkretnej lokalizacji i godziny, aby określić realne prawdopodobieństwo bezchmurnego nieba. To statystyka historyczna, która uzupełnia prognozę live.",
     "close": "Rozumiem"
+  },
+  "alerts": {
+    "coastalPhenomena": "Zjawiska Przybrzeżne",
+    "severityYellow": "Ostrzeżenie Żółte",
+    "severityOrange": "Ostrzeżenie Pomarańczowe",
+    "severityRed": "Ostrzeżenie Czerwone",
+    "validityPeriod": "Okres Obowiązywania",
+    "from": "Od",
+    "to": "Do",
+    "affectedArea": "Obszar Objęty Ostrzeżeniem",
+    "officialAemetMessage": "Oficjalny Komunikat AEMET",
+    "noDescriptionAvailable": "Brak szczegółowego opisu.",
+    "dataSource": "Źródło danych: AEMET Meteoalerta",
+    "close": "Zamknij"
   }
 }

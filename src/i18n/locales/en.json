@@ -54,6 +54,8 @@
     "calimaInfoDangersList": "• Reduced air quality and visibility\n• Respiratory problems, especially for asthmatics\n• Eye and skin irritation\n• Temperature increase up to 10°C\n• Possible flight disruptions",
     "calimaInfoSafety": "How to stay safe?",
     "calimaInfoSafetyList": "• Limit time outdoors\n• Close windows and use air conditioning\n• Drink plenty of water\n• Wear sunglasses\n• Asthmatics should carry their medication\n• Avoid intense physical activity",
+    "coastalAlert": "Alert: High Waves",
+    "coastalAlertDesc": "Coastal hazard warning - dangerous sea conditions expected.",
     "humidity": "Humidity",
     "wind": "Wind",
     "sunChance": "Chance of sun",
@@ -235,5 +237,19 @@
     "thunderstormHail": "Thunderstorm with hail",
     "severeThunderstorm": "Severe thunderstorm",
     "unknown": "Unknown"
+  },
+  "alerts": {
+    "coastalPhenomena": "Coastal Phenomena",
+    "severityYellow": "Yellow Warning",
+    "severityOrange": "Orange Warning",
+    "severityRed": "Red Warning",
+    "validityPeriod": "Validity Period",
+    "from": "From",
+    "to": "To",
+    "affectedArea": "Affected Area",
+    "officialAemetMessage": "Official AEMET Message",
+    "noDescriptionAvailable": "No detailed description available.",
+    "dataSource": "Data source: AEMET Meteoalerta",
+    "close": "Close"
   }
 }

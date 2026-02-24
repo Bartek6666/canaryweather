@@ -25,7 +25,8 @@ export type SearchType =
   | 'result_view'       // Weather result screen view
   | 'wind_details_view' // Wind details screen view
   | 'wind_stability_view' // Wind stability card view
-  | 'rain_details_view'; // Rain details screen view
+  | 'rain_details_view' // Rain details screen view
+  | 'alert_details_view'; // Alert details modal view
 
 export interface SearchAnalyticsEvent {
   searchQuery?: string;
@@ -315,5 +316,15 @@ export function trackRainDetailsView(params: {
   trackSearchEvent({
     searchType: 'rain_details_view',
     selectedStationId: params.stationId,
+  });
+}
+
+export function trackAlertDetailsView(params: {
+  severity: string;
+  alertType: string;
+}): void {
+  trackSearchEvent({
+    searchType: 'alert_details_view',
+    searchQuery: `${params.alertType}_${params.severity}`, // Using searchQuery to store alert metadata
   });
 }

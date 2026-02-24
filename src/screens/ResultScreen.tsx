@@ -15,14 +15,15 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
+import * as Haptics from 'expo-haptics';
 
 import { colors, spacing, typography, glass, glassText, borderRadius, gradients, shadows, getSunChanceColor, liveCard, theme } from '../constants/theme';
-import { AlertCard, GlassCard, SunChanceGauge, SunChanceModal, WeatherIcon, WeatherEffects } from '../components';
+import { AlertCard, AlertDetailModal, CoastalAlertCard, GlassCard, SunChanceGauge, SunChanceModal, WeatherIcon, WeatherEffects } from '../components';
 import locationsMapping from '../constants/locations_mapping.json';
-import { calculateSunChanceWithFallback, SunChanceWithFallback, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult, calculateInterpolatedMonthlyStats, InterpolatedMonthlyStatsResult } from '../services/weatherService';
+import { calculateSunChanceWithFallback, SunChanceWithFallback, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult, calculateInterpolatedMonthlyStats, InterpolatedMonthlyStatsResult, fetchMostSevereCoastalAlert } from '../services/weatherService';
 import { supabase } from '../services/supabase';
-import { trackResultView } from '../services/analyticsService';
-import { SunChanceResult, MonthlyStats, LiveWeatherData, WeatherCondition } from '../types';
+import { trackResultView, trackAlertDetailsView } from '../services/analyticsService';
+import { SunChanceResult, MonthlyStats, LiveWeatherData, WeatherCondition, CoastalAlert } from '../types';
 import { MONTH_KEYS } from '../i18n';
 import { RootStackParamList } from '../../App';
 
@@ -368,6 +369,11 @@ export default function ResultScreen({ navigation, route }: Props) {
   // Sun Chance info modal state
   const [showSunChanceModal, setShowSunChanceModal] = useState(false);
 
+  // Coastal alert state (AEMET Meteoalerta for high waves)
+  const [coastalAlert, setCoastalAlert] = useState<CoastalAlert | null>(null);
+  const [selectedAlert, setSelectedAlert] = useState<CoastalAlert | null>(null);
+  const [showAlertModal, setShowAlertModal] = useState(false);
+
   // Handle month selection with scroll to Sun Chance gauge
   const handleMonthSelect = useCallback((month: number) => {
     setSelectedMonth(month);
@@ -482,6 +488,54 @@ export default function ResultScreen({ navigation, route }: Props) {
     const interval = setInterval(loadCalimaStatus, 30 * 60 * 1000);
     return () => clearInterval(interval);
   }, [station]);
+
+  // Fetch coastal alerts from AEMET Meteoalerta (only for coastal stations)
+  useEffect(() => {
+    if (!station) return;
+
+    // Only fetch coastal alerts for coastal locations
+    const isCoastal = (station as Record<string, unknown>).isCoastal ?? true; // Default to true for backwards compatibility
+    if (!isCoastal) {
+      setCoastalAlert(null);
+      return;
+    }
+
+    const loadCoastalAlert = async () => {
+      try {
+        const alert = await fetchMostSevereCoastalAlert(station.island);
+        setCoastalAlert(alert);
+      } catch (e) {
+        console.error('[CoastalAlert] Error fetching alerts:', e);
+        setCoastalAlert(null);
+      }
+    };
+
+    loadCoastalAlert();
+
+    // Refresh coastal alerts every 30 minutes
+    const interval = setInterval(loadCoastalAlert, 30 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [station]);
+
+  // Haptic feedback for severe alerts (orange/red)
+  useEffect(() => {
+    if (coastalAlert && (coastalAlert.severity === 'orange' || coastalAlert.severity === 'red')) {
+      // Trigger stronger haptic notification for severe alerts
+      Haptics.notificationAsync(
+        coastalAlert.severity === 'red'
+          ? Haptics.NotificationFeedbackType.Error  // Strongest vibration for red
+          : Haptics.NotificationFeedbackType.Warning // Medium vibration for orange
+      );
+    }
+  }, [coastalAlert?.id]); // Only trigger when alert ID changes (new alert)
+
+  // Handle opening alert detail modal
+  const handleAlertPress = useCallback((alert: CoastalAlert) => {
+    setSelectedAlert(alert);
+    setShowAlertModal(true);
+    // Track analytics
+    trackAlertDetailsView({ severity: alert.severity, alertType: 'coastal' });
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -747,6 +801,14 @@ export default function ResultScreen({ navigation, route }: Props) {
         {/* Calima Alert - displayed when Saharan dust storm is detected (PM10 > 50 µg/m³) */}
         <AlertCard type="calima" visible={calimaStatus?.isDetected ?? false} />
 
+        {/* Coastal Alert - displayed when AEMET issues high wave warnings for coastal locations */}
+        {coastalAlert && (
+          <CoastalAlertCard
+            alert={coastalAlert}
+            onPress={() => handleAlertPress(coastalAlert)}
+          />
+        )}
+
         {/* Live Weather Card — real-time data from Open-Meteo */}
         <LiveWeatherCard data={liveData} isLoading={isLoadingLive} hasError={liveError} isFromCache={isFromCache} />
 
@@ -796,6 +858,13 @@ export default function ResultScreen({ navigation, route }: Props) {
       <SunChanceModal
         visible={showSunChanceModal}
         onClose={() => setShowSunChanceModal(false)}
+      />
+
+      {/* Alert Detail Modal - shows full AEMET warning details */}
+      <AlertDetailModal
+        visible={showAlertModal}
+        alert={selectedAlert}
+        onClose={() => setShowAlertModal(false)}
       />
     </View>
   );

@@ -38,6 +38,7 @@ export interface StationMapping {
   altitude: number;
   isNorthern: boolean;
   isHighAltitude?: boolean;
+  isCoastal?: boolean;
   aliases: string[];
 }
 
@@ -169,4 +170,41 @@ export interface LiveWeatherData {
   condition: WeatherCondition;
   conditionLabelKey: string; // i18n key for weather.* translation
   timestamp: string;
+}
+
+// ─── AEMET METEOALERTA TYPES ─────────────────────────────────────────────────
+
+/** Alert severity levels from AEMET Meteoalerta */
+export type AlertSeverity = 'yellow' | 'orange' | 'red';
+
+/** Alert phenomenon types from AEMET */
+export type AlertPhenomenon =
+  | 'coastal'       // Fenómenos Costeros - high waves, coastal flooding
+  | 'wind'          // Viento
+  | 'rain'          // Lluvias
+  | 'thunderstorm'  // Tormentas
+  | 'temperature'   // Temperaturas extremas
+  | 'snow'          // Nevadas
+  | 'other';        // Otros fenómenos
+
+/** AEMET Meteoalerta coastal event data */
+export interface CoastalAlert {
+  /** Alert ID from AEMET */
+  id: string;
+  /** Alert severity level */
+  severity: AlertSeverity;
+  /** Phenomenon type */
+  phenomenon: AlertPhenomenon;
+  /** Alert headline/title from AEMET */
+  headline: string;
+  /** Full description in Spanish from AEMET */
+  description: string;
+  /** Start time of alert validity (ISO string) */
+  startTime: string;
+  /** End time of alert validity (ISO string) */
+  endTime: string;
+  /** Affected area name */
+  areaName: string;
+  /** Raw AEMET event type code */
+  eventCode: string;
 }

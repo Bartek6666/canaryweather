@@ -54,6 +54,8 @@
     "calimaInfoDangersList": "• Reducción de la calidad del aire y visibilidad\n• Problemas respiratorios, especialmente en asmáticos\n• Irritación de ojos y piel\n• Aumento de temperatura hasta 10°C\n• Posibles interrupciones de vuelos",
     "calimaInfoSafety": "¿Cómo protegerse?",
     "calimaInfoSafetyList": "• Limitar el tiempo al aire libre\n• Cerrar ventanas y usar aire acondicionado\n• Beber mucha agua\n• Usar gafas de sol\n• Los asmáticos deben llevar su medicación\n• Evitar actividad física intensa",
+    "coastalAlert": "Alerta: Oleaje Alto",
+    "coastalAlertDesc": "Aviso de fenómenos costeros - condiciones marítimas peligrosas previstas.",
     "humidity": "Humedad",
     "wind": "Viento",
     "sunChance": "Probabilidad de sol",
@@ -235,5 +237,19 @@
     "thunderstormHail": "Tormenta con granizo",
     "severeThunderstorm": "Tormenta severa",
     "unknown": "Desconocido"
+  },
+  "alerts": {
+    "coastalPhenomena": "Fenómenos Costeros",
+    "severityYellow": "Aviso Amarillo",
+    "severityOrange": "Aviso Naranja",
+    "severityRed": "Aviso Rojo",
+    "validityPeriod": "Período de Validez",
+    "from": "Desde",
+    "to": "Hasta",
+    "affectedArea": "Zona Afectada",
+    "officialAemetMessage": "Mensaje Oficial de AEMET",
+    "noDescriptionAvailable": "No hay descripción detallada disponible.",
+    "dataSource": "Fuente de datos: AEMET Meteoalerta",
+    "close": "Cerrar"
   }
 }

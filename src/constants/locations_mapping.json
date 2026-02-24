@@ -11,6 +11,7 @@
       "longitude": -16.2518,
       "altitude": 35,
       "isNorthern": true,
+      "isCoastal": true,
       "aliases": [
         "Santa Cruz",
         "Santa Cruz de Tenerife",
@@ -25,6 +26,7 @@
       "longitude": -16.5614,
       "altitude": 64,
       "isNorthern": false,
+      "isCoastal": true,
       "aliases": [
         "Tenerife Sur",
         "Tenerife South",
@@ -43,6 +45,7 @@
       "longitude": -16.3414,
       "altitude": 617,
       "isNorthern": true,
+      "isCoastal": false,
       "aliases": [
         "La Laguna",
         "Los Rodeos",
@@ -59,6 +62,7 @@
       "altitude": 2371,
       "isNorthern": false,
       "isHighAltitude": true,
+      "isCoastal": false,
       "aliases": [
         "Izaña",
         "Teide",
@@ -80,6 +84,7 @@
       "longitude": -16.5489,
       "altitude": 25,
       "isNorthern": true,
+      "isCoastal": true,
       "aliases": [
         "Puerto de la Cruz",
         "Puerto Cruz",
@@ -98,6 +103,7 @@
       "longitude": -16.7256,
       "altitude": 270,
       "isNorthern": false,
+      "isCoastal": true,
       "aliases": [
         "Adeje",
         "Costa Adeje",
@@ -122,6 +128,7 @@
       "longitude": -16.6364,
       "altitude": 1400,
       "isNorthern": false,
+      "isCoastal": false,
       "aliases": [
         "Vilaflor",
         "Vilaflor de Chasna",
@@ -137,6 +144,7 @@
       "longitude": -15.3867,
       "altitude": 24,
       "isNorthern": false,
+      "isCoastal": true,
       "aliases": [
         "Gran Canaria Aeropuerto",
         "Gando",
@@ -152,6 +160,7 @@
       "longitude": -15.5864,
       "altitude": 62,
       "isNorthern": false,
+      "isCoastal": true,
       "aliases": [
         "Maspalomas",
         "Playa del Ingles",
@@ -173,6 +182,7 @@
       "longitude": -15.7181,
       "altitude": 30,
       "isNorthern": false,
+      "isCoastal": true,
       "aliases": [
         "Mogan",
         "Mogán",
@@ -191,6 +201,7 @@
       "longitude": -15.4167,
       "altitude": 269,
       "isNorthern": true,
+      "isCoastal": true,
       "aliases": [
         "Las Palmas",
         "Las Palmas de Gran Canaria",
@@ -210,6 +221,7 @@
       "longitude": -13.6056,
       "altitude": 14,
       "isNorthern": false,
+      "isCoastal": true,
       "aliases": [
         "Lanzarote",
         "Arrecife",
@@ -229,6 +241,7 @@
       "longitude": -13.4958,
       "altitude": 270,
       "isNorthern": true,
+      "isCoastal": true,
       "aliases": [
         "Haria",
         "Haría",
@@ -246,6 +259,7 @@
       "longitude": -13.5477,
       "altitude": 6,
       "isNorthern": false,
+      "isCoastal": true,
       "aliases": [
         "Arrecife",
         "Arrecife de Lanzarote",
@@ -260,6 +274,7 @@
       "longitude": -13.8633,
       "altitude": 25,
       "isNorthern": false,
+      "isCoastal": true,
       "aliases": [
         "Fuerteventura",
         "Puerto del Rosario",
@@ -284,6 +299,7 @@
       "longitude": -17.7558,
       "altitude": 33,
       "isNorthern": false,
+      "isCoastal": true,
       "aliases": [
         "La Palma",
         "Santa Cruz de La Palma",
@@ -307,6 +323,7 @@
       "altitude": 2326,
       "isNorthern": true,
       "isHighAltitude": true,
+      "isCoastal": false,
       "aliases": [
         "Roque de los Muchachos",
         "Observatorio",
@@ -325,6 +342,7 @@
       "longitude": -17.2142,
       "altitude": 225,
       "isNorthern": false,
+      "isCoastal": true,
       "aliases": [
         "La Gomera",
         "San Sebastian de la Gomera",
@@ -346,6 +364,7 @@
       "longitude": -17.8886,
       "altitude": 32,
       "isNorthern": false,
+      "isCoastal": true,
       "aliases": [
         "El Hierro",
         "Valverde",

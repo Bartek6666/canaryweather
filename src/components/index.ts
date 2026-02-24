@@ -1,4 +1,6 @@
 export { AlertCard } from './AlertCard';
+export { AlertDetailModal } from './AlertDetailModal';
+export { CoastalAlertCard } from './CoastalAlertCard';
 export { GlassCard } from './GlassCard';
 export { HeroLogo } from './HeroLogo';
 export { LanguageSwitcher } from './LanguageSwitcher';
