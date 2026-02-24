@@ -1168,299 +1168,6 @@ function calculateDistanceWeights(distances: number[]): number[] {
   return inverseDistances.map(w => w / sum);
 }
 
-/**
- * Interpolated weather result from multiple stations
- */
-export interface InterpolatedWeatherResult {
-  data: LiveWeatherData;
-  stations: Array<{
-    stationId: string;
-    name: string;
-    distance: number;
-    weight: number;
-  }>;
-  isSingleStation: boolean;
-  isFromCache: boolean;
-}
-
-/**
- * Fetches and interpolates live weather from nearest stations
- * - If closest station < 5km: uses only that station
- * - Otherwise: weighted average from 3 nearest stations
- *
- * @param targetLat Target latitude
- * @param targetLon Target longitude
- * @param forceRefresh Skip cache if true
- */
-export async function fetchInterpolatedWeather(
-  targetLat: number,
-  targetLon: number,
-  forceRefresh: boolean = false
-): Promise<InterpolatedWeatherResult | null> {
-  // Find 3 nearest stations
-  const nearestStations = findNearestStations(targetLat, targetLon, 3);
-
-  if (nearestStations.length === 0) {
-    return null;
-  }
-
-  // Check if closest station is within threshold
-  const closestStation = nearestStations[0];
-  if (closestStation.distance < SINGLE_STATION_THRESHOLD_KM) {
-    // Use single station data
-    const result = await fetchLiveWeather(
-      closestStation.latitude!,
-      closestStation.longitude!,
-      closestStation.stationId,
-      forceRefresh
-    );
-
-    if (!result) return null;
-
-    return {
-      data: result.data,
-      stations: [{
-        stationId: closestStation.stationId,
-        name: closestStation.name,
-        distance: closestStation.distance,
-        weight: 1,
-      }],
-      isSingleStation: true,
-      isFromCache: result.isFromCache,
-    };
-  }
-
-  // Fetch weather from all 3 stations in parallel
-  const weatherPromises = nearestStations.map(station =>
-    fetchLiveWeather(
-      station.latitude!,
-      station.longitude!,
-      station.stationId,
-      forceRefresh
-    )
-  );
-
-  const results = await Promise.all(weatherPromises);
-
-  // Filter out failed requests
-  const validResults: Array<{ station: NearbyStation; data: LiveWeatherData; isFromCache: boolean }> = [];
-  results.forEach((result, index) => {
-    if (result) {
-      validResults.push({
-        station: nearestStations[index],
-        data: result.data,
-        isFromCache: result.isFromCache,
-      });
-    }
-  });
-
-  if (validResults.length === 0) {
-    return null;
-  }
-
-  // If only one station returned data, use it
-  if (validResults.length === 1) {
-    return {
-      data: validResults[0].data,
-      stations: [{
-        stationId: validResults[0].station.stationId,
-        name: validResults[0].station.name,
-        distance: validResults[0].station.distance,
-        weight: 1,
-      }],
-      isSingleStation: true,
-      isFromCache: validResults[0].isFromCache,
-    };
-  }
-
-  // Calculate weights based on distances
-  const distances = validResults.map(r => r.station.distance);
-  const weights = calculateDistanceWeights(distances);
-
-  // Interpolate numeric values
-  let temperature = 0;
-  let humidity = 0;
-  let windSpeed = 0;
-
-  validResults.forEach((result, index) => {
-    temperature += result.data.temperature * weights[index];
-    humidity += result.data.humidity * weights[index];
-    windSpeed += result.data.windSpeed * weights[index];
-  });
-
-  // For weather condition, use the one from the closest station
-  const closestResult = validResults[0];
-
-  const interpolatedData: LiveWeatherData = {
-    temperature: Math.round(temperature),
-    humidity: Math.round(humidity),
-    windSpeed: Math.round(windSpeed),
-    weatherCode: closestResult.data.weatherCode,
-    condition: closestResult.data.condition,
-    conditionLabelKey: closestResult.data.conditionLabelKey,
-    timestamp: new Date().toISOString(),
-  };
-
-  return {
-    data: interpolatedData,
-    stations: validResults.map((r, i) => ({
-      stationId: r.station.stationId,
-      name: r.station.name,
-      distance: r.station.distance,
-      weight: Math.round(weights[i] * 100) / 100,
-    })),
-    isSingleStation: false,
-    isFromCache: validResults.some(r => r.isFromCache),
-  };
-}
-
-/**
- * Interpolated sun chance result from multiple stations
- */
-export interface InterpolatedSunChanceResult {
-  sun_chance: number;
-  sunny_days: number;
-  total_days: number;
-  confidence: 'high' | 'medium' | 'low';
-  stations: Array<{
-    stationId: string;
-    name: string;
-    distance: number;
-    weight: number;
-    sunChance: number;
-  }>;
-  isSingleStation: boolean;
-}
-
-/**
- * Calculates interpolated sun chance from nearest stations
- * - If closest station < 5km: uses only that station
- * - Otherwise: weighted average from 3 nearest stations
- */
-export async function calculateInterpolatedSunChance(
-  targetLat: number,
-  targetLon: number,
-  month: number,
-  dayStart: number = 1,
-  dayEnd: number = 31
-): Promise<InterpolatedSunChanceResult | null> {
-  // Find 3 nearest stations
-  const nearestStations = findNearestStations(targetLat, targetLon, 3);
-
-  if (nearestStations.length === 0) {
-    return null;
-  }
-
-  // Check if closest station is within threshold
-  const closestStation = nearestStations[0];
-  if (closestStation.distance < SINGLE_STATION_THRESHOLD_KM) {
-    const result = await calculateSunChance(closestStation.stationId, month, dayStart, dayEnd);
-
-    return {
-      sun_chance: result.sun_chance,
-      sunny_days: result.sunny_days,
-      total_days: result.total_days,
-      confidence: result.confidence,
-      stations: [{
-        stationId: closestStation.stationId,
-        name: closestStation.name,
-        distance: closestStation.distance,
-        weight: 1,
-        sunChance: result.sun_chance,
-      }],
-      isSingleStation: true,
-    };
-  }
-
-  // Fetch sun chance from all 3 stations in parallel
-  const sunChancePromises = nearestStations.map(station =>
-    calculateSunChance(station.stationId, month, dayStart, dayEnd)
-  );
-
-  const results = await Promise.all(sunChancePromises);
-
-  // Filter out stations with no data
-  const validResults: Array<{ station: NearbyStation; data: SunChanceResult }> = [];
-  results.forEach((result, index) => {
-    if (result.total_days > 0) {
-      validResults.push({
-        station: nearestStations[index],
-        data: result,
-      });
-    }
-  });
-
-  if (validResults.length === 0) {
-    return {
-      sun_chance: 0,
-      sunny_days: 0,
-      total_days: 0,
-      confidence: 'low',
-      stations: [],
-      isSingleStation: false,
-    };
-  }
-
-  // If only one station has data, use it
-  if (validResults.length === 1) {
-    return {
-      sun_chance: validResults[0].data.sun_chance,
-      sunny_days: validResults[0].data.sunny_days,
-      total_days: validResults[0].data.total_days,
-      confidence: validResults[0].data.confidence,
-      stations: [{
-        stationId: validResults[0].station.stationId,
-        name: validResults[0].station.name,
-        distance: validResults[0].station.distance,
-        weight: 1,
-        sunChance: validResults[0].data.sun_chance,
-      }],
-      isSingleStation: true,
-    };
-  }
-
-  // Calculate weights based on distances
-  const distances = validResults.map(r => r.station.distance);
-  const weights = calculateDistanceWeights(distances);
-
-  // Interpolate sun chance
-  let interpolatedSunChance = 0;
-  let totalSunnyDays = 0;
-  let totalDays = 0;
-
-  validResults.forEach((result, index) => {
-    interpolatedSunChance += result.data.sun_chance * weights[index];
-    totalSunnyDays += result.data.sunny_days;
-    totalDays += result.data.total_days;
-  });
-
-  // Determine confidence based on total data and number of stations
-  let confidence: 'high' | 'medium' | 'low';
-  const avgDaysPerStation = totalDays / validResults.length;
-  if (avgDaysPerStation >= 50 && validResults.length >= 2) {
-    confidence = 'high';
-  } else if (avgDaysPerStation >= 20) {
-    confidence = 'medium';
-  } else {
-    confidence = 'low';
-  }
-
-  return {
-    sun_chance: Math.round(interpolatedSunChance),
-    sunny_days: Math.round(totalSunnyDays / validResults.length),
-    total_days: Math.round(totalDays / validResults.length),
-    confidence,
-    stations: validResults.map((r, i) => ({
-      stationId: r.station.stationId,
-      name: r.station.name,
-      distance: r.station.distance,
-      weight: Math.round(weights[i] * 100) / 100,
-      sunChance: r.data.sun_chance,
-    })),
-    isSingleStation: false,
-  };
-}
-
 // ─── INTERPOLATED MONTHLY STATS ──────────────────────────────────────────────
 
 export interface InterpolatedMonthlyStatsResult {
@@ -1606,35 +1313,6 @@ export async function calculateInterpolatedMonthlyStats(
     })),
     isSingleStation: false,
   };
-}
-
-/**
- * Finds a station by alias (city name, tourist area, etc.)
- */
-export function findStationByAlias(alias: string): string | null {
-  const normalizedAlias = alias.toLowerCase().trim();
-  const stations = locationsMapping.stations as Record<string, StationMapping>;
-
-  for (const [stationId, station] of Object.entries(stations)) {
-    const matchedAlias = station.aliases.find(
-      (a) => a.toLowerCase() === normalizedAlias
-    );
-    if (matchedAlias) {
-      return stationId;
-    }
-  }
-
-  // Partial match fallback
-  for (const [stationId, station] of Object.entries(stations)) {
-    const matchedAlias = station.aliases.find(
-      (a) => a.toLowerCase().includes(normalizedAlias) || normalizedAlias.includes(a.toLowerCase())
-    );
-    if (matchedAlias) {
-      return stationId;
-    }
-  }
-
-  return null;
 }
 
 /**
@@ -1990,7 +1668,7 @@ const WMO_CODE_MAP: Record<number, WmoMapping> = {
  * @param code WMO weather code
  * @param isNight Whether it's currently nighttime (affects sunny -> clear-night mapping)
  */
-export function mapWmoCode(code: number, isNight: boolean = false): WmoMapping {
+function mapWmoCode(code: number, isNight: boolean = false): WmoMapping {
   const mapping = WMO_CODE_MAP[code] ?? { condition: 'cloudy', labelKey: 'unknown' };
 
   // Convert sunny conditions to night variants when it's dark
@@ -2009,6 +1687,96 @@ export function mapWmoCode(code: number, isNight: boolean = false): WmoMapping {
 // ─── AEMET API KEY ────────────────────────────────────────────────────────────
 
 const AEMET_API_KEY = process.env.EXPO_PUBLIC_AEMET_API_KEY || '';
+
+// ─── AEMET API HELPER ─────────────────────────────────────────────────────────
+
+/**
+ * Generic helper for AEMET's two-step API pattern:
+ * 1. Fetch meta URL → get datos URL
+ * 2. Fetch datos URL → get actual data
+ *
+ * @param endpoint AEMET API endpoint (full URL)
+ * @param logPrefix Prefix for console logs (e.g., '[AEMET]', '[CoastalAlerts]')
+ * @param timeoutMs Request timeout in milliseconds
+ * @returns Parsed JSON data or null on error
+ */
+async function fetchAemetWithDataUrl<T>(
+  endpoint: string,
+  logPrefix: string = '[AEMET]',
+  timeoutMs: number = 10000
+): Promise<T | null> {
+  if (!AEMET_API_KEY) {
+    console.warn(`${logPrefix} No API key configured`);
+    return null;
+  }
+
+  try {
+    // Step 1: Get data URL from AEMET API
+    const controller1 = new AbortController();
+    const timeoutId1 = setTimeout(() => controller1.abort(), timeoutMs);
+
+    const metaResponse = await fetch(endpoint, {
+      method: 'GET',
+      headers: {
+        'api_key': AEMET_API_KEY,
+        'Accept': 'application/json',
+      },
+      signal: controller1.signal,
+    });
+
+    clearTimeout(timeoutId1);
+
+    if (!metaResponse.ok) {
+      console.warn(`${logPrefix} Meta request failed: ${metaResponse.status}`);
+      return null;
+    }
+
+    const metaData = await metaResponse.json();
+
+    // Handle different response formats (some endpoints use estado/datos, others just datos)
+    const datosUrl = metaData.datos;
+    if (!datosUrl) {
+      console.warn(`${logPrefix} No data URL in response`);
+      return null;
+    }
+
+    // For Meteoalerta, check estado
+    if (metaData.estado !== undefined && metaData.estado !== 200) {
+      console.warn(`${logPrefix} API returned estado: ${metaData.estado}`);
+      return null;
+    }
+
+    // Step 2: Fetch actual data from datos URL
+    const controller2 = new AbortController();
+    const timeoutId2 = setTimeout(() => controller2.abort(), timeoutMs);
+
+    const dataResponse = await fetch(datosUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+      signal: controller2.signal,
+    });
+
+    clearTimeout(timeoutId2);
+
+    if (!dataResponse.ok) {
+      console.warn(`${logPrefix} Data request failed: ${dataResponse.status}`);
+      return null;
+    }
+
+    return await dataResponse.json() as T;
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        console.warn(`${logPrefix} Request timed out`);
+      } else {
+        console.warn(`${logPrefix} Error:`, error.message);
+      }
+    }
+    return null;
+  }
+}
 
 // ─── AEMET LIVE WEATHER (Primary source - official Spanish weather service) ───
 
@@ -2033,116 +1801,47 @@ interface AemetObservation {
 async function fetchAemetLiveWeather(
   stationId: string
 ): Promise<{ data: LiveWeatherData; timestamp: string } | null> {
-  if (!AEMET_API_KEY) {
-    console.warn('[AEMET] No API key configured');
+  const endpoint = `https://opendata.aemet.es/opendata/api/observacion/convencional/datos/estacion/${stationId}`;
+  const observations = await fetchAemetWithDataUrl<AemetObservation[]>(endpoint, '[AEMET]', 10000);
+
+  if (!observations || observations.length === 0) {
+    console.warn('[AEMET] No observations available');
     return null;
   }
 
-  const TIMEOUT_MS = 10000;
+  // Get the most recent observation (last in array)
+  const latest = observations[observations.length - 1];
 
-  try {
-    // Step 1: Get data URL from AEMET API
-    const metaUrl = `https://opendata.aemet.es/opendata/api/observacion/convencional/datos/estacion/${stationId}`;
+  // Default condition (will be overwritten by Open-Meteo in hybrid mode)
+  const isNight = isNightTime();
+  let condition: WeatherCondition = isNight ? 'clear-night' : 'sunny';
+  let labelKey = isNight ? 'clearNight' : 'clearSky';
+  let weatherCode = 0;
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
-
-    const metaResponse = await fetch(metaUrl, {
-      method: 'GET',
-      headers: {
-        'api_key': AEMET_API_KEY,
-        'Accept': 'application/json',
-      },
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!metaResponse.ok) {
-      console.warn(`[AEMET] Meta request failed: ${metaResponse.status}`);
-      return null;
-    }
-
-    const metaData = await metaResponse.json();
-
-    if (!metaData.datos) {
-      console.warn('[AEMET] No data URL in response');
-      return null;
-    }
-
-    // Step 2: Fetch actual observation data
-    const controller2 = new AbortController();
-    const timeoutId2 = setTimeout(() => controller2.abort(), TIMEOUT_MS);
-
-    const dataResponse = await fetch(metaData.datos, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-      },
-      signal: controller2.signal,
-    });
-
-    clearTimeout(timeoutId2);
-
-    if (!dataResponse.ok) {
-      console.warn(`[AEMET] Data request failed: ${dataResponse.status}`);
-      return null;
-    }
-
-    const observations: AemetObservation[] = await dataResponse.json();
-
-    if (!observations || observations.length === 0) {
-      console.warn('[AEMET] No observations available');
-      return null;
-    }
-
-    // Get the most recent observation (last in array)
-    const latest = observations[observations.length - 1];
-
-    // Default condition (will be overwritten by Open-Meteo in hybrid mode)
-    // Only detect rain/fog from AEMET measurements as fallback
-    const isNight = isNightTime();
-    let condition: WeatherCondition = isNight ? 'clear-night' : 'sunny';
-    let labelKey = isNight ? 'clearNight' : 'clearSky';
-    let weatherCode = 0;
-
-    // Only use AEMET for rain detection (precipitation sensor) and fog (visibility)
-    // Cloud cover is NOT detected here - Open-Meteo provides accurate satellite data
-    if (latest.prec !== undefined && latest.prec > 0) {
-      condition = 'rainy';
-      labelKey = latest.prec > 5 ? 'heavyRain' : 'lightRain';
-      weatherCode = latest.prec > 5 ? 65 : 61;
-    } else if (latest.vis !== undefined && latest.vis < 1) {
-      condition = 'foggy';
-      labelKey = 'fog';
-      weatherCode = 45;
-    }
-    // NOTE: Removed humidity-based cloud detection (hr > 70/90) - was inaccurate
-    // High humidity does NOT indicate cloud cover, especially at night in Canary Islands
-
-    const weatherData: LiveWeatherData = {
-      temperature: latest.ta !== undefined ? Math.round(latest.ta) : 0,
-      humidity: latest.hr !== undefined ? Math.round(latest.hr) : 0,
-      windSpeed: latest.vv !== undefined ? Math.round(latest.vv) : 0,
-      weatherCode,
-      condition,
-      conditionLabelKey: labelKey,
-      timestamp: latest.fint,
-    };
-
-    console.log(`[AEMET] Live data: ${weatherData.temperature}°C, wind ${weatherData.windSpeed} km/h (${latest.fint})`);
-
-    return { data: weatherData, timestamp: latest.fint };
-  } catch (error) {
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        console.warn('[AEMET] Request timed out');
-      } else {
-        console.warn('[AEMET] Error:', error.message);
-      }
-    }
-    return null;
+  // Only use AEMET for rain detection (precipitation sensor) and fog (visibility)
+  if (latest.prec !== undefined && latest.prec > 0) {
+    condition = 'rainy';
+    labelKey = latest.prec > 5 ? 'heavyRain' : 'lightRain';
+    weatherCode = latest.prec > 5 ? 65 : 61;
+  } else if (latest.vis !== undefined && latest.vis < 1) {
+    condition = 'foggy';
+    labelKey = 'fog';
+    weatherCode = 45;
   }
+
+  const weatherData: LiveWeatherData = {
+    temperature: latest.ta !== undefined ? Math.round(latest.ta) : 0,
+    humidity: latest.hr !== undefined ? Math.round(latest.hr) : 0,
+    windSpeed: latest.vv !== undefined ? Math.round(latest.vv) : 0,
+    weatherCode,
+    condition,
+    conditionLabelKey: labelKey,
+    timestamp: latest.fint,
+  };
+
+  console.log(`[AEMET] Live data: ${weatherData.temperature}°C, wind ${weatherData.windSpeed} km/h (${latest.fint})`);
+
+  return { data: weatherData, timestamp: latest.fint };
 }
 
 // ─── LIVE WEATHER (Open-Meteo API - Fallback) ─────────────────────────────────
@@ -2569,106 +2268,40 @@ interface AemetMeteoalertaResponse {
 export async function fetchCoastalAlerts(
   island: string
 ): Promise<CoastalAlert[] | null> {
-  const TIMEOUT_MS = 15000;
+  const zoneCode = AEMET_ZONE_CODES[island] || '610000';
+  const endpoint = `https://opendata.aemet.es/opendata/api/avisos_cap/ultimoelaborado/area/${zoneCode}`;
 
-  if (!AEMET_API_KEY) {
-    console.warn('[CoastalAlerts] AEMET API key not configured');
+  const alerts = await fetchAemetWithDataUrl<AemetCapAlert[]>(endpoint, '[CoastalAlerts]', 15000);
+
+  if (!alerts || !Array.isArray(alerts)) {
     return null;
   }
 
-  try {
-    // Step 1: Get the data URL from AEMET API
-    const zoneCode = AEMET_ZONE_CODES[island] || '610000';
-    const apiUrl = `https://opendata.aemet.es/opendata/api/avisos_cap/ultimoelaborado/area/${zoneCode}`;
+  // Filter for coastal phenomena and active alerts
+  const now = new Date();
+  const coastalAlerts = alerts
+    .filter((alert) => {
+      const phenomenon = mapAemetPhenomenon(alert.fenomeno);
+      const endTime = new Date(alert.fin);
+      return phenomenon === 'coastal' && endTime > now;
+    })
+    .map((alert): CoastalAlert => ({
+      id: alert.idAviso || `aemet-${Date.now()}`,
+      severity: mapAemetSeverity(alert.nivel),
+      phenomenon: 'coastal',
+      headline: alert.fenomeno || 'Fenómenos Costeros',
+      description: alert.descripcion || '',
+      startTime: alert.inicio,
+      endTime: alert.fin,
+      areaName: alert.areaDesc || alert.zona || island,
+      eventCode: alert.fenomeno,
+    }));
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  // Sort by severity (red > orange > yellow)
+  const severityOrder: Record<AlertSeverity, number> = { red: 3, orange: 2, yellow: 1 };
+  coastalAlerts.sort((a, b) => severityOrder[b.severity] - severityOrder[a.severity]);
 
-    const metaResponse = await fetch(apiUrl, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'api_key': AEMET_API_KEY,
-      },
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!metaResponse.ok) {
-      console.warn(`[CoastalAlerts] AEMET API error: ${metaResponse.status}`);
-      return null;
-    }
-
-    const metaData: AemetMeteoalertaResponse = await metaResponse.json();
-
-    if (metaData.estado !== 200 || !metaData.datos) {
-      console.warn('[CoastalAlerts] AEMET returned no data URL');
-      return null;
-    }
-
-    // Step 2: Fetch actual alert data from the datos URL
-    const dataController = new AbortController();
-    const dataTimeoutId = setTimeout(() => dataController.abort(), TIMEOUT_MS);
-
-    const dataResponse = await fetch(metaData.datos, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-      },
-      signal: dataController.signal,
-    });
-
-    clearTimeout(dataTimeoutId);
-
-    if (!dataResponse.ok) {
-      console.warn(`[CoastalAlerts] Failed to fetch alert data: ${dataResponse.status}`);
-      return null;
-    }
-
-    const alerts: AemetCapAlert[] = await dataResponse.json();
-
-    if (!Array.isArray(alerts)) {
-      console.warn('[CoastalAlerts] Invalid response format');
-      return null;
-    }
-
-    // Step 3: Filter for coastal phenomena and active alerts
-    const now = new Date();
-    const coastalAlerts = alerts
-      .filter((alert) => {
-        const phenomenon = mapAemetPhenomenon(alert.fenomeno);
-        const endTime = new Date(alert.fin);
-        // Only include coastal alerts that are still active
-        return phenomenon === 'coastal' && endTime > now;
-      })
-      .map((alert): CoastalAlert => ({
-        id: alert.idAviso || `aemet-${Date.now()}`,
-        severity: mapAemetSeverity(alert.nivel),
-        phenomenon: 'coastal',
-        headline: alert.fenomeno || 'Fenómenos Costeros',
-        description: alert.descripcion || '',
-        startTime: alert.inicio,
-        endTime: alert.fin,
-        areaName: alert.areaDesc || alert.zona || island,
-        eventCode: alert.fenomeno,
-      }));
-
-    // Sort by severity (red > orange > yellow)
-    const severityOrder: Record<AlertSeverity, number> = { red: 3, orange: 2, yellow: 1 };
-    coastalAlerts.sort((a, b) => severityOrder[b.severity] - severityOrder[a.severity]);
-
-    return coastalAlerts;
-  } catch (error) {
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        console.warn('[CoastalAlerts] Request timed out');
-      } else {
-        console.warn('[CoastalAlerts] Network error:', error.message);
-      }
-    }
-    return null;
-  }
+  return coastalAlerts;
 }
 
 /**

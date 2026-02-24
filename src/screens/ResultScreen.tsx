@@ -582,6 +582,13 @@ export default function ResultScreen({ navigation, route }: Props) {
       // Also refresh Calima status
       const calimaResult = await fetchCalimaStatus(station.latitude, station.longitude);
       setCalimaStatus(calimaResult);
+
+      // Refresh coastal alerts (only for coastal locations)
+      const isCoastal = (station as Record<string, unknown>).isCoastal ?? true;
+      if (isCoastal) {
+        const alert = await fetchMostSevereCoastalAlert(station.island);
+        setCoastalAlert(alert);
+      }
     } catch (error) {
       console.error('Refresh failed:', error);
     } finally {
