@@ -1,6 +1,7 @@
 export { AlertCard } from './AlertCard';
 export { AlertDetailModal } from './AlertDetailModal';
 export { CalimaInfoModal } from './CalimaInfoModal';
+export { ClickableGlassCard } from './common/ClickableGlassCard';
 export { CoastalAlertCard } from './CoastalAlertCard';
 export { GenericAlertCard } from './common/GenericAlertCard';
 export { GlassCard } from './GlassCard';

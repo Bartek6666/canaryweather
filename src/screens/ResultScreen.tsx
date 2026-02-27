@@ -18,7 +18,7 @@ import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 
 import { colors, spacing, typography, glass, glassText, borderRadius, gradients, shadows, getSunChanceColor, liveCard, theme } from '../constants/theme';
-import { AlertCard, AlertDetailModal, CoastalAlertCard, GlassCard, SunChanceGauge, SunChanceModal, WeatherIcon, WeatherEffects } from '../components';
+import { AlertCard, AlertDetailModal, ClickableGlassCard, CoastalAlertCard, GlassCard, SunChanceGauge, SunChanceModal, WeatherIcon, WeatherEffects } from '../components';
 import locationsMapping from '../constants/locations_mapping.json';
 import { calculateSunChanceWithFallback, SunChanceWithFallback, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult, calculateInterpolatedMonthlyStats, InterpolatedMonthlyStatsResult, fetchMostSevereCoastalAlert } from '../services/weatherService';
 import { supabase } from '../services/supabase';
@@ -752,9 +752,9 @@ export default function ResultScreen({ navigation, route }: Props) {
         {/* Wind and Rain cards row (historical data - interpolated from nearest stations) */}
         {interpolatedStats && interpolatedStats.stats.total_days > 0 && !isLoading && (
           <View style={styles.tempCards}>
-            <TouchableOpacity
-              style={styles.tempCardTouchable}
-              activeOpacity={0.7}
+            <ClickableGlassCard
+              style={styles.tempCard}
+              delay={350}
               onPress={() => navigation.navigate('WindDetails', {
                 stationId,
                 month: selectedMonth,
@@ -764,18 +764,16 @@ export default function ResultScreen({ navigation, route }: Props) {
                 island: station?.island || '',
               })}
             >
-              <GlassCard style={styles.tempCard} delay={350}>
-                <View style={styles.tempCardInner}>
-                  <MaterialCommunityIcons name="weather-windy" size={28} color={colors.cloud} />
-                  <Text style={styles.tempLabel}>{t('result.avgWind')}</Text>
-                  <Text style={[styles.tempValue, styles.tempValueWind]}>{interpolatedStats.stats.avg_wind} km/h</Text>
-                  <Ionicons name="chevron-forward" size={14} color={colors.textMuted} style={styles.cardChevron} />
-                </View>
-              </GlassCard>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.tempCardTouchable}
-              activeOpacity={0.7}
+              <View style={styles.tempCardInner}>
+                <MaterialCommunityIcons name="weather-windy" size={28} color={colors.cloud} />
+                <Text style={styles.tempLabel}>{t('result.avgWind')}</Text>
+                <Text style={[styles.tempValue, styles.tempValueWind]}>{interpolatedStats.stats.avg_wind} km/h</Text>
+                <Ionicons name="chevron-forward" size={14} color={colors.textMuted} style={styles.cardChevron} />
+              </View>
+            </ClickableGlassCard>
+            <ClickableGlassCard
+              style={styles.tempCard}
+              delay={400}
               onPress={() => navigation.navigate('RainDetails', {
                 stationId,
                 month: selectedMonth,
@@ -784,15 +782,13 @@ export default function ResultScreen({ navigation, route }: Props) {
                 island: station?.island || '',
               })}
             >
-              <GlassCard style={styles.tempCard} delay={400}>
-                <View style={styles.tempCardInner}>
-                  <Ionicons name="umbrella-outline" size={28} color={colors.rain} />
-                  <Text style={styles.tempLabel}>{t('result.rainyDays')}</Text>
-                  <Text style={[styles.tempValue, styles.tempValueRain]}>{interpolatedStats.stats.rain_days} {t('result.daysUnit')}</Text>
-                  <Ionicons name="chevron-forward" size={14} color={colors.textMuted} style={styles.cardChevron} />
-                </View>
-              </GlassCard>
-            </TouchableOpacity>
+              <View style={styles.tempCardInner}>
+                <Ionicons name="umbrella-outline" size={28} color={colors.rain} />
+                <Text style={styles.tempLabel}>{t('result.rainyDays')}</Text>
+                <Text style={[styles.tempValue, styles.tempValueRain]}>{interpolatedStats.stats.rain_days} {t('result.daysUnit')}</Text>
+                <Ionicons name="chevron-forward" size={14} color={colors.textMuted} style={styles.cardChevron} />
+              </View>
+            </ClickableGlassCard>
           </View>
         )}
 
@@ -920,7 +916,6 @@ const styles = StyleSheet.create({
   tempCards: { flexDirection: 'row', marginBottom: spacing.lg, gap: spacing.sm },
   // FIGMA: STYLE_TARGET — Temperature card (glassmorphism)
   tempCard: { flex: 1 },
-  tempCardTouchable: { flex: 1 },
   tempCardInner: { padding: spacing.md, alignItems: 'center' },
   cardChevron: { position: 'absolute', top: spacing.sm, right: spacing.sm },
   tempLabel: { ...typography.label, color: glassText.secondary, marginTop: spacing.sm, textAlign: 'center', flexShrink: 1 },
