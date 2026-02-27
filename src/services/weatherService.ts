@@ -2188,15 +2188,17 @@ export async function fetchCalimaStatus(
 
 import { CoastalAlert, AlertSeverity, AlertPhenomenon } from '../types';
 
-// AEMET zone codes for Canary Islands by island
-const AEMET_ZONE_CODES: Record<string, string> = {
-  'Tenerife': '610000',
-  'Gran Canaria': '350000',
-  'Lanzarote': '350000', // Eastern islands share code
-  'Fuerteventura': '350000',
-  'La Palma': '610000', // Western islands share code
-  'La Gomera': '610000',
-  'El Hierro': '610000',
+// AEMET Meteoalerta geocodes for Canary Islands (used to filter alerts)
+// API only accepts region code "65" for Canarias, then we filter by these geocodes
+// See: https://www.aemet.es/en/eltiempo/prediccion/avisos
+const AEMET_ISLAND_GEOCODES: Record<string, string[]> = {
+  'Lanzarote': ['659101', '659101C'],
+  'Fuerteventura': ['659201', '659201C'],
+  'Gran Canaria': ['659001', '659001C', '659003', '659003C', '659004', '659004C'],
+  'Tenerife': ['659601', '659601C', '659602', '659602C', '659603', '659603C'],
+  'La Palma': ['659302', '659302C', '659303', '659303C', '659304', '659304C'],
+  'La Gomera': ['659401', '659401C'],
+  'El Hierro': ['659501', '659501C'],
 };
 
 // Note: Uses AEMET_API_KEY already defined above in this file
@@ -2241,25 +2243,97 @@ function mapAemetPhenomenon(eventType: string): AlertPhenomenon {
   return 'other';
 }
 
-/** AEMET Meteoalerta CAP response structure */
-interface AemetCapAlert {
-  idAviso: string;
+/** Parsed alert from CAP XML embedded in TAR archive */
+interface ParsedCapAlert {
+  id: string;
   nivel: string;
   fenomeno: string;
-  descripcion?: string;
+  descripcion: string;
   inicio: string;
   fin: string;
-  zona?: string;
-  areaDesc?: string;
+  areaDesc: string;
+  geocode: string;
 }
 
-interface AemetMeteoalertaResponse {
-  datos: string; // URL to fetch actual alert data
-  estado: number;
+/**
+ * Parses CAP XML alerts from AEMET TAR archive response
+ * AEMET returns alerts as a TAR archive containing XML files in CAP 1.2 format
+ */
+function parseCapAlertsFromTar(tarContent: string): ParsedCapAlert[] {
+  const alerts: ParsedCapAlert[] = [];
+
+  // Split by XML declaration to find individual alert files
+  const xmlParts = tarContent.split('<?xml version="1.0"');
+
+  for (const part of xmlParts) {
+    if (!part.includes('<alert')) continue;
+
+    const xml = '<?xml version="1.0"' + part;
+
+    // Extract Spanish language info block (language>es-ES)
+    const spanishInfoMatch = xml.match(/<info>\s*<language>es-ES<\/language>([\s\S]*?)<\/info>/);
+    if (!spanishInfoMatch) continue;
+
+    const infoBlock = spanishInfoMatch[1];
+
+    // Extract identifier
+    const idMatch = xml.match(/<identifier>([^<]+)<\/identifier>/);
+    const id = idMatch?.[1] || `aemet-${Date.now()}-${Math.random()}`;
+
+    // Extract event type (fenomeno)
+    const eventMatch = infoBlock.match(/<event>([^<]+)<\/event>/);
+    const fenomeno = eventMatch?.[1] || '';
+
+    // Extract nivel (severity level)
+    const nivelMatch = infoBlock.match(/<valueName>AEMET-Meteoalerta nivel<\/valueName>\s*<value>([^<]+)<\/value>/);
+    const nivel = nivelMatch?.[1] || 'amarillo';
+
+    // Extract description
+    const descMatch = infoBlock.match(/<description>([^<]+)<\/description>/);
+    const descripcion = descMatch?.[1] || '';
+
+    // Extract onset (start time)
+    const onsetMatch = infoBlock.match(/<onset>([^<]+)<\/onset>/);
+    const inicio = onsetMatch?.[1] || '';
+
+    // Extract expires (end time)
+    const expiresMatch = infoBlock.match(/<expires>([^<]+)<\/expires>/);
+    const fin = expiresMatch?.[1] || '';
+
+    // Extract area info
+    const areaMatch = infoBlock.match(/<area>([\s\S]*?)<\/area>/);
+    if (!areaMatch) continue;
+
+    const areaBlock = areaMatch[1];
+
+    // Extract areaDesc
+    const areaDescMatch = areaBlock.match(/<areaDesc>([^<]+)<\/areaDesc>/);
+    const areaDesc = areaDescMatch?.[1] || '';
+
+    // Extract geocode
+    const geocodeMatch = areaBlock.match(/<valueName>AEMET-Meteoalerta zona<\/valueName>\s*<value>([^<]+)<\/value>/);
+    const geocode = geocodeMatch?.[1] || '';
+
+    if (fenomeno && fin) {
+      alerts.push({
+        id,
+        nivel,
+        fenomeno,
+        descripcion,
+        inicio,
+        fin,
+        areaDesc,
+        geocode,
+      });
+    }
+  }
+
+  return alerts;
 }
 
 /**
  * Fetches coastal weather alerts from AEMET Meteoalerta API
+ * Queries all Canary Islands (region 65) and filters by island geocode
  * Filters for "Fenómenos Costeros" (coastal phenomena) - high waves, storm surge
  *
  * @param island Island name to filter alerts
@@ -2268,40 +2342,111 @@ interface AemetMeteoalertaResponse {
 export async function fetchCoastalAlerts(
   island: string
 ): Promise<CoastalAlert[] | null> {
-  const zoneCode = AEMET_ZONE_CODES[island] || '610000';
-  const endpoint = `https://opendata.aemet.es/opendata/api/avisos_cap/ultimoelaborado/area/${zoneCode}`;
-
-  const alerts = await fetchAemetWithDataUrl<AemetCapAlert[]>(endpoint, '[CoastalAlerts]', 15000);
-
-  if (!alerts || !Array.isArray(alerts)) {
+  if (!AEMET_API_KEY) {
+    console.warn('[CoastalAlerts] No API key configured');
     return null;
   }
 
-  // Filter for coastal phenomena and active alerts
-  const now = new Date();
-  const coastalAlerts = alerts
-    .filter((alert) => {
-      const phenomenon = mapAemetPhenomenon(alert.fenomeno);
-      const endTime = new Date(alert.fin);
-      return phenomenon === 'coastal' && endTime > now;
-    })
-    .map((alert): CoastalAlert => ({
-      id: alert.idAviso || `aemet-${Date.now()}`,
-      severity: mapAemetSeverity(alert.nivel),
-      phenomenon: 'coastal',
-      headline: alert.fenomeno || 'Fenómenos Costeros',
-      description: alert.descripcion || '',
-      startTime: alert.inicio,
-      endTime: alert.fin,
-      areaName: alert.areaDesc || alert.zona || island,
-      eventCode: alert.fenomeno,
-    }));
+  const islandGeocodes = AEMET_ISLAND_GEOCODES[island];
+  if (!islandGeocodes) {
+    console.warn(`[CoastalAlerts] Unknown island: ${island}`);
+    return null;
+  }
 
-  // Sort by severity (red > orange > yellow)
-  const severityOrder: Record<AlertSeverity, number> = { red: 3, orange: 2, yellow: 1 };
-  coastalAlerts.sort((a, b) => severityOrder[b.severity] - severityOrder[a.severity]);
+  try {
+    // Step 1: Get data URL from AEMET API (query all Canary Islands - region 65)
+    const endpoint = 'https://opendata.aemet.es/opendata/api/avisos_cap/ultimoelaborado/area/65';
+    const controller1 = new AbortController();
+    const timeoutId1 = setTimeout(() => controller1.abort(), 15000);
 
-  return coastalAlerts;
+    const metaResponse = await fetch(endpoint, {
+      method: 'GET',
+      headers: {
+        'api_key': AEMET_API_KEY,
+        'Accept': 'application/json',
+      },
+      signal: controller1.signal,
+    });
+
+    clearTimeout(timeoutId1);
+
+    if (!metaResponse.ok) {
+      console.warn(`[CoastalAlerts] Meta request failed: ${metaResponse.status}`);
+      return null;
+    }
+
+    const metaData = await metaResponse.json();
+
+    if (metaData.estado !== 200 || !metaData.datos) {
+      console.warn(`[CoastalAlerts] API returned estado: ${metaData.estado}`);
+      return null;
+    }
+
+    // Step 2: Fetch TAR archive from datos URL
+    const controller2 = new AbortController();
+    const timeoutId2 = setTimeout(() => controller2.abort(), 15000);
+
+    const dataResponse = await fetch(metaData.datos, {
+      method: 'GET',
+      signal: controller2.signal,
+    });
+
+    clearTimeout(timeoutId2);
+
+    if (!dataResponse.ok) {
+      console.warn(`[CoastalAlerts] Data request failed: ${dataResponse.status}`);
+      return null;
+    }
+
+    // Get response as text (TAR archive with embedded XML)
+    const tarContent = await dataResponse.text();
+
+    // Parse CAP alerts from TAR content
+    const parsedAlerts = parseCapAlertsFromTar(tarContent);
+
+    // Filter for this island's geocodes, coastal phenomena, and active alerts
+    const now = new Date();
+    const coastalAlerts = parsedAlerts
+      .filter((alert) => {
+        // Check if alert is for this island (match geocode)
+        const matchesIsland = islandGeocodes.some(code => alert.geocode === code);
+        if (!matchesIsland) return false;
+
+        // Check if it's a coastal phenomenon
+        const phenomenon = mapAemetPhenomenon(alert.fenomeno);
+        if (phenomenon !== 'coastal') return false;
+
+        // Check if alert is still active
+        const endTime = new Date(alert.fin);
+        return endTime > now;
+      })
+      .map((alert): CoastalAlert => ({
+        id: alert.id,
+        severity: mapAemetSeverity(alert.nivel),
+        phenomenon: 'coastal',
+        headline: alert.fenomeno || 'Fenómenos Costeros',
+        description: alert.descripcion || '',
+        startTime: alert.inicio,
+        endTime: alert.fin,
+        areaName: alert.areaDesc || island,
+        eventCode: alert.fenomeno,
+      }));
+
+    // Sort by severity (red > orange > yellow)
+    const severityOrder: Record<AlertSeverity, number> = { red: 3, orange: 2, yellow: 1 };
+    coastalAlerts.sort((a, b) => severityOrder[b.severity] - severityOrder[a.severity]);
+
+    return coastalAlerts;
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        console.warn('[CoastalAlerts] Request timed out');
+      } else {
+        console.warn('[CoastalAlerts] Error:', error.message);
+      }
+    }
+    return null;
+  }
 }
 
 /**
