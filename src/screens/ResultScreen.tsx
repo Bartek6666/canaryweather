@@ -20,7 +20,7 @@ import * as Haptics from 'expo-haptics';
 import { colors, spacing, typography, glass, glassText, borderRadius, gradients, shadows, getSunChanceColor, liveCard, theme } from '../constants/theme';
 import { AlertCard, AlertDetailModal, ClickableGlassCard, CoastalAlertCard, GlassCard, SunChanceGauge, SunChanceModal, WeatherIcon, WeatherEffects } from '../components';
 import locationsMapping from '../constants/locations_mapping.json';
-import { calculateSunChanceWithFallback, SunChanceWithFallback, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult, calculateInterpolatedMonthlyStats, InterpolatedMonthlyStatsResult, fetchMostSevereCoastalAlert } from '../services/weatherService';
+import { calculateSunChanceWithFallback, SunChanceWithFallback, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult, calculateInterpolatedMonthlyStats, InterpolatedMonthlyStatsResult, fetchMostSevereCoastalAlert, applyMuddyRainDetection } from '../services/weatherService';
 import { supabase } from '../services/supabase';
 import { trackResultView, trackAlertDetailsView } from '../services/analyticsService';
 import { SunChanceResult, MonthlyStats, LiveWeatherData, WeatherCondition, CoastalAlert } from '../types';
@@ -167,6 +167,22 @@ function LiveWeatherCard({ data, isLoading, hasError, isFromCache = false }: Liv
                 </View>
                 <Text style={styles.liveWindText}>{t('result.wind')}: {data.windSpeed} km/h</Text>
               </View>
+              {/* Gusts info - show only when available and significant */}
+              {data.windGusts !== undefined && data.windGusts > 0 && (
+                <View style={styles.liveWindRow}>
+                  <View style={styles.parameterIconWrapper}>
+                    <MaterialCommunityIcons
+                      name="weather-windy-variant"
+                      size={16}
+                      color={data.windGusts > 35 ? colors.warning : '#FFFFFF'}
+                      style={styles.parameterIcon}
+                    />
+                  </View>
+                  <Text style={[styles.liveWindText, data.windGusts > 35 && styles.liveGustsWarning]}>
+                    {t('result.gusts')}: {data.windGusts} km/h
+                  </Text>
+                </View>
+              )}
               {/* Humidity info - last row, no bottom margin */}
               <View style={[styles.liveWindRow, styles.liveWindRowLast]}>
                 <View style={styles.parameterIconWrapper}>
@@ -365,6 +381,13 @@ export default function ResultScreen({ navigation, route }: Props) {
 
   // Calima alert state (connected to Open-Meteo Air Quality API)
   const [calimaStatus, setCalimaStatus] = useState<CalimaStatus | null>(null);
+
+  // Apply "Lluvia de Barro" (Mud Rain) detection when both weather and calima data are available
+  // This is a unique Canary Islands phenomenon: Saharan dust (PM10 > 50) + rain = mud rain
+  const displayLiveData = useMemo(() => {
+    if (!liveData) return null;
+    return applyMuddyRainDetection(liveData, calimaStatus);
+  }, [liveData, calimaStatus]);
 
   // Sun Chance info modal state
   const [showSunChanceModal, setShowSunChanceModal] = useState(false);
@@ -598,7 +621,7 @@ export default function ResultScreen({ navigation, route }: Props) {
 
   const getSummary = () => {
     const sunChance = sunChanceResult?.sun_chance ?? 0;
-    const windSpeed = liveData?.windSpeed ?? 0;
+    const windSpeed = displayLiveData?.windSpeed ?? 0;
     const avgTemp = currentStats?.avg_tmax ?? 0;
     const displayName = locationName || station?.name;
 
@@ -813,7 +836,7 @@ export default function ResultScreen({ navigation, route }: Props) {
         )}
 
         {/* Live Weather Card — real-time data from Open-Meteo */}
-        <LiveWeatherCard data={liveData} isLoading={isLoadingLive} hasError={liveError} isFromCache={isFromCache} />
+        <LiveWeatherCard data={displayLiveData} isLoading={isLoadingLive} hasError={liveError} isFromCache={isFromCache} />
 
         {/* FIGMA: STYLE_TARGET — History section (year cards) */}
         {yearlyData.length > 0 && !isLoading && (
@@ -1151,6 +1174,10 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.2)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
+  },
+  liveGustsWarning: {
+    color: colors.warning,
+    fontWeight: '600',
   },
   // Parameter icons (wind, humidity) - small with subtle glow
   parameterIconWrapper: {

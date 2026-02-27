@@ -1684,6 +1684,95 @@ function mapWmoCode(code: number, isNight: boolean = false): WmoMapping {
   return mapping;
 }
 
+// ─── STATE PRIORITIZATION ─────────────────────────────────────────────────────
+
+// Thresholds for state prioritization
+const GUSTS_WINDY_THRESHOLD = 35; // km/h - force "Windy" state if gusts exceed this
+
+/**
+ * Prioritizes weather condition based on real-time sensor data
+ * Overrides satellite-based conditions when ground sensors detect:
+ * - Precipitation > 0 → forces "rainy" condition
+ * - Wind gusts > 35 km/h → forces "windy" condition
+ *
+ * This ensures the app shows dangerous conditions (rain, strong winds)
+ * even when the satellite says "cloudy"
+ */
+function prioritizeWeatherCondition(
+  baseCondition: WeatherCondition,
+  baseLabelKey: string,
+  precipitation?: number,
+  windGusts?: number,
+  isNight: boolean = false
+): { condition: WeatherCondition; labelKey: string } {
+  // Priority 1: Precipitation detected → force rainy
+  if (precipitation !== undefined && precipitation > 0) {
+    return {
+      condition: 'rainy',
+      labelKey: precipitation > 5 ? 'heavyRain' : 'lightRain',
+    };
+  }
+
+  // Priority 2: Strong gusts detected → force windy (unless already stormy/rainy)
+  if (windGusts !== undefined && windGusts > GUSTS_WINDY_THRESHOLD) {
+    // Don't override rain or storm conditions
+    if (baseCondition !== 'rainy' && baseCondition !== 'stormy') {
+      return {
+        condition: 'windy',
+        labelKey: windGusts > 50 ? 'strongWinds' : 'windy',
+      };
+    }
+  }
+
+  // No override needed
+  return { condition: baseCondition, labelKey: baseLabelKey };
+}
+
+/**
+ * Detects "Lluvia de Barro" (Mud Rain) - unique Canary Islands phenomenon
+ * Occurs when Saharan dust (Calima) combines with rainfall
+ *
+ * @param pm10 PM10 dust concentration (µg/m³)
+ * @param precipitation Current precipitation in mm
+ * @returns true if conditions indicate mud rain
+ */
+function detectMuddyRain(pm10?: number, precipitation?: number): boolean {
+  return (
+    pm10 !== undefined &&
+    pm10 > PM10_CALIMA_THRESHOLD &&
+    precipitation !== undefined &&
+    precipitation > 0
+  );
+}
+
+/**
+ * Applies "Lluvia de Barro" (Mud Rain) transformation to weather data
+ * This is a unique Canary Islands phenomenon when Saharan dust mixes with rain
+ *
+ * @param weatherData Live weather data
+ * @param calimaStatus Calima detection status (PM10 levels)
+ * @returns Updated weather data with muddy-rain condition if applicable
+ */
+export function applyMuddyRainDetection(
+  weatherData: LiveWeatherData,
+  calimaStatus: CalimaStatus | null
+): LiveWeatherData {
+  if (!calimaStatus) return weatherData;
+
+  const isMuddyRain = detectMuddyRain(calimaStatus.pm10, weatherData.precipitation);
+
+  if (isMuddyRain) {
+    console.log(`[MuddyRain] Detected! PM10=${calimaStatus.pm10}, precip=${weatherData.precipitation}`);
+    return {
+      ...weatherData,
+      condition: 'muddy-rain',
+      conditionLabelKey: 'muddyRain',
+    };
+  }
+
+  return weatherData;
+}
+
 // ─── AEMET API KEY ────────────────────────────────────────────────────────────
 
 const AEMET_API_KEY = process.env.EXPO_PUBLIC_AEMET_API_KEY || '';
@@ -1833,13 +1922,15 @@ async function fetchAemetLiveWeather(
     temperature: latest.ta !== undefined ? Math.round(latest.ta) : 0,
     humidity: latest.hr !== undefined ? Math.round(latest.hr) : 0,
     windSpeed: latest.vv !== undefined ? Math.round(latest.vv) : 0,
+    windGusts: latest.vmax !== undefined ? Math.round(latest.vmax) : undefined,
+    precipitation: latest.prec !== undefined ? latest.prec : undefined,
     weatherCode,
     condition,
     conditionLabelKey: labelKey,
     timestamp: latest.fint,
   };
 
-  console.log(`[AEMET] Live data: ${weatherData.temperature}°C, wind ${weatherData.windSpeed} km/h (${latest.fint})`);
+  console.log(`[AEMET] Live data: ${weatherData.temperature}°C, wind ${weatherData.windSpeed} km/h, gusts ${weatherData.windGusts ?? 'N/A'} km/h (${latest.fint})`);
 
   return { data: weatherData, timestamp: latest.fint };
 }
@@ -1853,6 +1944,8 @@ interface OpenMeteoResponse {
     relative_humidity_2m: number;
     weather_code: number;
     wind_speed_10m: number;
+    wind_gusts_10m?: number;
+    precipitation?: number;
     is_day: number; // 1 = day, 0 = night
   };
 }
@@ -1997,6 +2090,24 @@ export async function fetchLiveWeather(
         console.log('[AEMET] Using AEMET data (Open-Meteo condition unavailable)');
       }
 
+      // Apply state prioritization: real sensor data overrides satellite conditions
+      const prioritized = prioritizeWeatherCondition(
+        weatherData.condition,
+        weatherData.conditionLabelKey,
+        weatherData.precipitation,
+        weatherData.windGusts,
+        isNightTime()
+      );
+
+      if (prioritized.condition !== weatherData.condition) {
+        console.log(`[Priority] Overriding ${weatherData.condition} → ${prioritized.condition} (precip=${weatherData.precipitation}, gusts=${weatherData.windGusts})`);
+        weatherData = {
+          ...weatherData,
+          condition: prioritized.condition,
+          conditionLabelKey: prioritized.labelKey,
+        };
+      }
+
       // Save to cache on success
       await saveWeatherToCache(stationId, weatherData);
       saveToRateLimitCache(stationId, weatherData);
@@ -2009,7 +2120,7 @@ export async function fetchLiveWeather(
   const TIMEOUT_MS = 10000; // 10 seconds timeout
 
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,is_day&timezone=auto`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,wind_gusts_10m,precipitation,is_day&timezone=auto`;
 
     // Create AbortController for timeout
     const controller = new AbortController();
@@ -2057,15 +2168,35 @@ export async function fetchLiveWeather(
     const isNight = data.current.is_day === 0;
     const { condition, labelKey } = mapWmoCode(data.current.weather_code, isNight);
 
-    const weatherData: LiveWeatherData = {
+    let weatherData: LiveWeatherData = {
       temperature: Math.round(data.current.temperature_2m),
       humidity: Math.round(data.current.relative_humidity_2m),
       windSpeed: Math.round(data.current.wind_speed_10m),
+      windGusts: data.current.wind_gusts_10m !== undefined ? Math.round(data.current.wind_gusts_10m) : undefined,
+      precipitation: data.current.precipitation,
       weatherCode: data.current.weather_code,
       condition,
       conditionLabelKey: labelKey,
       timestamp: data.current.time,
     };
+
+    // Apply state prioritization: real sensor data overrides satellite conditions
+    const prioritized = prioritizeWeatherCondition(
+      weatherData.condition,
+      weatherData.conditionLabelKey,
+      weatherData.precipitation,
+      weatherData.windGusts,
+      isNight
+    );
+
+    if (prioritized.condition !== weatherData.condition) {
+      console.log(`[Priority] Overriding ${weatherData.condition} → ${prioritized.condition}`);
+      weatherData = {
+        ...weatherData,
+        condition: prioritized.condition,
+        conditionLabelKey: prioritized.labelKey,
+      };
+    }
 
     // Save to cache on success
     if (stationId) {
@@ -2101,6 +2232,135 @@ export async function fetchLiveWeather(
 
     return null;
   }
+}
+
+// ─── MULTI-STATION WEATHER VALIDATION (Tuineje Problem Fix) ──────────────────
+
+/**
+ * Result of multi-station weather validation
+ * Used to detect when nearby stations report significantly different conditions
+ */
+export interface WeatherValidationResult {
+  /** Primary station weather data */
+  primaryData: LiveWeatherData;
+  /** Whether there's a significant weather discrepancy between stations */
+  hasDiscrepancy: boolean;
+  /** Warning message if discrepancy detected */
+  discrepancyWarning?: string;
+  /** Alternative station data if discrepancy detected and it shows worse weather */
+  alternativeData?: {
+    stationName: string;
+    stationId: string;
+    distance: number;
+    data: LiveWeatherData;
+  };
+}
+
+// Thresholds for detecting weather discrepancies
+const WIND_DISCREPANCY_THRESHOLD = 15; // km/h difference
+const GUSTS_DISCREPANCY_THRESHOLD = 20; // km/h difference
+
+/**
+ * Validates weather by comparing data from 2 nearest stations
+ * If the second station shows significantly different (worse) conditions,
+ * returns a warning and the alternative data
+ *
+ * This addresses the "Tuineje problem" where coastal stations may show
+ * calm conditions while inland areas experience storms
+ *
+ * @param lat User latitude
+ * @param lon User longitude
+ * @param primaryResult Primary weather data already fetched
+ * @returns Validation result with potential discrepancy warning
+ */
+export async function validateWeatherWithNearbyStation(
+  lat: number,
+  lon: number,
+  primaryResult: LiveWeatherResult,
+  primaryStationId: string
+): Promise<WeatherValidationResult> {
+  const result: WeatherValidationResult = {
+    primaryData: primaryResult.data,
+    hasDiscrepancy: false,
+  };
+
+  // Find 2 nearest stations (excluding high altitude)
+  const nearestStations = findNearestStations(lat, lon, 2, true);
+
+  // If we don't have a second station nearby, skip validation
+  if (nearestStations.length < 2) {
+    return result;
+  }
+
+  // Get the second nearest station (the first should be the primary)
+  const alternativeStation = nearestStations.find(s => s.stationId !== primaryStationId);
+  if (!alternativeStation) {
+    return result;
+  }
+
+  // Only compare if alternative station is within reasonable distance (100km)
+  if (alternativeStation.distance > 100) {
+    return result;
+  }
+
+  // Fetch weather from alternative station
+  const altWeather = await fetchAemetLiveWeather(alternativeStation.stationId);
+  if (!altWeather) {
+    return result;
+  }
+
+  const primary = primaryResult.data;
+  const alt = altWeather.data;
+
+  // Check for precipitation discrepancy
+  // If alternative station has precipitation but primary doesn't
+  const primaryHasPrecip = (primary.precipitation ?? 0) > 0;
+  const altHasPrecip = (alt.precipitation ?? 0) > 0;
+
+  if (altHasPrecip && !primaryHasPrecip) {
+    result.hasDiscrepancy = true;
+    result.discrepancyWarning = `weather_discrepancy_rain`;
+    result.alternativeData = {
+      stationName: alternativeStation.name,
+      stationId: alternativeStation.stationId,
+      distance: alternativeStation.distance,
+      data: alt,
+    };
+    console.log(`[WeatherValidation] Discrepancy: ${alternativeStation.name} has rain, primary doesn't`);
+    return result;
+  }
+
+  // Check for wind gust discrepancy
+  const primaryGusts = primary.windGusts ?? 0;
+  const altGusts = alt.windGusts ?? 0;
+
+  if (altGusts > primaryGusts + GUSTS_DISCREPANCY_THRESHOLD && altGusts > GUSTS_WINDY_THRESHOLD) {
+    result.hasDiscrepancy = true;
+    result.discrepancyWarning = `weather_discrepancy_wind`;
+    result.alternativeData = {
+      stationName: alternativeStation.name,
+      stationId: alternativeStation.stationId,
+      distance: alternativeStation.distance,
+      data: alt,
+    };
+    console.log(`[WeatherValidation] Discrepancy: ${alternativeStation.name} has stronger gusts (${altGusts} vs ${primaryGusts} km/h)`);
+    return result;
+  }
+
+  // Check for wind speed discrepancy
+  if (alt.windSpeed > primary.windSpeed + WIND_DISCREPANCY_THRESHOLD) {
+    result.hasDiscrepancy = true;
+    result.discrepancyWarning = `weather_discrepancy_wind`;
+    result.alternativeData = {
+      stationName: alternativeStation.name,
+      stationId: alternativeStation.stationId,
+      distance: alternativeStation.distance,
+      data: alt,
+    };
+    console.log(`[WeatherValidation] Discrepancy: ${alternativeStation.name} has stronger winds (${alt.windSpeed} vs ${primary.windSpeed} km/h)`);
+  }
+
+  return result;
 }
 
 // ─── CALIMA DETECTION (Open-Meteo Air Quality API) ────────────────────────────

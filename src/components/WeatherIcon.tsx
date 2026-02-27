@@ -47,6 +47,14 @@ const WEATHER_ICON_MAP: Record<WeatherCondition, WeatherIconConfig> = {
     icon: 'cloud',
     glowColor: '#94A3B8', // Muted gray glow for fog
   },
+  windy: {
+    icon: 'leaf', // Wind blowing leaves
+    glowColor: '#60A5FA', // Light blue glow for windy
+  },
+  'muddy-rain': {
+    icon: 'rainy', // Rain icon but with different glow
+    glowColor: '#D97706', // Orange-brown glow for muddy rain (Calima)
+  },
   'clear-night': {
     icon: 'moon',
     glowColor: MOON_COLOR, // Soft silver glow for clear night
@@ -197,9 +205,10 @@ export function WeatherIcon({
   // Icon opacity - lower for small parameter icons
   const iconOpacity = isSmall ? 0.6 : 1;
 
-  // Use warm yellow for sunny icon, silver for night, white for others
+  // Use warm yellow for sunny icon, silver for night, orange-brown for muddy rain, white for others
   const iconColor = condition === 'sunny' ? SUN_COLOR
     : (condition === 'clear-night' || condition === 'partly-cloudy-night') ? MOON_COLOR
+    : condition === 'muddy-rain' ? '#D97706' // Orange-brown for Calima + rain
     : '#FFFFFF';
 
   return (

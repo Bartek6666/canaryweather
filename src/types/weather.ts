@@ -160,12 +160,14 @@ export interface AemetDailyData {
 }
 
 // Live weather data from Open-Meteo API
-export type WeatherCondition = 'sunny' | 'partly-sunny' | 'cloudy' | 'rainy' | 'stormy' | 'snowy' | 'foggy' | 'clear-night' | 'partly-cloudy-night';
+export type WeatherCondition = 'sunny' | 'partly-sunny' | 'cloudy' | 'rainy' | 'stormy' | 'snowy' | 'foggy' | 'windy' | 'muddy-rain' | 'clear-night' | 'partly-cloudy-night';
 
 export interface LiveWeatherData {
   temperature: number;
   humidity: number;
   windSpeed: number;
+  windGusts?: number; // Wind gusts (rachas) in km/h - important for storm detection
+  precipitation?: number; // Current/recent precipitation in mm
   weatherCode: number;
   condition: WeatherCondition;
   conditionLabelKey: string; // i18n key for weather.* translation

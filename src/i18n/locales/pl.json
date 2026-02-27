@@ -56,8 +56,11 @@
     "calimaInfoSafetyList": "• Ogranicz przebywanie na zewnątrz\n• Zamknij okna i używaj klimatyzacji\n• Pij dużo wody\n• Noś okulary przeciwsłoneczne\n• Osoby z astmą powinny mieć przy sobie leki\n• Unikaj intensywnego wysiłku fizycznego",
     "coastalAlert": "Uwaga: Wysokie Fale",
     "coastalAlertDesc": "Ostrzeżenie o zagrożeniu wybrzeża - spodziewane niebezpieczne warunki na morzu.",
+    "weatherDiscrepancyRain": "Deszcz zgłoszony na pobliskiej stacji {{station}}",
+    "weatherDiscrepancyWind": "Silniejszy wiatr na pobliskiej stacji {{station}}",
     "humidity": "Wilgotność",
     "wind": "Wiatr",
+    "gusts": "Porywy",
     "sunChance": "Szansa na słońce",
     "sunChanceIn": "Szansa na słońce w {{month}}",
     "sunChanceInJanuary": "Szansa na słońce w styczniu",
@@ -252,6 +255,9 @@
     "thunderstorm": "Burza",
     "thunderstormHail": "Burza z gradem",
     "severeThunderstorm": "Silna burza z gradem",
+    "windy": "Wietrznie",
+    "strongWinds": "Silny wiatr",
+    "muddyRain": "Brudny deszcz (Calima)",
     "unknown": "Nieznane"
   },
   "onboarding": {

@@ -56,8 +56,11 @@
     "calimaInfoSafetyList": "• Limit time outdoors\n• Close windows and use air conditioning\n• Drink plenty of water\n• Wear sunglasses\n• Asthmatics should carry their medication\n• Avoid intense physical activity",
     "coastalAlert": "Alert: High Waves",
     "coastalAlertDesc": "Coastal hazard warning - dangerous sea conditions expected.",
+    "weatherDiscrepancyRain": "Rain reported at nearby {{station}} station",
+    "weatherDiscrepancyWind": "Stronger winds at nearby {{station}} station",
     "humidity": "Humidity",
     "wind": "Wind",
+    "gusts": "Gusts",
     "sunChance": "Chance of sun",
     "sunChanceIn": "Sun chance in {{month}}",
     "confidenceHigh": "High confidence",
@@ -236,6 +239,9 @@
     "thunderstorm": "Thunderstorm",
     "thunderstormHail": "Thunderstorm with hail",
     "severeThunderstorm": "Severe thunderstorm",
+    "windy": "Windy",
+    "strongWinds": "Strong winds",
+    "muddyRain": "Mud rain (Calima)",
     "unknown": "Unknown"
   },
   "alerts": {

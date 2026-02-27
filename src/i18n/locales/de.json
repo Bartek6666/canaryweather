@@ -56,8 +56,11 @@
     "calimaInfoSafetyList": "• Zeit im Freien begrenzen\n• Fenster schließen und Klimaanlage nutzen\n• Viel Wasser trinken\n• Sonnenbrille tragen\n• Asthmatiker sollten Medikamente dabei haben\n• Intensive körperliche Aktivität vermeiden",
     "coastalAlert": "Warnung: Hohe Wellen",
     "coastalAlertDesc": "Küstenwarnung - gefährliche Seebedingungen erwartet.",
+    "weatherDiscrepancyRain": "Regen an nahegelegener Station {{station}} gemeldet",
+    "weatherDiscrepancyWind": "Stärkerer Wind an nahegelegener Station {{station}}",
     "humidity": "Luftfeuchtigkeit",
     "wind": "Wind",
+    "gusts": "Böen",
     "sunChance": "Chance auf Sonne",
     "sunChanceIn": "Sonnenchance im {{month}}",
     "confidenceHigh": "Hohe Sicherheit",
@@ -236,6 +239,9 @@
     "thunderstorm": "Gewitter",
     "thunderstormHail": "Gewitter mit Hagel",
     "severeThunderstorm": "Schweres Gewitter",
+    "windy": "Windig",
+    "strongWinds": "Starker Wind",
+    "muddyRain": "Schlammregen (Calima)",
     "unknown": "Unbekannt"
   },
   "alerts": {

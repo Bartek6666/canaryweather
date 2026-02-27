@@ -56,8 +56,11 @@
     "calimaInfoSafetyList": "• Limitar el tiempo al aire libre\n• Cerrar ventanas y usar aire acondicionado\n• Beber mucha agua\n• Usar gafas de sol\n• Los asmáticos deben llevar su medicación\n• Evitar actividad física intensa",
     "coastalAlert": "Alerta: Oleaje Alto",
     "coastalAlertDesc": "Aviso de fenómenos costeros - condiciones marítimas peligrosas previstas.",
+    "weatherDiscrepancyRain": "Lluvia registrada en estación cercana {{station}}",
+    "weatherDiscrepancyWind": "Viento más fuerte en estación cercana {{station}}",
     "humidity": "Humedad",
     "wind": "Viento",
+    "gusts": "Rachas",
     "sunChance": "Probabilidad de sol",
     "sunChanceIn": "Probabilidad de sol en {{month}}",
     "confidenceHigh": "Alta confianza",
@@ -236,6 +239,9 @@
     "thunderstorm": "Tormenta",
     "thunderstormHail": "Tormenta con granizo",
     "severeThunderstorm": "Tormenta severa",
+    "windy": "Ventoso",
+    "strongWinds": "Viento fuerte",
+    "muddyRain": "Lluvia de barro (Calima)",
     "unknown": "Desconocido"
   },
   "alerts": {
