@@ -401,8 +401,9 @@ export async function getMonthlyStats(stationId: string): Promise<MonthlyStats[]
       : 0;
 
     // Calculate average wind from historical data, or fall back to typical estimate
+    // AEMET provides velmedia in m/s, convert to km/h (multiply by 3.6)
     const avgWind = validWind.length > 0
-      ? validWind.reduce((sum, d) => sum + ((d as any).velmedia || 0), 0) / validWind.length
+      ? (validWind.reduce((sum, d) => sum + ((d as any).velmedia || 0), 0) / validWind.length) * 3.6
       : null; // Will use getTypicalWindSpeed as fallback
 
     const rainDays = monthData.filter((d) => d.precip !== null && d.precip > 0).length;
@@ -524,12 +525,13 @@ export async function calculateWindStability(
   }
 
   // Calculate mean wind speed
-  const windSpeeds = monthData.map((row) => row.velmedia as number);
-  const mean = windSpeeds.reduce((sum, speed) => sum + speed, 0) / windSpeeds.length;
+  // AEMET provides velmedia in m/s, convert to km/h for display (multiply by 3.6)
+  const windSpeedsKmh = monthData.map((row) => (row.velmedia as number) * 3.6);
+  const mean = windSpeedsKmh.reduce((sum, speed) => sum + speed, 0) / windSpeedsKmh.length;
 
   // Calculate standard deviation
-  const squaredDifferences = windSpeeds.map((speed) => Math.pow(speed - mean, 2));
-  const variance = squaredDifferences.reduce((sum, sq) => sum + sq, 0) / windSpeeds.length;
+  const squaredDifferences = windSpeedsKmh.map((speed) => Math.pow(speed - mean, 2));
+  const variance = squaredDifferences.reduce((sum, sq) => sum + sq, 0) / windSpeedsKmh.length;
   const standardDeviation = Math.sqrt(variance);
 
   // Convert standard deviation to stability percentage
@@ -544,8 +546,8 @@ export async function calculateWindStability(
   const windRangeMax = Math.round(mean + standardDeviation);
 
   // Count windy days (wind > 20 km/h) and calculate average per year
-  const WINDY_THRESHOLD = 20;
-  const windyDaysTotal = windSpeeds.filter((speed) => speed > WINDY_THRESHOLD).length;
+  const WINDY_THRESHOLD_KMH = 20;
+  const windyDaysTotal = windSpeedsKmh.filter((speed) => speed > WINDY_THRESHOLD_KMH).length;
   // Average windy days per month (data spans ~10 years)
   const yearsOfData = 10;
   const windyDaysPerMonth = Math.round(windyDaysTotal / yearsOfData);
@@ -886,7 +888,8 @@ export async function getWindRankingByIsland(month: number): Promise<IslandRanki
       const island = station.island;
       const stats = islandStats.get(island);
       if (stats && row.velmedia !== null) {
-        stats.totalWind += row.velmedia;
+        // AEMET provides velmedia in m/s, convert to km/h (multiply by 3.6)
+        stats.totalWind += row.velmedia * 3.6;
         stats.count++;
       }
     }
