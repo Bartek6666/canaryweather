@@ -1687,7 +1687,7 @@ function mapWmoCode(code: number, isNight: boolean = false): WmoMapping {
 // ─── STATE PRIORITIZATION ─────────────────────────────────────────────────────
 
 // Thresholds for state prioritization
-const GUSTS_WINDY_THRESHOLD = 35; // km/h - force "Windy" state if gusts exceed this
+const GUSTS_WINDY_THRESHOLD = 35; // km/h - threshold for wind warning color and station discrepancy detection
 
 /**
  * Prioritizes weather condition based on real-time sensor data
@@ -1705,7 +1705,8 @@ function prioritizeWeatherCondition(
   windGusts?: number,
   isNight: boolean = false
 ): { condition: WeatherCondition; labelKey: string } {
-  // Priority 1: Precipitation detected → force rainy
+  // Priority: Precipitation detected → force rainy
+  // (Wind information is shown in the side panel with color warning, not via icon change)
   if (precipitation !== undefined && precipitation > 0) {
     return {
       condition: 'rainy',
@@ -1713,18 +1714,7 @@ function prioritizeWeatherCondition(
     };
   }
 
-  // Priority 2: Strong gusts detected → force windy (unless already stormy/rainy)
-  if (windGusts !== undefined && windGusts > GUSTS_WINDY_THRESHOLD) {
-    // Don't override rain or storm conditions
-    if (baseCondition !== 'rainy' && baseCondition !== 'stormy') {
-      return {
-        condition: 'windy',
-        labelKey: windGusts > 50 ? 'strongWinds' : 'windy',
-      };
-    }
-  }
-
-  // No override needed
+  // No override needed - keep original condition from AEMET/OpenMeteo
   return { condition: baseCondition, labelKey: baseLabelKey };
 }
 
