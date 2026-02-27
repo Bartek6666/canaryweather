@@ -28,7 +28,7 @@ interface WeatherRecord {
   tavg: number | null;
   precip: number | null;
   sol: number | null;
-  velmedia: number | null;  // Average wind speed (km/h)
+  velmedia: number | null;  // Average wind speed (m/s from AEMET, convert to km/h with *3.6)
   is_interpolated: boolean;
 }
 

@@ -44,7 +44,7 @@ interface ProcessedWeatherData {
   tavg: number | null;
   precip: number | null;
   sol: number | null;
-  velmedia: number | null;  // Average wind speed (km/h)
+  velmedia: number | null;  // Average wind speed (m/s from AEMET, convert to km/h with *3.6)
   is_interpolated: boolean;
 }
 
@@ -189,7 +189,7 @@ async function fetchPeriodData(
       tavg: parseAemetNumber(item.tmed),
       precip: parseAemetNumber(item.prec),
       sol: parseAemetNumber(item.sol),
-      velmedia: parseAemetNumber(item.velmedia),  // Average wind speed (km/h)
+      velmedia: parseAemetNumber(item.velmedia),  // Average wind speed (m/s from AEMET)
       is_interpolated: false,
     }));
 
