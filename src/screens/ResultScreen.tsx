@@ -20,7 +20,7 @@ import * as Haptics from 'expo-haptics';
 import { colors, spacing, typography, glass, glassText, borderRadius, gradients, shadows, getSunChanceColor, liveCard, theme } from '../constants/theme';
 import { AlertCard, AlertDetailModal, ClickableGlassCard, CoastalAlertCard, GlassCard, SunChanceGauge, SunChanceModal, WeatherIcon, WeatherEffects } from '../components';
 import locationsMapping from '../constants/locations_mapping.json';
-import { calculateSunChanceWithFallback, SunChanceWithFallback, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult, calculateInterpolatedMonthlyStats, InterpolatedMonthlyStatsResult, fetchMostSevereCoastalAlert, applyMuddyRainDetection } from '../services/weatherService';
+import { calculateSunChanceWithFallback, SunChanceWithFallback, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult, calculateInterpolatedMonthlyStats, InterpolatedMonthlyStatsResult, fetchMostSevereCoastalAlert, applyMuddyRainDetection, validateWeatherWithNearbyStation, WeatherValidationResult } from '../services/weatherService';
 import { supabase } from '../services/supabase';
 import { trackResultView, trackAlertDetailsView } from '../services/analyticsService';
 import { SunChanceResult, MonthlyStats, LiveWeatherData, WeatherCondition, CoastalAlert } from '../types';
@@ -397,6 +397,9 @@ export default function ResultScreen({ navigation, route }: Props) {
   const [selectedAlert, setSelectedAlert] = useState<CoastalAlert | null>(null);
   const [showAlertModal, setShowAlertModal] = useState(false);
 
+  // Weather discrepancy state (when nearby station shows different conditions)
+  const [weatherDiscrepancy, setWeatherDiscrepancy] = useState<WeatherValidationResult | null>(null);
+
   // Handle month selection with scroll to Sun Chance gauge
   const handleMonthSelect = useCallback((month: number) => {
     setSelectedMonth(month);
@@ -468,16 +471,30 @@ export default function ResultScreen({ navigation, route }: Props) {
           setLiveData(result.data);
           setIsFromCache(result.isFromCache);
           setLiveError(false);
+
+          // Validate weather with nearby station (detect discrepancies like Tuineje problem)
+          // Only validate on fresh data, not cached
+          if (!result.isFromCache) {
+            const validation = await validateWeatherWithNearbyStation(
+              station.latitude,
+              station.longitude,
+              result,
+              stationId
+            );
+            setWeatherDiscrepancy(validation.hasDiscrepancy ? validation : null);
+          }
         } else {
           setLiveData(null);
           setIsFromCache(false);
           setLiveError(true);
+          setWeatherDiscrepancy(null);
         }
       } catch (e) {
         console.error('[LiveWeather] Error fetching data:', e);
         setLiveData(null);
         setIsFromCache(false);
         setLiveError(true);
+        setWeatherDiscrepancy(null);
       } finally {
         setIsLoadingLive(false);
       }
@@ -837,6 +854,29 @@ export default function ResultScreen({ navigation, route }: Props) {
 
         {/* Live Weather Card — real-time data from Open-Meteo */}
         <LiveWeatherCard data={displayLiveData} isLoading={isLoadingLive} hasError={liveError} isFromCache={isFromCache} />
+
+        {/* Weather Discrepancy Warning - shows when nearby station has different conditions */}
+        {weatherDiscrepancy && weatherDiscrepancy.hasDiscrepancy && weatherDiscrepancy.alternativeData && (
+          <View style={styles.discrepancyWarning}>
+            <View style={styles.discrepancyContent}>
+              <Ionicons name="warning" size={18} color={colors.warning} />
+              <View style={styles.discrepancyTextContainer}>
+                <Text style={styles.discrepancyText}>
+                  {weatherDiscrepancy.discrepancyWarning === 'weather_discrepancy_rain'
+                    ? t('result.weatherDiscrepancyRain', { station: weatherDiscrepancy.alternativeData.stationName })
+                    : t('result.weatherDiscrepancyWind', { station: weatherDiscrepancy.alternativeData.stationName })}
+                </Text>
+                <Text style={styles.discrepancyDetail}>
+                  {weatherDiscrepancy.alternativeData.data.precipitation && weatherDiscrepancy.alternativeData.data.precipitation > 0
+                    ? `${weatherDiscrepancy.alternativeData.data.precipitation} mm`
+                    : weatherDiscrepancy.alternativeData.data.windGusts
+                      ? `${t('result.gusts')}: ${weatherDiscrepancy.alternativeData.data.windGusts} km/h`
+                      : `${t('result.wind')}: ${weatherDiscrepancy.alternativeData.data.windSpeed} km/h`}
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
 
         {/* FIGMA: STYLE_TARGET — History section (year cards) */}
         {yearlyData.length > 0 && !isLoading && (
@@ -1242,6 +1282,35 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginLeft: spacing.xs,
     fontWeight: '500',
+  },
+  // Weather discrepancy warning (nearby station has different conditions)
+  discrepancyWarning: {
+    marginBottom: spacing.md,
+    backgroundColor: 'rgba(255, 152, 0, 0.12)',
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 152, 0, 0.3)',
+    padding: spacing.md,
+  },
+  discrepancyContent: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  discrepancyTextContainer: {
+    flex: 1,
+    marginLeft: spacing.sm,
+  },
+  discrepancyText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.warning,
+    lineHeight: 20,
+  },
+  discrepancyDetail: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.textPrimary,
+    marginTop: spacing.xs,
   },
   liveOfflineContent: {
     alignItems: 'flex-start',
