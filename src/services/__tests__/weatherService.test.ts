@@ -27,7 +27,7 @@ function mockSupabaseResponse(data: any[] | null, error: any = null) {
 }
 
 // Import after mocking
-import { calculateWindStability, WindStabilityResult } from '../weatherService';
+import { calculateWindStability, WindStabilityResult, getMonthlyStats } from '../weatherService';
 
 describe('calculateWindStability', () => {
   beforeEach(() => {
@@ -225,6 +225,243 @@ describe('Wind speed conversion', () => {
 
     conversions.forEach(({ ms, kmh }) => {
       expect(ms * 3.6).toBeCloseTo(kmh, 1);
+    });
+  });
+});
+
+describe('getMonthlyStats', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('temperature calculations', () => {
+    it('should calculate average max and min temperatures correctly', async () => {
+      const mockData = [
+        { date: '2024-01-01', tmax: 20, tmin: 10, precip: 0, sol: 8, velmedia: 5 },
+        { date: '2024-01-02', tmax: 22, tmin: 12, precip: 0, sol: 7, velmedia: 5 },
+        { date: '2024-01-03', tmax: 24, tmin: 14, precip: 0, sol: 9, velmedia: 5 },
+      ];
+
+      mockSupabaseResponse(mockData);
+
+      const result = await getMonthlyStats('TEST001');
+      const january = result.find(s => s.month === 1);
+
+      expect(january).toBeDefined();
+      expect(january!.avg_tmax).toBe(22); // (20 + 22 + 24) / 3 = 22
+      expect(january!.avg_tmin).toBe(12); // (10 + 12 + 14) / 3 = 12
+    });
+
+    it('should handle null temperature values', async () => {
+      const mockData = [
+        { date: '2024-01-01', tmax: 20, tmin: 10, precip: 0, sol: 8, velmedia: 5 },
+        { date: '2024-01-02', tmax: null, tmin: null, precip: 0, sol: 7, velmedia: 5 },
+        { date: '2024-01-03', tmax: 24, tmin: 14, precip: 0, sol: 9, velmedia: 5 },
+      ];
+
+      mockSupabaseResponse(mockData);
+
+      const result = await getMonthlyStats('TEST001');
+      const january = result.find(s => s.month === 1);
+
+      expect(january).toBeDefined();
+      expect(january!.avg_tmax).toBe(22); // (20 + 24) / 2 = 22
+      expect(january!.avg_tmin).toBe(12); // (10 + 14) / 2 = 12
+    });
+  });
+
+  describe('wind speed conversion (m/s to km/h)', () => {
+    it('should convert velmedia from m/s to km/h in monthly stats', async () => {
+      const mockData = [
+        { date: '2024-01-01', tmax: 20, tmin: 10, precip: 0, sol: 8, velmedia: 5.0 },
+        { date: '2024-01-02', tmax: 22, tmin: 12, precip: 0, sol: 7, velmedia: 5.0 },
+        { date: '2024-01-03', tmax: 24, tmin: 14, precip: 0, sol: 9, velmedia: 5.0 },
+      ];
+
+      mockSupabaseResponse(mockData);
+
+      const result = await getMonthlyStats('TEST001');
+      const january = result.find(s => s.month === 1);
+
+      expect(january).toBeDefined();
+      // 5.0 m/s * 3.6 = 18 km/h
+      expect(january!.avg_wind).toBe(18);
+    });
+
+    it('should handle varying wind speeds', async () => {
+      const mockData = [
+        { date: '2024-01-01', tmax: 20, tmin: 10, precip: 0, sol: 8, velmedia: 2.78 }, // 10 km/h
+        { date: '2024-01-02', tmax: 22, tmin: 12, precip: 0, sol: 7, velmedia: 5.56 }, // 20 km/h
+        { date: '2024-01-03', tmax: 24, tmin: 14, precip: 0, sol: 9, velmedia: 8.33 }, // 30 km/h
+      ];
+
+      mockSupabaseResponse(mockData);
+
+      const result = await getMonthlyStats('TEST001');
+      const january = result.find(s => s.month === 1);
+
+      expect(january).toBeDefined();
+      // Average: (2.78 + 5.56 + 8.33) / 3 * 3.6 = 20 km/h
+      expect(january!.avg_wind).toBeCloseTo(20, 0);
+    });
+  });
+
+  describe('precipitation and rain days', () => {
+    it('should count rain days correctly', async () => {
+      const mockData = [
+        { date: '2024-01-01', tmax: 20, tmin: 10, precip: 0, sol: 8, velmedia: 5 },
+        { date: '2024-01-02', tmax: 22, tmin: 12, precip: 5.2, sol: 2, velmedia: 5 }, // Rain
+        { date: '2024-01-03', tmax: 24, tmin: 14, precip: 0, sol: 9, velmedia: 5 },
+        { date: '2024-01-04', tmax: 21, tmin: 11, precip: 12.0, sol: 0, velmedia: 5 }, // Rain
+        { date: '2024-01-05', tmax: 23, tmin: 13, precip: 0.5, sol: 6, velmedia: 5 }, // Rain (> 0)
+      ];
+
+      mockSupabaseResponse(mockData);
+
+      const result = await getMonthlyStats('TEST001');
+      const january = result.find(s => s.month === 1);
+
+      expect(january).toBeDefined();
+      expect(january!.rain_days).toBe(3); // 3 days with precip > 0
+    });
+
+    it('should calculate average precipitation', async () => {
+      const mockData = [
+        { date: '2024-01-01', tmax: 20, tmin: 10, precip: 0, sol: 8, velmedia: 5 },
+        { date: '2024-01-02', tmax: 22, tmin: 12, precip: 10, sol: 2, velmedia: 5 },
+        { date: '2024-01-03', tmax: 24, tmin: 14, precip: 5, sol: 9, velmedia: 5 },
+      ];
+
+      mockSupabaseResponse(mockData);
+
+      const result = await getMonthlyStats('TEST001');
+      const january = result.find(s => s.month === 1);
+
+      expect(january).toBeDefined();
+      expect(january!.avg_precip).toBe(5); // (0 + 10 + 5) / 3 = 5
+    });
+  });
+
+  describe('sun chance calculation', () => {
+    it('should calculate sun chance percentage', async () => {
+      // Sun chance = (days with sol > 6h AND precip <= 0.1) / total days
+      const mockData = [
+        { date: '2024-01-01', tmax: 20, tmin: 10, precip: 0, sol: 8, velmedia: 5 },   // Sunny
+        { date: '2024-01-02', tmax: 22, tmin: 12, precip: 0, sol: 7, velmedia: 5 },   // Sunny
+        { date: '2024-01-03', tmax: 24, tmin: 14, precip: 5, sol: 9, velmedia: 5 },   // Not sunny (rain)
+        { date: '2024-01-04', tmax: 21, tmin: 11, precip: 0, sol: 4, velmedia: 5 },   // Not sunny (low sol)
+      ];
+
+      mockSupabaseResponse(mockData);
+
+      const result = await getMonthlyStats('TEST001');
+      const january = result.find(s => s.month === 1);
+
+      expect(january).toBeDefined();
+      expect(january!.sun_chance).toBe(50); // 2 sunny / 4 total = 50%
+    });
+  });
+
+  describe('monthly grouping', () => {
+    it('should group data by month correctly', async () => {
+      const mockData = [
+        { date: '2024-01-15', tmax: 18, tmin: 10, precip: 0, sol: 7, velmedia: 5 },
+        { date: '2024-02-15', tmax: 20, tmin: 12, precip: 0, sol: 8, velmedia: 5 },
+        { date: '2024-03-15', tmax: 22, tmin: 14, precip: 0, sol: 9, velmedia: 5 },
+        { date: '2024-07-15', tmax: 28, tmin: 20, precip: 0, sol: 11, velmedia: 5 },
+      ];
+
+      mockSupabaseResponse(mockData);
+
+      const result = await getMonthlyStats('TEST001');
+
+      expect(result).toHaveLength(12); // Always returns 12 months
+
+      const january = result.find(s => s.month === 1);
+      const february = result.find(s => s.month === 2);
+      const july = result.find(s => s.month === 7);
+
+      expect(january!.avg_tmax).toBe(18);
+      expect(february!.avg_tmax).toBe(20);
+      expect(july!.avg_tmax).toBe(28);
+    });
+
+    it('should return 12 months even with partial data', async () => {
+      const mockData = [
+        { date: '2024-06-15', tmax: 25, tmin: 18, precip: 0, sol: 10, velmedia: 5 },
+      ];
+
+      mockSupabaseResponse(mockData);
+
+      const result = await getMonthlyStats('TEST001');
+
+      expect(result).toHaveLength(12);
+
+      const june = result.find(s => s.month === 6);
+      expect(june!.avg_tmax).toBe(25);
+      expect(june!.total_days).toBe(1);
+
+      // Empty months should have 0 values
+      const january = result.find(s => s.month === 1);
+      expect(january!.total_days).toBe(0);
+      expect(january!.avg_tmax).toBe(0);
+    });
+  });
+
+  describe('edge cases', () => {
+    it('should return empty array on database error', async () => {
+      mockSupabaseResponse(null, { message: 'Database error' });
+
+      const result = await getMonthlyStats('TEST001');
+
+      expect(result).toEqual([]);
+    });
+
+    it('should return empty array when no data', async () => {
+      mockSupabaseResponse([]);
+
+      const result = await getMonthlyStats('TEST001');
+
+      expect(result).toEqual([]);
+    });
+
+    it('should handle all null values in a month', async () => {
+      const mockData = [
+        { date: '2024-01-01', tmax: null, tmin: null, precip: null, sol: null, velmedia: null },
+        { date: '2024-01-02', tmax: null, tmin: null, precip: null, sol: null, velmedia: null },
+      ];
+
+      mockSupabaseResponse(mockData);
+
+      const result = await getMonthlyStats('TEST001');
+      const january = result.find(s => s.month === 1);
+
+      expect(january).toBeDefined();
+      expect(january!.avg_tmax).toBe(0);
+      expect(january!.avg_tmin).toBe(0);
+      expect(january!.total_days).toBe(2);
+    });
+  });
+
+  describe('total_days tracking', () => {
+    it('should track total days per month', async () => {
+      const mockData = [
+        { date: '2024-01-01', tmax: 20, tmin: 10, precip: 0, sol: 8, velmedia: 5 },
+        { date: '2024-01-02', tmax: 22, tmin: 12, precip: 0, sol: 7, velmedia: 5 },
+        { date: '2024-01-03', tmax: 24, tmin: 14, precip: 0, sol: 9, velmedia: 5 },
+        { date: '2024-02-01', tmax: 21, tmin: 11, precip: 0, sol: 8, velmedia: 5 },
+        { date: '2024-02-02', tmax: 23, tmin: 13, precip: 0, sol: 7, velmedia: 5 },
+      ];
+
+      mockSupabaseResponse(mockData);
+
+      const result = await getMonthlyStats('TEST001');
+
+      const january = result.find(s => s.month === 1);
+      const february = result.find(s => s.month === 2);
+
+      expect(january!.total_days).toBe(3);
+      expect(february!.total_days).toBe(2);
     });
   });
 });
