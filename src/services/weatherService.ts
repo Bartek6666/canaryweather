@@ -2296,8 +2296,22 @@ export async function validateWeatherWithNearbyStation(
     return result;
   }
 
-  // Fetch weather from alternative station
-  const altWeather = await fetchAemetLiveWeather(alternativeStation.stationId);
+  // Check cache for alternative station first to avoid unnecessary API calls
+  const cachedAltData = getFromRateLimitCache(alternativeStation.stationId);
+  let altWeather: { data: LiveWeatherData; timestamp: string } | null;
+
+  if (cachedAltData) {
+    console.log(`[WeatherValidation] Using cached data for ${alternativeStation.name}`);
+    altWeather = { data: cachedAltData, timestamp: new Date().toISOString() };
+  } else {
+    // Fetch fresh data from alternative station
+    altWeather = await fetchAemetLiveWeather(alternativeStation.stationId);
+    // Save to cache if successful
+    if (altWeather) {
+      saveToRateLimitCache(alternativeStation.stationId, altWeather.data);
+    }
+  }
+
   if (!altWeather) {
     return result;
   }

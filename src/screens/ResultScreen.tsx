@@ -17,7 +17,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 
-import { colors, spacing, typography, glass, glassText, borderRadius, gradients, shadows, getSunChanceColor, liveCard, theme } from '../constants/theme';
+import { colors, spacing, typography, glass, glassText, borderRadius, gradients, getSunChanceColor, liveCard } from '../constants/theme';
 import { AlertCard, AlertDetailModal, ClickableGlassCard, CoastalAlertCard, GlassCard, SunChanceGauge, SunChanceModal, WeatherIcon, WeatherEffects } from '../components';
 import locationsMapping from '../constants/locations_mapping.json';
 import { calculateSunChanceWithFallback, SunChanceWithFallback, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult, calculateInterpolatedMonthlyStats, InterpolatedMonthlyStatsResult, fetchMostSevereCoastalAlert, applyMuddyRainDetection, validateWeatherWithNearbyStation, WeatherValidationResult } from '../services/weatherService';
