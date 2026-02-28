@@ -43,6 +43,13 @@ function saveToRateLimitCache(stationId: string, data: LiveWeatherData): void {
   inMemoryCache.set(stationId, { data, timestamp: Date.now() });
 }
 
+/**
+ * Clears the in-memory rate limit cache (for testing purposes)
+ */
+export function clearRateLimitCache(): void {
+  inMemoryCache.clear();
+}
+
 interface CachedWeatherData {
   data: LiveWeatherData;
   timestamp: number;

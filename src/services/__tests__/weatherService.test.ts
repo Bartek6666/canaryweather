@@ -27,7 +27,8 @@ function mockSupabaseResponse(data: any[] | null, error: any = null) {
 }
 
 // Import after mocking
-import { calculateWindStability, WindStabilityResult, getMonthlyStats } from '../weatherService';
+import { calculateWindStability, WindStabilityResult, getMonthlyStats, validateWeatherWithNearbyStation, clearRateLimitCache } from '../weatherService';
+import type { LiveWeatherResult } from '../weatherService';
 
 describe('calculateWindStability', () => {
   beforeEach(() => {
@@ -463,5 +464,64 @@ describe('getMonthlyStats', () => {
       expect(january!.total_days).toBe(3);
       expect(february!.total_days).toBe(2);
     });
+  });
+});
+
+describe('validateWeatherWithNearbyStation caching', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    clearRateLimitCache();
+  });
+
+  const createMockPrimaryResult = (): LiveWeatherResult => ({
+    data: {
+      temperature: 24,
+      humidity: 60,
+      windSpeed: 15,
+      windGusts: 20,
+      precipitation: 0,
+      weatherCode: 0,
+      condition: 'sunny',
+      conditionLabelKey: 'clearSky',
+      timestamp: '2024-02-15T12:00:00',
+    },
+    isFromCache: false,
+  });
+
+  it('should return result without discrepancy when no alternative station data', async () => {
+    // Without AEMET API key, fetchAemetLiveWeather returns null
+    // This tests that the function handles missing data gracefully
+    const primaryResult = createMockPrimaryResult();
+
+    const result = await validateWeatherWithNearbyStation(28.0, -16.5, primaryResult, 'C449C');
+
+    // Should return primary data without discrepancy
+    expect(result.primaryData).toEqual(primaryResult.data);
+    expect(result.hasDiscrepancy).toBe(false);
+    expect(result.alternativeData).toBeUndefined();
+  });
+
+  it('should clear cache without errors', () => {
+    // Test that clearRateLimitCache works without throwing
+    expect(() => clearRateLimitCache()).not.toThrow();
+  });
+
+  it('should handle multiple calls to clearRateLimitCache', () => {
+    // Clearing empty cache should not throw
+    clearRateLimitCache();
+    clearRateLimitCache();
+    expect(() => clearRateLimitCache()).not.toThrow();
+  });
+
+  it('should return primary data structure correctly', async () => {
+    const primaryResult = createMockPrimaryResult();
+
+    const result = await validateWeatherWithNearbyStation(28.0, -16.5, primaryResult, 'C449C');
+
+    // Verify result structure
+    expect(result).toHaveProperty('primaryData');
+    expect(result).toHaveProperty('hasDiscrepancy');
+    expect(result.primaryData.temperature).toBe(24);
+    expect(result.primaryData.windSpeed).toBe(15);
   });
 });
