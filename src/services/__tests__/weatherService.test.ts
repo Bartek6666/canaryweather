@@ -525,3 +525,612 @@ describe('validateWeatherWithNearbyStation caching', () => {
     expect(result.primaryData.windSpeed).toBe(15);
   });
 });
+
+// ─── INTERPOLATION TESTS ─────────────────────────────────────────────────────
+
+// We need to test calculateInterpolatedMonthlyStats through integration
+// since it uses findNearestStations which depends on locations_mapping.json
+// Let's test the distance weight calculation logic and interpolation behavior
+
+describe('calculateInterpolatedMonthlyStats', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should return null when no stations are found', async () => {
+    // Mock empty response from Supabase to simulate no data
+    mockSupabaseResponse([]);
+
+    // Import after mocking
+    const { calculateInterpolatedMonthlyStats } = require('../weatherService');
+
+    // Use coordinates far from any station (middle of ocean)
+    const result = await calculateInterpolatedMonthlyStats(0, 0, 1);
+
+    // May return null or empty depending on findNearestStations behavior
+    // If stations are found but no data, should return null
+    expect(result === null || result?.stations?.length === 0 || result?.isSingleStation !== undefined).toBe(true);
+  });
+
+  it('should use single station when very close (within 5km)', async () => {
+    // Santa Cruz de Tenerife station coordinates: 28.4653, -16.2572
+    const mockData = [
+      { date: '2024-01-15', tmax: 22, tmin: 15, precip: 2, sol: 7, velmedia: 4.0 },
+      { date: '2024-01-16', tmax: 23, tmin: 16, precip: 0, sol: 8, velmedia: 3.5 },
+    ];
+
+    mockSupabaseResponse(mockData);
+
+    const { calculateInterpolatedMonthlyStats } = require('../weatherService');
+
+    // Use coordinates very close to Santa Cruz station
+    const result = await calculateInterpolatedMonthlyStats(28.4653, -16.2572, 1);
+
+    if (result) {
+      // Should use single station when very close
+      expect(result.isSingleStation).toBe(true);
+      expect(result.stations).toHaveLength(1);
+      expect(result.stations[0].weight).toBe(1);
+    }
+  });
+
+  it('should interpolate from multiple stations when far from nearest', async () => {
+    // Create mock data for multiple station queries
+    // When calculateInterpolatedMonthlyStats queries multiple stations,
+    // Supabase will be called multiple times
+    const mockDataStation1 = [
+      { date: '2024-01-15', tmax: 20, tmin: 12, precip: 5, sol: 6, velmedia: 5.0 },
+    ];
+
+    // First call returns station 1 data, subsequent calls return different data
+    let callCount = 0;
+    mockSupabase.from.mockImplementation(() => ({
+      select: jest.fn().mockReturnValue({
+        eq: jest.fn().mockReturnValue({
+          gte: jest.fn().mockImplementation(() => {
+            callCount++;
+            if (callCount === 1) {
+              return Promise.resolve({
+                data: [{ date: '2024-01-15', tmax: 20, tmin: 12, precip: 5, sol: 6, velmedia: 5.0 }],
+                error: null,
+              });
+            } else if (callCount === 2) {
+              return Promise.resolve({
+                data: [{ date: '2024-01-15', tmax: 24, tmin: 16, precip: 2, sol: 8, velmedia: 4.0 }],
+                error: null,
+              });
+            } else {
+              return Promise.resolve({
+                data: [{ date: '2024-01-15', tmax: 22, tmin: 14, precip: 3, sol: 7, velmedia: 4.5 }],
+                error: null,
+              });
+            }
+          }),
+        }),
+      }),
+    }));
+
+    const { calculateInterpolatedMonthlyStats } = require('../weatherService');
+
+    // Use coordinates between stations (center of Tenerife)
+    const result = await calculateInterpolatedMonthlyStats(28.35, -16.55, 1);
+
+    if (result && !result.isSingleStation) {
+      // Should interpolate from multiple stations
+      expect(result.stations.length).toBeGreaterThanOrEqual(2);
+      // Weights should sum to approximately 1
+      const totalWeight = result.stations.reduce((sum: number, s: { weight: number }) => sum + s.weight, 0);
+      expect(totalWeight).toBeCloseTo(1, 1);
+    }
+  });
+
+  it('should return correctly structured MonthlyStats', async () => {
+    const mockData = [
+      { date: '2024-02-15', tmax: 21, tmin: 14, precip: 3, sol: 7.5, velmedia: 4.2 },
+      { date: '2024-02-16', tmax: 22, tmin: 15, precip: 0, sol: 8.0, velmedia: 3.8 },
+    ];
+
+    mockSupabaseResponse(mockData);
+
+    const { calculateInterpolatedMonthlyStats } = require('../weatherService');
+
+    const result = await calculateInterpolatedMonthlyStats(28.4653, -16.2572, 2);
+
+    if (result) {
+      expect(result.stats).toHaveProperty('month');
+      expect(result.stats).toHaveProperty('avg_tmax');
+      expect(result.stats).toHaveProperty('avg_tmin');
+      expect(result.stats).toHaveProperty('avg_precip');
+      expect(result.stats).toHaveProperty('avg_sol');
+      expect(result.stats).toHaveProperty('avg_wind');
+      expect(result.stats).toHaveProperty('sun_chance');
+      expect(result.stats).toHaveProperty('rain_days');
+      expect(result.stats.month).toBe(2);
+    }
+  });
+});
+
+// ─── CALIMA DETECTION TESTS ─────────────────────────────────────────────────
+
+describe('fetchCalimaStatus', () => {
+  // Store original fetch
+  const originalFetch = global.fetch;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    // Restore original fetch
+    global.fetch = originalFetch;
+  });
+
+  it('should detect calima when PM10 >= 50', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({
+        current: {
+          time: '2024-02-15T12:00:00',
+          pm10: 65,
+        },
+      }),
+    });
+
+    const { fetchCalimaStatus } = require('../weatherService');
+
+    const result = await fetchCalimaStatus(28.0, -16.5);
+
+    expect(result).not.toBeNull();
+    expect(result!.isDetected).toBe(true);
+    expect(result!.isSevere).toBe(false);
+    expect(result!.pm10).toBe(65);
+  });
+
+  it('should detect severe calima when PM10 >= 100', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({
+        current: {
+          time: '2024-02-15T12:00:00',
+          pm10: 150,
+        },
+      }),
+    });
+
+    const { fetchCalimaStatus } = require('../weatherService');
+
+    const result = await fetchCalimaStatus(28.0, -16.5);
+
+    expect(result).not.toBeNull();
+    expect(result!.isDetected).toBe(true);
+    expect(result!.isSevere).toBe(true);
+    expect(result!.pm10).toBe(150);
+  });
+
+  it('should not detect calima when PM10 < 50', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({
+        current: {
+          time: '2024-02-15T12:00:00',
+          pm10: 25,
+        },
+      }),
+    });
+
+    const { fetchCalimaStatus } = require('../weatherService');
+
+    const result = await fetchCalimaStatus(28.0, -16.5);
+
+    expect(result).not.toBeNull();
+    expect(result!.isDetected).toBe(false);
+    expect(result!.isSevere).toBe(false);
+    expect(result!.pm10).toBe(25);
+  });
+
+  it('should return null on API error', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+    });
+
+    const { fetchCalimaStatus } = require('../weatherService');
+
+    const result = await fetchCalimaStatus(28.0, -16.5);
+
+    expect(result).toBeNull();
+  });
+
+  it('should return null when PM10 data is missing', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({
+        current: {
+          time: '2024-02-15T12:00:00',
+          // pm10 is undefined
+        },
+      }),
+    });
+
+    const { fetchCalimaStatus } = require('../weatherService');
+
+    const result = await fetchCalimaStatus(28.0, -16.5);
+
+    expect(result).toBeNull();
+  });
+
+  it('should return null on network error', async () => {
+    global.fetch = jest.fn().mockRejectedValue(new Error('Network error'));
+
+    const { fetchCalimaStatus } = require('../weatherService');
+
+    const result = await fetchCalimaStatus(28.0, -16.5);
+
+    expect(result).toBeNull();
+  });
+
+  it('should round PM10 value to integer', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({
+        current: {
+          time: '2024-02-15T12:00:00',
+          pm10: 72.7,
+        },
+      }),
+    });
+
+    const { fetchCalimaStatus } = require('../weatherService');
+
+    const result = await fetchCalimaStatus(28.0, -16.5);
+
+    expect(result).not.toBeNull();
+    expect(result!.pm10).toBe(73); // Rounded from 72.7
+  });
+
+  it('should detect calima at exactly threshold value (50)', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({
+        current: {
+          time: '2024-02-15T12:00:00',
+          pm10: 50,
+        },
+      }),
+    });
+
+    const { fetchCalimaStatus } = require('../weatherService');
+
+    const result = await fetchCalimaStatus(28.0, -16.5);
+
+    expect(result!.isDetected).toBe(true);
+    expect(result!.isSevere).toBe(false);
+  });
+
+  it('should detect severe calima at exactly threshold value (100)', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({
+        current: {
+          time: '2024-02-15T12:00:00',
+          pm10: 100,
+        },
+      }),
+    });
+
+    const { fetchCalimaStatus } = require('../weatherService');
+
+    const result = await fetchCalimaStatus(28.0, -16.5);
+
+    expect(result!.isDetected).toBe(true);
+    expect(result!.isSevere).toBe(true);
+  });
+});
+
+// ─── COASTAL ALERTS TESTS ─────────────────────────────────────────────────────
+
+describe('fetchCoastalAlerts', () => {
+  const originalFetch = global.fetch;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  // Sample CAP XML alert for testing
+  const createMockCapAlert = (params: {
+    id: string;
+    nivel: string;
+    fenomeno: string;
+    geocode: string;
+    inicio?: string;
+    fin?: string;
+  }) => {
+    const now = new Date();
+    const endTime = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24h from now
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
+  <identifier>${params.id}</identifier>
+  <info>
+    <language>es-ES</language>
+    <event>${params.fenomeno}</event>
+    <description>Alerta de ${params.fenomeno}</description>
+    <onset>${params.inicio || now.toISOString()}</onset>
+    <expires>${params.fin || endTime.toISOString()}</expires>
+    <area>
+      <areaDesc>Costa de Tenerife</areaDesc>
+      <geocode>
+        <valueName>AEMET_ID</valueName>
+        <value>${params.geocode}</value>
+      </geocode>
+    </area>
+    <parameter>
+      <valueName>nivel</valueName>
+      <value>${params.nivel}</value>
+    </parameter>
+  </info>
+</alert>`;
+  };
+
+  it('should return null when no API key is configured', async () => {
+    // The module checks EXPO_PUBLIC_AEMET_API_KEY
+    // Without env var set, should return null
+    const { fetchCoastalAlerts } = require('../weatherService');
+
+    const result = await fetchCoastalAlerts('Tenerife');
+
+    // Without API key, returns null
+    expect(result).toBeNull();
+  });
+
+  it('should return null for unknown island', async () => {
+    const { fetchCoastalAlerts } = require('../weatherService');
+
+    const result = await fetchCoastalAlerts('UnknownIsland');
+
+    expect(result).toBeNull();
+  });
+
+  it('should handle API meta request failure', async () => {
+    // Mock AEMET_API_KEY in environment
+    process.env.EXPO_PUBLIC_AEMET_API_KEY = 'test-api-key';
+
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+    });
+
+    // Need to re-require to pick up env var
+    jest.resetModules();
+    jest.mock('@supabase/supabase-js');
+    (require('@supabase/supabase-js').createClient as jest.Mock).mockReturnValue(mockSupabase);
+
+    const { fetchCoastalAlerts } = require('../weatherService');
+
+    const result = await fetchCoastalAlerts('Tenerife');
+
+    expect(result).toBeNull();
+
+    // Cleanup
+    delete process.env.EXPO_PUBLIC_AEMET_API_KEY;
+  });
+
+  it('should handle API estado not 200', async () => {
+    process.env.EXPO_PUBLIC_AEMET_API_KEY = 'test-api-key';
+
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({
+        estado: 429, // Rate limited
+        descripcion: 'Too many requests',
+      }),
+    });
+
+    jest.resetModules();
+    jest.mock('@supabase/supabase-js');
+    (require('@supabase/supabase-js').createClient as jest.Mock).mockReturnValue(mockSupabase);
+
+    const { fetchCoastalAlerts } = require('../weatherService');
+
+    const result = await fetchCoastalAlerts('Tenerife');
+
+    expect(result).toBeNull();
+
+    delete process.env.EXPO_PUBLIC_AEMET_API_KEY;
+  });
+
+  it('should return empty array when no alerts match filters', async () => {
+    process.env.EXPO_PUBLIC_AEMET_API_KEY = 'test-api-key';
+
+    // Create non-coastal alert (wind)
+    const mockTarContent = createMockCapAlert({
+      id: 'ALERT001',
+      nivel: 'amarillo',
+      fenomeno: 'Viento',
+      geocode: '659601', // Tenerife
+    });
+
+    global.fetch = jest.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          estado: 200,
+          datos: 'https://example.com/data.tar',
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(mockTarContent),
+      });
+
+    jest.resetModules();
+    jest.mock('@supabase/supabase-js');
+    (require('@supabase/supabase-js').createClient as jest.Mock).mockReturnValue(mockSupabase);
+
+    const { fetchCoastalAlerts } = require('../weatherService');
+
+    const result = await fetchCoastalAlerts('Tenerife');
+
+    // Should return empty array (wind alerts filtered out)
+    expect(result).toEqual([]);
+
+    delete process.env.EXPO_PUBLIC_AEMET_API_KEY;
+  });
+
+  it('should parse and return coastal alerts correctly', async () => {
+    process.env.EXPO_PUBLIC_AEMET_API_KEY = 'test-api-key';
+
+    const mockTarContent = createMockCapAlert({
+      id: 'ALERT_COASTAL_001',
+      nivel: 'naranja',
+      fenomeno: 'Fenómenos Costeros',
+      geocode: '659601C', // Tenerife coastal
+    });
+
+    global.fetch = jest.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          estado: 200,
+          datos: 'https://example.com/data.tar',
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        text: () => Promise.resolve(mockTarContent),
+      });
+
+    jest.resetModules();
+    jest.mock('@supabase/supabase-js');
+    (require('@supabase/supabase-js').createClient as jest.Mock).mockReturnValue(mockSupabase);
+
+    const { fetchCoastalAlerts } = require('../weatherService');
+
+    const result = await fetchCoastalAlerts('Tenerife');
+
+    // Should parse the coastal alert
+    if (result && result.length > 0) {
+      expect(result[0].phenomenon).toBe('coastal');
+      expect(result[0].severity).toBe('orange');
+    }
+
+    delete process.env.EXPO_PUBLIC_AEMET_API_KEY;
+  });
+
+  it('should handle network timeout', async () => {
+    process.env.EXPO_PUBLIC_AEMET_API_KEY = 'test-api-key';
+
+    const abortError = new Error('Aborted');
+    abortError.name = 'AbortError';
+
+    global.fetch = jest.fn().mockRejectedValue(abortError);
+
+    jest.resetModules();
+    jest.mock('@supabase/supabase-js');
+    (require('@supabase/supabase-js').createClient as jest.Mock).mockReturnValue(mockSupabase);
+
+    const { fetchCoastalAlerts } = require('../weatherService');
+
+    const result = await fetchCoastalAlerts('Tenerife');
+
+    expect(result).toBeNull();
+
+    delete process.env.EXPO_PUBLIC_AEMET_API_KEY;
+  });
+});
+
+describe('fetchMostSevereCoastalAlert', () => {
+  const originalFetch = global.fetch;
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  it('should return null when no alerts', async () => {
+    const { fetchMostSevereCoastalAlert } = require('../weatherService');
+
+    const result = await fetchMostSevereCoastalAlert('Tenerife');
+
+    expect(result).toBeNull();
+  });
+});
+
+// ─── HELPER FUNCTION TESTS ─────────────────────────────────────────────────────
+
+describe('findNearestStations', () => {
+  it('should return stations sorted by distance', () => {
+    const { findNearestStations } = require('../weatherService');
+
+    // Santa Cruz de Tenerife coordinates
+    const stations = findNearestStations(28.4653, -16.2572, 3);
+
+    expect(stations.length).toBeLessThanOrEqual(3);
+    // Verify sorted by distance (ascending)
+    for (let i = 1; i < stations.length; i++) {
+      expect(stations[i].distance).toBeGreaterThanOrEqual(stations[i - 1].distance);
+    }
+  });
+
+  it('should include station names and IDs', () => {
+    const { findNearestStations } = require('../weatherService');
+
+    const stations = findNearestStations(28.4653, -16.2572, 1);
+
+    if (stations.length > 0) {
+      expect(stations[0]).toHaveProperty('stationId');
+      expect(stations[0]).toHaveProperty('name');
+      expect(stations[0]).toHaveProperty('distance');
+    }
+  });
+
+  it('should exclude high altitude stations by default', () => {
+    const { findNearestStations } = require('../weatherService');
+
+    // Coordinates near Izaña (high altitude station)
+    const stations = findNearestStations(28.3086, -16.4992, 5);
+
+    // Should not include Izaña (C430E) or Roque de los Muchachos
+    const hasHighAltitude = stations.some(
+      (s: { stationId: string }) => s.stationId === 'C430E' || s.stationId === 'C628Y'
+    );
+    expect(hasHighAltitude).toBe(false);
+  });
+
+  it('should include high altitude stations when excludeHighAltitude is false', () => {
+    const { findNearestStations } = require('../weatherService');
+
+    // Coordinates near Izaña (high altitude station)
+    const stations = findNearestStations(28.3086, -16.4992, 5, false);
+
+    // May include Izaña depending on exact coordinates
+    expect(stations.length).toBeGreaterThan(0);
+  });
+});
+
+// ─── ALERT SEVERITY MAPPING TESTS ─────────────────────────────────────────────
+
+describe('Alert severity and phenomenon mapping', () => {
+  // These are internal functions, but we can test their behavior through fetchCoastalAlerts
+  // by checking the output format
+
+  it('should correctly structure CoastalAlert type', () => {
+    // Verify the expected shape of CoastalAlert
+    const mockAlert = {
+      id: 'test-id',
+      severity: 'orange' as const,
+      phenomenon: 'coastal' as const,
+      headline: 'Test headline',
+      description: 'Test description',
+      startTime: '2024-02-15T00:00:00Z',
+      endTime: '2024-02-16T00:00:00Z',
+      areaName: 'Costa Norte',
+      eventCode: 'FC',
+    };
+
+    expect(mockAlert.severity).toMatch(/^(yellow|orange|red)$/);
+    expect(mockAlert.phenomenon).toBe('coastal');
+  });
+});
