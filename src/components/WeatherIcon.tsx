@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { WeatherCondition } from '../types';
 
 // ─── WEATHER ICON MAPPING ────────────────────────────────────────────────────
