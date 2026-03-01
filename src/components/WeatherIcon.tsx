@@ -172,7 +172,7 @@ function PartlySunnyIcon({ size, isSmall, showGlow }: PartlySunnyIconProps) {
 
 // ─── WEATHER ICON COMPONENT ──────────────────────────────────────────────────
 
-export function WeatherIcon({
+export const WeatherIcon = React.memo(function WeatherIcon({
   condition,
   size = 'large',
   showGlow = true,
@@ -221,7 +221,7 @@ export function WeatherIcon({
       />
     </View>
   );
-}
+});
 
 // ─── PARAMETER ICON COMPONENT ────────────────────────────────────────────────
 // Smaller icons for wind, humidity etc. with subtle glow

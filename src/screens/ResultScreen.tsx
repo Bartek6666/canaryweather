@@ -55,7 +55,7 @@ interface LiveWeatherCardProps {
   isFromCache?: boolean;
 }
 
-function LiveWeatherCard({ data, isLoading, hasError, isFromCache = false }: LiveWeatherCardProps) {
+const LiveWeatherCard = React.memo(function LiveWeatherCard({ data, isLoading, hasError, isFromCache = false }: LiveWeatherCardProps) {
   const { t } = useTranslation();
   const pulseAnim = useRef(new Animated.Value(0.4)).current;
   const skeletonAnim = useRef(new Animated.Value(0.3)).current;
@@ -222,10 +222,9 @@ function LiveWeatherCard({ data, isLoading, hasError, isFromCache = false }: Liv
       )}
     </View>
   );
-}
+});
 
-
-function BestTimeCard({ week, rank, delay = 0 }: { week: WeeklyBestPeriod; rank: number; delay?: number }) {
+const BestTimeCard = React.memo(function BestTimeCard({ week, rank, delay = 0 }: { week: WeeklyBestPeriod; rank: number; delay?: number }) {
   const { t } = useTranslation();
   const medalColors = [colors.medalGold, colors.medalSilver, colors.medalBronze];
   const borderColors = [
@@ -277,9 +276,9 @@ function BestTimeCard({ week, rank, delay = 0 }: { week: WeeklyBestPeriod; rank:
       </View>
     </GlassCard>
   );
-}
+});
 
-function YearHistoryItem({ data, month, delay = 0 }: { data: YearlyData; month: number; delay?: number }) {
+const YearHistoryItem = React.memo(function YearHistoryItem({ data, month, delay = 0 }: { data: YearlyData; month: number; delay?: number }) {
   const { t } = useTranslation();
   const sunChance = data.totalDays > 0 ? Math.round((data.sunnyDays / data.totalDays) * 100) : 0;
   const weatherCondition: WeatherCondition = sunChance >= 70 ? 'sunny' : sunChance >= 40 ? 'partly-sunny' : 'cloudy';
@@ -357,7 +356,7 @@ function YearHistoryItem({ data, month, delay = 0 }: { data: YearlyData; month: 
       </Pressable>
     </Animated.View>
   );
-}
+});
 
 export default function ResultScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
@@ -636,7 +635,7 @@ export default function ResultScreen({ navigation, route }: Props) {
     }
   }, [station, stationId]);
 
-  const getSummary = () => {
+  const summary = useMemo(() => {
     const sunChance = sunChanceResult?.sun_chance ?? 0;
     const windSpeed = displayLiveData?.windSpeed ?? 0;
     const avgTemp = currentStats?.avg_tmax ?? 0;
@@ -668,7 +667,7 @@ export default function ResultScreen({ navigation, route }: Props) {
     }
 
     return parts.join(' ');
-  };
+  }, [sunChanceResult?.sun_chance, displayLiveData?.windSpeed, currentStats?.avg_tmax, locationName, station?.name, t]);
 
   if (!station) return (
     <View style={styles.container}>
@@ -897,7 +896,7 @@ export default function ResultScreen({ navigation, route }: Props) {
                 <Ionicons name="information-circle" size={20} color={colors.rain} />
                 <Text style={styles.summaryTitle}>{t('result.summary')}</Text>
               </View>
-              <Text style={styles.summaryText}>{getSummary()}</Text>
+              <Text style={styles.summaryText}>{summary}</Text>
             </View>
           </GlassCard>
         )}
