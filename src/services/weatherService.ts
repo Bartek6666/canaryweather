@@ -685,14 +685,16 @@ export async function calculateRainStats(
     ? rainyDays.reduce((sum, row) => sum + (row.precip as number), 0) / totalRainyDays
     : 0;
 
-  // Determine confidence based on sample size
+  // Determine confidence based on how decisive the result is
+  // Values far from 50% (both high dry% and low dry%) indicate certain outcomes
   let confidence: 'high' | 'medium' | 'low';
-  if (monthData.length >= 200) {
-    confidence = 'high';
-  } else if (monthData.length >= 50) {
-    confidence = 'medium';
+  const distanceFrom50 = Math.abs(daysWithoutRain - 50);
+  if (distanceFrom50 >= 25) {
+    confidence = 'high'; // <=25% or >=75%: Very certain result
+  } else if (distanceFrom50 >= 10) {
+    confidence = 'medium'; // 26-40% or 60-74%: Moderately certain
   } else {
-    confidence = 'low';
+    confidence = 'low'; // 41-59%: Uncertain (could go either way)
   }
 
   return {

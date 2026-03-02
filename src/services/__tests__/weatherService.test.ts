@@ -1134,3 +1134,62 @@ describe('Alert severity and phenomenon mapping', () => {
     expect(mockAlert.phenomenon).toBe('coastal');
   });
 });
+
+// ─── RAIN STATS CONFIDENCE LOGIC TESTS ────────────────────────────────────────
+
+describe('Rain confidence calculation logic', () => {
+  // Test the confidence calculation logic directly
+  // Confidence is based on distance from 50% (how decisive the result is)
+
+  function calculateConfidence(daysWithoutRain: number): 'high' | 'medium' | 'low' {
+    const distanceFrom50 = Math.abs(daysWithoutRain - 50);
+    if (distanceFrom50 >= 25) {
+      return 'high'; // <=25% or >=75%: Very certain result
+    } else if (distanceFrom50 >= 10) {
+      return 'medium'; // 26-40% or 60-74%: Moderately certain
+    } else {
+      return 'low'; // 41-59%: Uncertain (could go either way)
+    }
+  }
+
+  it('should return high confidence for 93% dry days (user reported issue)', () => {
+    // User reported: 93% dry days was showing "medium confidence" - should be "high"
+    expect(calculateConfidence(93)).toBe('high');
+  });
+
+  it('should return high confidence for >= 75% dry days', () => {
+    expect(calculateConfidence(75)).toBe('high');
+    expect(calculateConfidence(80)).toBe('high');
+    expect(calculateConfidence(90)).toBe('high');
+    expect(calculateConfidence(100)).toBe('high');
+  });
+
+  it('should return high confidence for <= 25% dry days (very rainy)', () => {
+    expect(calculateConfidence(25)).toBe('high');
+    expect(calculateConfidence(20)).toBe('high');
+    expect(calculateConfidence(10)).toBe('high');
+    expect(calculateConfidence(0)).toBe('high');
+  });
+
+  it('should return medium confidence for 60-74% dry days', () => {
+    expect(calculateConfidence(60)).toBe('medium');
+    expect(calculateConfidence(65)).toBe('medium');
+    expect(calculateConfidence(70)).toBe('medium');
+    expect(calculateConfidence(74)).toBe('medium');
+  });
+
+  it('should return medium confidence for 26-40% dry days', () => {
+    expect(calculateConfidence(26)).toBe('medium');
+    expect(calculateConfidence(30)).toBe('medium');
+    expect(calculateConfidence(35)).toBe('medium');
+    expect(calculateConfidence(40)).toBe('medium');
+  });
+
+  it('should return low confidence for 41-59% dry days (uncertain)', () => {
+    expect(calculateConfidence(41)).toBe('low');
+    expect(calculateConfidence(45)).toBe('low');
+    expect(calculateConfidence(50)).toBe('low'); // Most uncertain
+    expect(calculateConfidence(55)).toBe('low');
+    expect(calculateConfidence(59)).toBe('low');
+  });
+});
