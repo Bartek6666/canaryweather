@@ -225,7 +225,10 @@ export default function RainDetailsScreen({ navigation, route }: Props) {
               <View style={styles.intensityInner}>
                 <View style={styles.intensityHeader}>
                   <Ionicons name="water" size={20} color={colors.rain} />
-                  <Text style={styles.intensityTitle}>{t('rain.intensity_info')}</Text>
+                  <View style={styles.intensityTitleContainer}>
+                    <Text style={styles.intensityTitle}>{t('rain.intensity_info')}</Text>
+                    <Text style={styles.intensitySubtitle}>{locationName || stationName}</Text>
+                  </View>
                 </View>
                 <View style={styles.intensityStats}>
                   <View style={styles.intensityStat}>
@@ -440,13 +443,21 @@ const styles = StyleSheet.create({
   },
   intensityHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: spacing.md,
+  },
+  intensityTitleContainer: {
+    flex: 1,
+    marginLeft: spacing.sm,
   },
   intensityTitle: {
     ...typography.h3,
     color: colors.textPrimary,
-    marginLeft: spacing.sm,
+  },
+  intensitySubtitle: {
+    ...typography.bodySmall,
+    color: colors.textSecondary,
+    marginTop: 2,
   },
   intensityStats: {
     flexDirection: 'row',
