@@ -413,7 +413,12 @@ export async function getMonthlyStats(stationId: string): Promise<MonthlyStats[]
       ? (validWind.reduce((sum, d) => sum + ((d as any).velmedia || 0), 0) / validWind.length) * 3.6
       : null; // Will use getTypicalWindSpeed as fallback
 
-    const rainDays = monthData.filter((d) => d.precip !== null && d.precip > 0).length;
+    const rainDaysTotal = monthData.filter((d) => d.precip !== null && d.precip > 0).length;
+
+    // Calculate number of unique years to get average rain days per year
+    const uniqueYears = new Set(monthData.map((d) => new Date(d.date).getFullYear()));
+    const yearsCount = uniqueYears.size || 1;
+    const rainDaysAvg = Math.round(rainDaysTotal / yearsCount);
 
     const sunnyDays = monthData.filter(
       (d) => d.sol !== null && d.sol > MIN_SUN_HOURS && (d.precip === null || d.precip <= MAX_PRECIP)
@@ -428,7 +433,7 @@ export async function getMonthlyStats(stationId: string): Promise<MonthlyStats[]
       // Use actual historical wind data if available, otherwise fall back to typical estimate
       avg_wind: avgWind !== null ? Math.round(avgWind * 10) / 10 : getTypicalWindSpeed(stationId, month),
       sun_chance: monthData.length > 0 ? Math.round((sunnyDays / monthData.length) * 100) : 0,
-      rain_days: rainDays,
+      rain_days: rainDaysAvg,
       total_days: monthData.length,
     });
   }
