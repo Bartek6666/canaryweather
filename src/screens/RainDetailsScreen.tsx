@@ -202,26 +202,9 @@ export default function RainDetailsScreen({ navigation, route }: Props) {
             </View>
           </View>
 
-          {/* Historical Context Card */}
-          <GlassCard style={styles.contextCard} delay={450}>
-            <View style={styles.contextInner}>
-              <View style={styles.contextHeader}>
-                <Ionicons name="time-outline" size={20} color={colors.rain} />
-                <Text style={styles.contextTitle}>{t('rain.historical_context')}</Text>
-              </View>
-              <Text style={styles.contextText}>
-                {t('rain.historical_description', {
-                  month: monthName,
-                  station: stationName,
-                  years: '2016-2025',
-                })}
-              </Text>
-            </View>
-          </GlassCard>
-
           {/* Rain Intensity Info Card */}
           {rainStats && rainStats.sampleCount > 0 && (
-            <GlassCard style={styles.intensityCard} delay={550}>
+            <GlassCard style={styles.intensityCard} delay={450}>
               <View style={styles.intensityInner}>
                 <View style={styles.intensityHeader}>
                   <Ionicons name="water" size={20} color={colors.rain} />
@@ -242,16 +225,26 @@ export default function RainDetailsScreen({ navigation, route }: Props) {
                     <Text style={styles.intensityStatLabel}>{t('rain.rainy_days_avg')}</Text>
                   </View>
                 </View>
-                <Text style={styles.intensityComment}>
-                  {rainStats.averagePrecip < 5
-                    ? t('rain.comment_light')
-                    : rainStats.averagePrecip < 15
-                    ? t('rain.comment_moderate')
-                    : t('rain.comment_heavy')}
-                </Text>
               </View>
             </GlassCard>
           )}
+
+          {/* Historical Context Card */}
+          <GlassCard style={styles.contextCard} delay={550}>
+            <View style={styles.contextInner}>
+              <View style={styles.contextHeader}>
+                <Ionicons name="time-outline" size={20} color={colors.rain} />
+                <Text style={styles.contextTitle}>{t('rain.historical_context')}</Text>
+              </View>
+              <Text style={styles.contextText}>
+                {t('rain.historical_description', {
+                  month: monthName,
+                  station: stationName,
+                  years: '2016-2025',
+                })}
+              </Text>
+            </View>
+          </GlassCard>
 
           {/* Island Rain Ranking */}
           {islandRanking.length > 0 && (
@@ -477,13 +470,6 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: spacing.xs,
     textAlign: 'center',
-  },
-  intensityComment: {
-    ...typography.body,
-    color: colors.textSecondary,
-    fontStyle: 'italic',
-    textAlign: 'center',
-    lineHeight: 22,
   },
   contextCard: {
     width: '100%',
