@@ -2944,3 +2944,270 @@ export async function fetchMostSevereCoastalAlert(
   if (!alerts || alerts.length === 0) return null;
   return alerts[0]; // Already sorted by severity
 }
+
+/**
+ * Fetches wind weather alerts from AEMET Meteoalerta API
+ * Queries all Canary Islands (region 65) and filters by island geocode
+ * Filters for "Vientos" (wind) phenomena
+ *
+ * @param island Island name to filter alerts
+ * @returns Array of wind alerts or null if request fails
+ */
+export async function fetchWindAlerts(
+  island: string
+): Promise<CoastalAlert[] | null> {
+  if (!AEMET_API_KEY) {
+    console.warn('[WindAlerts] No API key configured');
+    return null;
+  }
+
+  const islandGeocodes = AEMET_ISLAND_GEOCODES[island];
+  if (!islandGeocodes) {
+    console.warn(`[WindAlerts] Unknown island: ${island}`);
+    return null;
+  }
+
+  try {
+    // Step 1: Get data URL from AEMET API (query all Canary Islands - region 65)
+    const endpoint = 'https://opendata.aemet.es/opendata/api/avisos_cap/ultimoelaborado/area/65';
+    const controller1 = new AbortController();
+    const timeoutId1 = setTimeout(() => controller1.abort(), 15000);
+
+    const metaResponse = await fetch(endpoint, {
+      method: 'GET',
+      headers: {
+        'api_key': AEMET_API_KEY,
+        'Accept': 'application/json',
+      },
+      signal: controller1.signal,
+    });
+
+    clearTimeout(timeoutId1);
+
+    if (!metaResponse.ok) {
+      console.warn(`[WindAlerts] Meta request failed: ${metaResponse.status}`);
+      return null;
+    }
+
+    const metaData = await metaResponse.json();
+
+    if (metaData.estado !== 200 || !metaData.datos) {
+      console.warn(`[WindAlerts] API returned estado: ${metaData.estado}`);
+      return null;
+    }
+
+    // Step 2: Fetch TAR archive from datos URL
+    const controller2 = new AbortController();
+    const timeoutId2 = setTimeout(() => controller2.abort(), 15000);
+
+    const dataResponse = await fetch(metaData.datos, {
+      method: 'GET',
+      signal: controller2.signal,
+    });
+
+    clearTimeout(timeoutId2);
+
+    if (!dataResponse.ok) {
+      console.warn(`[WindAlerts] Data request failed: ${dataResponse.status}`);
+      return null;
+    }
+
+    // Get response as text (TAR archive with embedded XML)
+    const tarContent = await dataResponse.text();
+
+    // Parse CAP alerts from TAR content
+    const parsedAlerts = parseCapAlertsFromTar(tarContent);
+
+    // Filter for this island's geocodes, wind phenomena, and active alerts
+    const now = new Date();
+    const windAlerts = parsedAlerts
+      .filter((alert) => {
+        // Check if alert is for this island (match geocode)
+        const matchesIsland = islandGeocodes.some(code => alert.geocode === code);
+        if (!matchesIsland) return false;
+
+        // Check if it's a wind phenomenon
+        const phenomenon = mapAemetPhenomenon(alert.fenomeno);
+        if (phenomenon !== 'wind') return false;
+
+        // Only include yellow, orange, red alerts (skip green/verde)
+        const severity = mapAemetSeverity(alert.nivel);
+        if (alert.nivel?.toLowerCase() === 'verde' || alert.nivel?.toLowerCase() === 'green') return false;
+
+        // Check if alert is still active
+        const endTime = new Date(alert.fin);
+        return endTime > now;
+      })
+      .map((alert): CoastalAlert => ({
+        id: alert.id,
+        severity: mapAemetSeverity(alert.nivel),
+        phenomenon: 'wind',
+        headline: alert.fenomeno || 'Vientos',
+        description: alert.descripcion || '',
+        startTime: alert.inicio,
+        endTime: alert.fin,
+        areaName: alert.areaDesc || island,
+        eventCode: alert.fenomeno,
+      }));
+
+    // Sort by severity (red > orange > yellow)
+    const severityOrder: Record<AlertSeverity, number> = { red: 3, orange: 2, yellow: 1 };
+    windAlerts.sort((a, b) => severityOrder[b.severity] - severityOrder[a.severity]);
+
+    return windAlerts;
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        console.warn('[WindAlerts] Request timed out');
+      } else {
+        console.warn('[WindAlerts] Error:', error.message);
+      }
+    }
+    return null;
+  }
+}
+
+/**
+ * Returns the most severe wind alert for a location
+ * Use this to display a single alert card in the UI
+ */
+export async function fetchMostSevereWindAlert(
+  island: string
+): Promise<CoastalAlert | null> {
+  const alerts = await fetchWindAlerts(island);
+  if (!alerts || alerts.length === 0) return null;
+  return alerts[0]; // Already sorted by severity
+}
+
+/**
+ * Fetches snow weather alerts from AEMET Meteoalerta API
+ * Queries all Canary Islands (region 65) and filters by island geocode
+ * Filters for "Nevadas" (snow) phenomena - relevant for high altitude areas like Teide
+ *
+ * @param island Island name to filter alerts
+ * @returns Array of snow alerts or null if request fails
+ */
+export async function fetchSnowAlerts(
+  island: string
+): Promise<CoastalAlert[] | null> {
+  if (!AEMET_API_KEY) {
+    console.warn('[SnowAlerts] No API key configured');
+    return null;
+  }
+
+  const islandGeocodes = AEMET_ISLAND_GEOCODES[island];
+  if (!islandGeocodes) {
+    console.warn(`[SnowAlerts] Unknown island: ${island}`);
+    return null;
+  }
+
+  try {
+    // Step 1: Get data URL from AEMET API (query all Canary Islands - region 65)
+    const endpoint = 'https://opendata.aemet.es/opendata/api/avisos_cap/ultimoelaborado/area/65';
+    const controller1 = new AbortController();
+    const timeoutId1 = setTimeout(() => controller1.abort(), 15000);
+
+    const metaResponse = await fetch(endpoint, {
+      method: 'GET',
+      headers: {
+        'api_key': AEMET_API_KEY,
+        'Accept': 'application/json',
+      },
+      signal: controller1.signal,
+    });
+
+    clearTimeout(timeoutId1);
+
+    if (!metaResponse.ok) {
+      console.warn(`[SnowAlerts] Meta request failed: ${metaResponse.status}`);
+      return null;
+    }
+
+    const metaData = await metaResponse.json();
+
+    if (metaData.estado !== 200 || !metaData.datos) {
+      console.warn(`[SnowAlerts] API returned estado: ${metaData.estado}`);
+      return null;
+    }
+
+    // Step 2: Fetch TAR archive from datos URL
+    const controller2 = new AbortController();
+    const timeoutId2 = setTimeout(() => controller2.abort(), 15000);
+
+    const dataResponse = await fetch(metaData.datos, {
+      method: 'GET',
+      signal: controller2.signal,
+    });
+
+    clearTimeout(timeoutId2);
+
+    if (!dataResponse.ok) {
+      console.warn(`[SnowAlerts] Data request failed: ${dataResponse.status}`);
+      return null;
+    }
+
+    // Get response as text (TAR archive with embedded XML)
+    const tarContent = await dataResponse.text();
+
+    // Parse CAP alerts from TAR content
+    const parsedAlerts = parseCapAlertsFromTar(tarContent);
+
+    // Filter for this island's geocodes, snow phenomena, and active alerts
+    const now = new Date();
+    const snowAlerts = parsedAlerts
+      .filter((alert) => {
+        // Check if alert is for this island (match geocode)
+        const matchesIsland = islandGeocodes.some(code => alert.geocode === code);
+        if (!matchesIsland) return false;
+
+        // Check if it's a snow phenomenon
+        const phenomenon = mapAemetPhenomenon(alert.fenomeno);
+        if (phenomenon !== 'snow') return false;
+
+        // Only include yellow, orange, red alerts (skip green/verde)
+        if (alert.nivel?.toLowerCase() === 'verde' || alert.nivel?.toLowerCase() === 'green') return false;
+
+        // Check if alert is still active
+        const endTime = new Date(alert.fin);
+        return endTime > now;
+      })
+      .map((alert): CoastalAlert => ({
+        id: alert.id,
+        severity: mapAemetSeverity(alert.nivel),
+        phenomenon: 'snow',
+        headline: alert.fenomeno || 'Nevadas',
+        description: alert.descripcion || '',
+        startTime: alert.inicio,
+        endTime: alert.fin,
+        areaName: alert.areaDesc || island,
+        eventCode: alert.fenomeno,
+      }));
+
+    // Sort by severity (red > orange > yellow)
+    const severityOrder: Record<AlertSeverity, number> = { red: 3, orange: 2, yellow: 1 };
+    snowAlerts.sort((a, b) => severityOrder[b.severity] - severityOrder[a.severity]);
+
+    return snowAlerts;
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        console.warn('[SnowAlerts] Request timed out');
+      } else {
+        console.warn('[SnowAlerts] Error:', error.message);
+      }
+    }
+    return null;
+  }
+}
+
+/**
+ * Returns the most severe snow alert for a location
+ * Use this to display a single alert card in the UI (relevant for high altitude like Teide)
+ */
+export async function fetchMostSevereSnowAlert(
+  island: string
+): Promise<CoastalAlert | null> {
+  const alerts = await fetchSnowAlerts(island);
+  if (!alerts || alerts.length === 0) return null;
+  return alerts[0]; // Already sorted by severity
+}

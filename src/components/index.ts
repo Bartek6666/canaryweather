@@ -4,6 +4,8 @@ export { CalimaInfoModal } from './CalimaInfoModal';
 export { ClickableGlassCard } from './common/ClickableGlassCard';
 export { CoastalAlertCard } from './CoastalAlertCard';
 export { GlassCard } from './GlassCard';
+export { SnowAlertCard } from './SnowAlertCard';
+export { WindAlertCard } from './WindAlertCard';
 export { HeroLogo } from './HeroLogo';
 export { LanguageSwitcher } from './LanguageSwitcher';
 export { LocationPrompt } from './LocationPrompt';

@@ -19,9 +19,9 @@ import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 
 import { colors, spacing, typography, glass, glassText, borderRadius, gradients, getSunChanceColor, liveCard } from '../constants/theme';
-import { AlertCard, AlertDetailModal, ClickableGlassCard, CoastalAlertCard, GlassCard, SunChanceGauge, SunChanceModal, WeatherIcon, WeatherEffects } from '../components';
+import { AlertCard, AlertDetailModal, ClickableGlassCard, CoastalAlertCard, GlassCard, SnowAlertCard, SunChanceGauge, SunChanceModal, WeatherIcon, WeatherEffects, WindAlertCard } from '../components';
 import locationsMapping from '../constants/locations_mapping.json';
-import { calculateSunChanceWithFallback, SunChanceWithFallback, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult, calculateInterpolatedMonthlyStats, InterpolatedMonthlyStatsResult, fetchMostSevereCoastalAlert, applyMuddyRainDetection, validateWeatherWithNearbyStation, WeatherValidationResult } from '../services/weatherService';
+import { calculateSunChanceWithFallback, SunChanceWithFallback, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult, calculateInterpolatedMonthlyStats, InterpolatedMonthlyStatsResult, fetchMostSevereCoastalAlert, fetchMostSevereWindAlert, fetchMostSevereSnowAlert, applyMuddyRainDetection, validateWeatherWithNearbyStation, WeatherValidationResult } from '../services/weatherService';
 import { supabase } from '../services/supabase';
 import { trackResultView, trackAlertDetailsView } from '../services/analyticsService';
 import { SunChanceResult, MonthlyStats, LiveWeatherData, WeatherCondition, CoastalAlert } from '../types';
@@ -397,6 +397,12 @@ export default function ResultScreen({ navigation, route }: Props) {
   const [selectedAlert, setSelectedAlert] = useState<CoastalAlert | null>(null);
   const [showAlertModal, setShowAlertModal] = useState(false);
 
+  // Wind alert state (AEMET Meteoalerta for strong winds)
+  const [windAlert, setWindAlert] = useState<CoastalAlert | null>(null);
+
+  // Snow alert state (AEMET Meteoalerta for snow - high altitude like Teide)
+  const [snowAlert, setSnowAlert] = useState<CoastalAlert | null>(null);
+
   // Weather discrepancy state (when nearby station shows different conditions)
   const [weatherDiscrepancy, setWeatherDiscrepancy] = useState<WeatherValidationResult | null>(null);
 
@@ -557,7 +563,56 @@ export default function ResultScreen({ navigation, route }: Props) {
     return () => clearInterval(interval);
   }, [station]);
 
-  // Haptic feedback for severe alerts (orange/red)
+  // Fetch wind alerts from AEMET Meteoalerta
+  useEffect(() => {
+    if (!station) return;
+
+    const loadWindAlert = async () => {
+      try {
+        const alert = await fetchMostSevereWindAlert(station.island);
+        setWindAlert(alert);
+      } catch (e) {
+        console.error('[WindAlert] Error fetching alerts:', e);
+        setWindAlert(null);
+      }
+    };
+
+    loadWindAlert();
+
+    // Refresh wind alerts every 30 minutes
+    const interval = setInterval(loadWindAlert, 30 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [station]);
+
+  // Fetch snow alerts from AEMET Meteoalerta (only for high altitude locations)
+  useEffect(() => {
+    if (!station) return;
+
+    // Only fetch snow alerts for high altitude locations (like Teide)
+    const isHighAltitude = (station as Record<string, unknown>).isHighAltitude ?? false;
+    if (!isHighAltitude) {
+      setSnowAlert(null);
+      return;
+    }
+
+    const loadSnowAlert = async () => {
+      try {
+        const alert = await fetchMostSevereSnowAlert(station.island);
+        setSnowAlert(alert);
+      } catch (e) {
+        console.error('[SnowAlert] Error fetching alerts:', e);
+        setSnowAlert(null);
+      }
+    };
+
+    loadSnowAlert();
+
+    // Refresh snow alerts every 30 minutes
+    const interval = setInterval(loadSnowAlert, 30 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [station]);
+
+  // Haptic feedback for severe alerts (orange/red) - coastal
   useEffect(() => {
     if (coastalAlert && (coastalAlert.severity === 'orange' || coastalAlert.severity === 'red')) {
       // Trigger stronger haptic notification for severe alerts
@@ -569,12 +624,34 @@ export default function ResultScreen({ navigation, route }: Props) {
     }
   }, [coastalAlert?.id]); // Only trigger when alert ID changes (new alert)
 
+  // Haptic feedback for severe wind alerts (orange/red)
+  useEffect(() => {
+    if (windAlert && (windAlert.severity === 'orange' || windAlert.severity === 'red')) {
+      Haptics.notificationAsync(
+        windAlert.severity === 'red'
+          ? Haptics.NotificationFeedbackType.Error
+          : Haptics.NotificationFeedbackType.Warning
+      );
+    }
+  }, [windAlert?.id]);
+
+  // Haptic feedback for severe snow alerts (orange/red)
+  useEffect(() => {
+    if (snowAlert && (snowAlert.severity === 'orange' || snowAlert.severity === 'red')) {
+      Haptics.notificationAsync(
+        snowAlert.severity === 'red'
+          ? Haptics.NotificationFeedbackType.Error
+          : Haptics.NotificationFeedbackType.Warning
+      );
+    }
+  }, [snowAlert?.id]);
+
   // Handle opening alert detail modal
-  const handleAlertPress = useCallback((alert: CoastalAlert) => {
+  const handleAlertPress = useCallback((alert: CoastalAlert, alertType: 'coastal' | 'wind' | 'snow' = 'coastal') => {
     setSelectedAlert(alert);
     setShowAlertModal(true);
     // Track analytics
-    trackAlertDetailsView({ severity: alert.severity, alertType: 'coastal' });
+    trackAlertDetailsView({ severity: alert.severity, alertType });
   }, []);
 
   useEffect(() => {
@@ -628,6 +705,17 @@ export default function ResultScreen({ navigation, route }: Props) {
       if (isCoastal) {
         const alert = await fetchMostSevereCoastalAlert(station.island);
         setCoastalAlert(alert);
+      }
+
+      // Refresh wind alerts
+      const windAlertResult = await fetchMostSevereWindAlert(station.island);
+      setWindAlert(windAlertResult);
+
+      // Refresh snow alerts (only for high altitude locations)
+      const isHighAltitude = (station as Record<string, unknown>).isHighAltitude ?? false;
+      if (isHighAltitude) {
+        const snowAlertResult = await fetchMostSevereSnowAlert(station.island);
+        setSnowAlert(snowAlertResult);
       }
     } catch (error) {
       console.error('Refresh failed:', error);
@@ -848,7 +936,23 @@ export default function ResultScreen({ navigation, route }: Props) {
         {coastalAlert && (
           <CoastalAlertCard
             alert={coastalAlert}
-            onPress={() => handleAlertPress(coastalAlert)}
+            onPress={() => handleAlertPress(coastalAlert, 'coastal')}
+          />
+        )}
+
+        {/* Wind Alert - displayed when AEMET issues strong wind warnings */}
+        {windAlert && (
+          <WindAlertCard
+            alert={windAlert}
+            onPress={() => handleAlertPress(windAlert, 'wind')}
+          />
+        )}
+
+        {/* Snow Alert - displayed when AEMET issues snow warnings for high altitude (Teide, etc.) */}
+        {snowAlert && (
+          <SnowAlertCard
+            alert={snowAlert}
+            onPress={() => handleAlertPress(snowAlert, 'snow')}
           />
         )}
 
