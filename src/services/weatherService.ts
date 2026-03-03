@@ -1801,9 +1801,10 @@ export function applyMuddyRainDetection(
   return weatherData;
 }
 
-// ─── AEMET API KEY ────────────────────────────────────────────────────────────
+// ─── API KEYS ─────────────────────────────────────────────────────────────────
 
 const AEMET_API_KEY = process.env.EXPO_PUBLIC_AEMET_API_KEY || '';
+const WEATHERAPI_KEY = process.env.EXPO_PUBLIC_WEATHERAPI_KEY || '';
 
 // ─── AEMET API HELPER ─────────────────────────────────────────────────────────
 
@@ -2043,6 +2044,164 @@ async function fetchOpenMeteoCondition(lat: number, lon: number): Promise<OpenMe
   }
 }
 
+// ─── WEATHERAPI.COM CONDITION FETCH (Primary) ─────────────────────────────────
+
+interface WeatherAPIResponse {
+  current: {
+    temp_c: number;
+    humidity: number;
+    wind_kph: number;
+    gust_kph: number;
+    cloud: number;
+    is_day: number;
+    condition: {
+      text: string;
+      code: number;
+    };
+  };
+}
+
+/**
+ * Maps WeatherAPI condition code to our internal WeatherCondition
+ * WeatherAPI codes: https://www.weatherapi.com/docs/weather_conditions.json
+ */
+function mapWeatherAPICode(code: number, isNight: boolean): { condition: WeatherCondition; labelKey: string } {
+  // Clear/Sunny
+  if (code === 1000) {
+    return isNight
+      ? { condition: 'clear-night', labelKey: 'clearNight' }
+      : { condition: 'sunny', labelKey: 'clearSky' };
+  }
+
+  // Partly cloudy
+  if (code === 1003) {
+    return isNight
+      ? { condition: 'partly-cloudy-night', labelKey: 'partlyCloudyNight' }
+      : { condition: 'partly-sunny', labelKey: 'partlyCloudy' };
+  }
+
+  // Cloudy
+  if (code === 1006) {
+    return { condition: 'cloudy', labelKey: 'partlyCloudy' };
+  }
+
+  // Overcast
+  if (code === 1009) {
+    return { condition: 'cloudy', labelKey: 'overcast' };
+  }
+
+  // Mist/Fog
+  if (code === 1030 || code === 1135 || code === 1147) {
+    return { condition: 'foggy', labelKey: 'fog' };
+  }
+
+  // Drizzle/Light rain (1063, 1150, 1153, 1168, 1171, 1180, 1183)
+  if ([1063, 1150, 1153, 1168, 1171, 1180, 1183].includes(code)) {
+    return { condition: 'rainy', labelKey: 'lightRain' };
+  }
+
+  // Rain (1186, 1189, 1192, 1195, 1240, 1243, 1246)
+  if ([1186, 1189, 1240, 1243].includes(code)) {
+    return { condition: 'rainy', labelKey: 'rain' };
+  }
+
+  // Heavy rain
+  if ([1192, 1195, 1246].includes(code)) {
+    return { condition: 'rainy', labelKey: 'heavyRain' };
+  }
+
+  // Snow (1066, 1114, 1117, 1210, 1213, 1216, 1219, 1222, 1225, 1255, 1258)
+  if ([1066, 1210, 1213, 1255].includes(code)) {
+    return { condition: 'snowy', labelKey: 'lightSnow' };
+  }
+  if ([1114, 1216, 1219].includes(code)) {
+    return { condition: 'snowy', labelKey: 'snow' };
+  }
+  if ([1117, 1222, 1225, 1258].includes(code)) {
+    return { condition: 'snowy', labelKey: 'heavySnow' };
+  }
+
+  // Sleet/Ice (1069, 1072, 1198, 1201, 1204, 1207, 1237, 1249, 1252, 1261, 1264)
+  if ([1069, 1072, 1198, 1201, 1204, 1207, 1237, 1249, 1252, 1261, 1264].includes(code)) {
+    return { condition: 'rainy', labelKey: 'freezingRain' };
+  }
+
+  // Thunderstorm (1087, 1273, 1276, 1279, 1282)
+  if (code === 1087) {
+    return { condition: 'stormy', labelKey: 'thunderstorm' };
+  }
+  if ([1273, 1276].includes(code)) {
+    return { condition: 'stormy', labelKey: 'thunderstorm' };
+  }
+  if ([1279, 1282].includes(code)) {
+    return { condition: 'stormy', labelKey: 'thunderstormHail' };
+  }
+
+  // Default: cloudy
+  return { condition: 'cloudy', labelKey: 'overcast' };
+}
+
+/**
+ * Fetches weather condition from WeatherAPI.com (primary source)
+ * More accurate than Open-Meteo as it aggregates multiple data sources
+ */
+async function fetchWeatherAPICondition(lat: number, lon: number): Promise<OpenMeteoConditionResult | null> {
+  if (!WEATHERAPI_KEY) {
+    console.warn('[WeatherAPI] No API key configured, falling back to Open-Meteo');
+    return null;
+  }
+
+  const TIMEOUT_MS = 8000;
+
+  try {
+    const url = `https://api.weatherapi.com/v1/current.json?key=${WEATHERAPI_KEY}&q=${lat},${lon}&aqi=no`;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      console.warn(`[WeatherAPI] API error: ${response.status}`);
+      return null;
+    }
+
+    const data: WeatherAPIResponse = await response.json();
+
+    if (!data.current) {
+      console.warn('[WeatherAPI] No current data');
+      return null;
+    }
+
+    const isNight = data.current.is_day === 0;
+    const { condition, labelKey } = mapWeatherAPICode(data.current.condition.code, isNight);
+
+    console.log(`[WeatherAPI] Condition: ${data.current.condition.text} (code ${data.current.condition.code}), wind ${Math.round(data.current.wind_kph)} km/h, gusts ${Math.round(data.current.gust_kph)} km/h`);
+
+    return {
+      weatherCode: data.current.condition.code,
+      condition,
+      conditionLabelKey: labelKey,
+      isNight,
+      windSpeed: Math.round(data.current.wind_kph),
+      windGusts: Math.round(data.current.gust_kph),
+    };
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.warn('[WeatherAPI] Request timed out');
+    } else {
+      console.warn('[WeatherAPI] Error:', error);
+    }
+    return null;
+  }
+}
+
 // Mock data for development/testing when API is unavailable
 const MOCK_WEATHER_DATA: LiveWeatherData[] = [
   { temperature: 24, humidity: 65, windSpeed: 12, weatherCode: 0, condition: 'sunny', conditionLabelKey: 'clearSky', timestamp: new Date().toISOString() },
@@ -2100,39 +2259,45 @@ export async function fetchLiveWeather(
     }
   }
 
-  // ─── HYBRID APPROACH: AEMET for measurements + Open-Meteo for condition ───
+  // ─── HYBRID APPROACH: AEMET for measurements + WeatherAPI/Open-Meteo for condition ───
   if (stationId && AEMET_API_KEY) {
     const aemetResult = await fetchAemetLiveWeather(stationId);
     if (aemetResult) {
-      // Fetch accurate weather condition from Open-Meteo (satellite-based)
-      const openMeteoCondition = await fetchOpenMeteoCondition(lat, lon);
+      // Fetch accurate weather condition - try WeatherAPI first (more accurate), then Open-Meteo as fallback
+      let conditionData = await fetchWeatherAPICondition(lat, lon);
+      let conditionSource = 'WeatherAPI';
+
+      if (!conditionData) {
+        conditionData = await fetchOpenMeteoCondition(lat, lon);
+        conditionSource = 'Open-Meteo';
+      }
 
       let weatherData = aemetResult.data;
 
-      if (openMeteoCondition) {
-        // Merge: AEMET measurements + Open-Meteo condition
-        // Also use Open-Meteo wind data if AEMET doesn't have it (some stations lack wind sensors)
-        const useOpenMeteoWind = aemetResult.data.windSpeed === 0 && openMeteoCondition.windSpeed !== undefined;
+      if (conditionData) {
+        // Merge: AEMET measurements + WeatherAPI/Open-Meteo condition
+        // Also use condition source wind data if AEMET doesn't have it (some stations lack wind sensors)
+        const useExternalWind = aemetResult.data.windSpeed === 0 && conditionData.windSpeed !== undefined;
 
         weatherData = {
           ...aemetResult.data,
-          weatherCode: openMeteoCondition.weatherCode,
-          condition: openMeteoCondition.condition,
-          conditionLabelKey: openMeteoCondition.conditionLabelKey,
-          // Use Open-Meteo wind data when AEMET station reports 0 (likely missing sensor)
-          ...(useOpenMeteoWind && {
-            windSpeed: openMeteoCondition.windSpeed,
-            windGusts: openMeteoCondition.windGusts,
+          weatherCode: conditionData.weatherCode,
+          condition: conditionData.condition,
+          conditionLabelKey: conditionData.conditionLabelKey,
+          // Use external wind data when AEMET station reports 0 (likely missing sensor)
+          ...(useExternalWind && {
+            windSpeed: conditionData.windSpeed,
+            windGusts: conditionData.windGusts,
           }),
         };
 
-        if (useOpenMeteoWind) {
-          console.log(`[Hybrid] AEMET measurements + Open-Meteo condition + Open-Meteo wind (${openMeteoCondition.windSpeed} km/h, gusts ${openMeteoCondition.windGusts ?? 'N/A'} km/h)`);
+        if (useExternalWind) {
+          console.log(`[Hybrid] AEMET measurements + ${conditionSource} condition + ${conditionSource} wind (${conditionData.windSpeed} km/h, gusts ${conditionData.windGusts ?? 'N/A'} km/h)`);
         } else {
-          console.log('[Hybrid] AEMET measurements + Open-Meteo condition');
+          console.log(`[Hybrid] AEMET measurements + ${conditionSource} condition`);
         }
       } else {
-        console.log('[AEMET] Using AEMET data (Open-Meteo condition unavailable)');
+        console.log('[AEMET] Using AEMET data (no condition source available)');
       }
 
       // Apply state prioritization: real sensor data overrides satellite conditions
