@@ -1985,6 +1985,8 @@ interface OpenMeteoConditionResult {
   condition: WeatherCondition;
   conditionLabelKey: string;
   isNight: boolean;
+  windSpeed?: number;
+  windGusts?: number;
 }
 
 /**
@@ -1995,7 +1997,7 @@ async function fetchOpenMeteoCondition(lat: number, lon: number): Promise<OpenMe
   const TIMEOUT_MS = 8000;
 
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=weather_code,is_day&timezone=auto`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=weather_code,is_day,wind_speed_10m,wind_gusts_10m&timezone=auto`;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -2028,6 +2030,8 @@ async function fetchOpenMeteoCondition(lat: number, lon: number): Promise<OpenMe
       condition,
       conditionLabelKey: labelKey,
       isNight,
+      windSpeed: data.current.wind_speed_10m !== undefined ? Math.round(data.current.wind_speed_10m) : undefined,
+      windGusts: data.current.wind_gusts_10m !== undefined ? Math.round(data.current.wind_gusts_10m) : undefined,
     };
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
@@ -2107,13 +2111,26 @@ export async function fetchLiveWeather(
 
       if (openMeteoCondition) {
         // Merge: AEMET measurements + Open-Meteo condition
+        // Also use Open-Meteo wind data if AEMET doesn't have it (some stations lack wind sensors)
+        const useOpenMeteoWind = aemetResult.data.windSpeed === 0 && openMeteoCondition.windSpeed !== undefined;
+
         weatherData = {
           ...aemetResult.data,
           weatherCode: openMeteoCondition.weatherCode,
           condition: openMeteoCondition.condition,
           conditionLabelKey: openMeteoCondition.conditionLabelKey,
+          // Use Open-Meteo wind data when AEMET station reports 0 (likely missing sensor)
+          ...(useOpenMeteoWind && {
+            windSpeed: openMeteoCondition.windSpeed,
+            windGusts: openMeteoCondition.windGusts,
+          }),
         };
-        console.log('[Hybrid] AEMET measurements + Open-Meteo condition');
+
+        if (useOpenMeteoWind) {
+          console.log(`[Hybrid] AEMET measurements + Open-Meteo condition + Open-Meteo wind (${openMeteoCondition.windSpeed} km/h, gusts ${openMeteoCondition.windGusts ?? 'N/A'} km/h)`);
+        } else {
+          console.log('[Hybrid] AEMET measurements + Open-Meteo condition');
+        }
       } else {
         console.log('[AEMET] Using AEMET data (Open-Meteo condition unavailable)');
       }
