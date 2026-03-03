@@ -212,14 +212,17 @@ export async function calculateSunChance(
 
   const sunChance = totalDays > 0 ? Math.round((sunnyDays / totalDays) * 100) : 0;
 
-  // Determine confidence based on data availability
+  // Determine confidence based on percentage value (same as rain)
+  // High confidence when result is far from 50% (clear prediction)
+  // Low confidence when close to 50% (uncertain)
   let confidence: 'high' | 'medium' | 'low';
-  if (totalDays >= 50 && hasSolData) {
-    confidence = 'high';
-  } else if (totalDays >= 20) {
-    confidence = 'medium';
+  const distanceFrom50 = Math.abs(sunChance - 50);
+  if (distanceFrom50 >= 25) {
+    confidence = 'high'; // <= 25% or >= 75%
+  } else if (distanceFrom50 >= 10) {
+    confidence = 'medium'; // 26-40% or 60-74%
   } else {
-    confidence = 'low';
+    confidence = 'low'; // 41-59%
   }
 
   return {

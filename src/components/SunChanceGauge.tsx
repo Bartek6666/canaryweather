@@ -115,15 +115,6 @@ export function SunChanceGauge({ percentage, confidence, isLoading = false, onIn
     return colors.sunChanceLow;
   };
 
-  // Calculate confidence based on sun chance percentage
-  const getConfidenceLevel = (value: number): 'high' | 'medium' | 'low' => {
-    if (value >= 65) return 'high';
-    if (value >= 40) return 'medium';
-    return 'low';
-  };
-
-  const calculatedConfidence = getConfidenceLevel(percentage);
-
   // Generate gradient segments
   const renderGradientArc = () => {
     if (animatedProgress <= 0) return null;
@@ -289,7 +280,7 @@ export function SunChanceGauge({ percentage, confidence, isLoading = false, onIn
               {displayedPercentage}%
             </Text>
             <Text style={styles.label}>{sunChanceLabel}</Text>
-            <Text style={styles.confidence}>{confidenceLabels[calculatedConfidence]}</Text>
+            <Text style={styles.confidence}>{confidenceLabels[confidence]}</Text>
           </View>
         </View>
       </View>
