@@ -560,8 +560,9 @@ export async function calculateWindStability(
   // Count windy days (wind > 20 km/h) and calculate average per year
   const WINDY_THRESHOLD_KMH = 20;
   const windyDaysTotal = windSpeedsKmh.filter((speed) => speed > WINDY_THRESHOLD_KMH).length;
-  // Average windy days per month (data spans ~10 years)
-  const yearsOfData = 10;
+  // Calculate actual number of unique years in the data
+  const uniqueYears = new Set(monthData.map((row) => new Date(row.date).getFullYear()));
+  const yearsOfData = uniqueYears.size || 1;
   const windyDaysPerMonth = Math.round(windyDaysTotal / yearsOfData);
 
   // Determine confidence based on sample size
@@ -590,9 +591,11 @@ export async function calculateWindStability(
 export interface RainStatsResult {
   daysWithoutRain: number; // Percentage of days without rain (0-100)
   totalRainyDays: number; // Count of rainy days (precip > 0.1mm)
+  rainyDaysPerYear: number; // Average rainy days per year
   totalDays: number; // Total days measured
   averagePrecip: number; // Average precipitation (mm) on rainy days
   sampleCount: number; // Number of measurements
+  yearsCount: number; // Number of unique years in the data
   confidence: 'high' | 'medium' | 'low';
 }
 
@@ -627,9 +630,11 @@ export async function calculateRainStats(
       return {
         daysWithoutRain: 0,
         totalRainyDays: 0,
+        rainyDaysPerYear: 0,
         totalDays: 0,
         averagePrecip: 0,
         sampleCount: 0,
+        yearsCount: 0,
         confidence: 'low',
       };
     }
@@ -639,9 +644,11 @@ export async function calculateRainStats(
     return {
       daysWithoutRain: 0,
       totalRainyDays: 0,
+      rainyDaysPerYear: 0,
       totalDays: 0,
       averagePrecip: 0,
       sampleCount: 0,
+      yearsCount: 0,
       confidence: 'low',
     };
   }
@@ -650,9 +657,11 @@ export async function calculateRainStats(
     return {
       daysWithoutRain: 0,
       totalRainyDays: 0,
+      rainyDaysPerYear: 0,
       totalDays: 0,
       averagePrecip: 0,
       sampleCount: 0,
+      yearsCount: 0,
       confidence: 'low',
     };
   }
@@ -668,9 +677,11 @@ export async function calculateRainStats(
     return {
       daysWithoutRain: 0,
       totalRainyDays: 0,
+      rainyDaysPerYear: 0,
       totalDays: 0,
       averagePrecip: 0,
       sampleCount: 0,
+      yearsCount: 0,
       confidence: 'low',
     };
   }
@@ -681,6 +692,11 @@ export async function calculateRainStats(
   const rainyDays = monthData.filter((row) => row.precip > RAIN_THRESHOLD);
   const totalRainyDays = rainyDays.length;
   const totalDays = monthData.length;
+
+  // Calculate number of unique years in the data
+  const uniqueYears = new Set(monthData.map((row) => new Date(row.date).getFullYear()));
+  const yearsCount = uniqueYears.size || 1;
+  const rainyDaysPerYear = Math.round(totalRainyDays / yearsCount);
 
   // Calculate percentage of days WITHOUT rain (positive messaging)
   const daysWithoutRain = Math.round(((totalDays - totalRainyDays) / totalDays) * 100);
@@ -705,9 +721,11 @@ export async function calculateRainStats(
   return {
     daysWithoutRain,
     totalRainyDays,
+    rainyDaysPerYear,
     totalDays,
     averagePrecip: Math.round(averagePrecip * 10) / 10,
     sampleCount: monthData.length,
+    yearsCount,
     confidence,
   };
 }

@@ -237,7 +237,7 @@ export default function RainDetailsScreen({ navigation, route }: Props) {
                   </View>
                   <View style={styles.intensityStat}>
                     <Text style={styles.intensityStatValue}>
-                      {Math.round(rainStats.totalRainyDays / 10)} {t('rain.of_days', { total: getDaysInMonth(month) })}
+                      {rainStats.rainyDaysPerYear} {t('rain.of_days', { total: getDaysInMonth(month) })}
                     </Text>
                     <Text style={styles.intensityStatLabel}>{t('rain.rainy_days_avg')}</Text>
                   </View>
