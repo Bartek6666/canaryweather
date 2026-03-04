@@ -25,7 +25,7 @@ export function WindAlertCard({ alert, onPress }: WindAlertCardProps) {
       title={t('result.windAlert')}
       description={t('result.windAlertDesc')}
       onPress={onPress}
-      showSeverityBadge={true}
+      showSeverityBadge={false}
       showChevron={true}
     />
   );

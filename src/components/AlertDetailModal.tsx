@@ -138,22 +138,18 @@ export function AlertDetailModal({ visible, alert, onClose }: AlertDetailModalPr
               <Text style={styles.areaText}>{alert.areaName}</Text>
             </View>
 
-            {/* Official AEMET Description Section */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Ionicons name="document-text-outline" size={20} color={colors.textMuted} />
-                <Text style={styles.sectionTitle}>{t('alerts.officialAemetMessage')}</Text>
-              </View>
-              <View style={styles.descriptionContainer}>
-                {alert.description ? (
+            {/* Official AEMET Description Section - only shown when description is available */}
+            {alert.description && alert.description.trim().length > 0 && (
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Ionicons name="document-text-outline" size={20} color={colors.textMuted} />
+                  <Text style={styles.sectionTitle}>{t('alerts.officialAemetMessage')}</Text>
+                </View>
+                <View style={styles.descriptionContainer}>
                   <Text style={styles.descriptionText}>{alert.description}</Text>
-                ) : (
-                  <Text style={styles.descriptionPlaceholder}>
-                    {t('alerts.noDescriptionAvailable')}
-                  </Text>
-                )}
+                </View>
               </View>
-            </View>
+            )}
 
             {/* Source Attribution */}
             <View style={styles.sourceSection}>

@@ -25,7 +25,7 @@ export function SnowAlertCard({ alert, onPress }: SnowAlertCardProps) {
       title={t('result.snowAlert')}
       description={t('result.snowAlertDesc')}
       onPress={onPress}
-      showSeverityBadge={true}
+      showSeverityBadge={false}
       showChevron={true}
     />
   );

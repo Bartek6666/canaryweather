@@ -2289,12 +2289,18 @@ export async function fetchLiveWeather(
         // Merge: AEMET measurements + WeatherAPI/Open-Meteo condition
         // Use external wind data when:
         // 1. AEMET station reports 0 (likely missing sensor), OR
-        // 2. AEMET observation is stale (> 2 hours old) and external source has higher wind speed
+        // 2. AEMET observation is stale (> 2 hours old) and external source has higher wind speed, OR
+        // 3. External source shows SIGNIFICANTLY stronger wind (>2x or +15 km/h) - station may be sheltered
         const aemetWindMissing = aemetResult.data.windSpeed === 0;
         const externalHasStrongerWind = isStaleObservation &&
           conditionData.windSpeed !== undefined &&
           conditionData.windSpeed > aemetResult.data.windSpeed;
-        const useExternalWind = (aemetWindMissing || externalHasStrongerWind) &&
+        // Significant discrepancy: external shows >2x wind OR at least 15 km/h more
+        const significantWindDiscrepancy = conditionData.windSpeed !== undefined &&
+          aemetResult.data.windSpeed > 0 &&
+          (conditionData.windSpeed > aemetResult.data.windSpeed * 2 ||
+           conditionData.windSpeed > aemetResult.data.windSpeed + 15);
+        const useExternalWind = (aemetWindMissing || externalHasStrongerWind || significantWindDiscrepancy) &&
           conditionData.windSpeed !== undefined;
 
         weatherData = {
@@ -2310,7 +2316,11 @@ export async function fetchLiveWeather(
         };
 
         if (useExternalWind) {
-          const reason = aemetWindMissing ? 'missing sensor' : `stale data (${staleHours}h old)`;
+          const reason = aemetWindMissing
+            ? 'missing sensor'
+            : significantWindDiscrepancy
+              ? `significant discrepancy: AEMET ${aemetResult.data.windSpeed} vs ${conditionSource} ${conditionData.windSpeed} km/h`
+              : `stale data (${staleHours}h old)`;
           console.log(`[Hybrid] AEMET measurements + ${conditionSource} condition + ${conditionSource} wind [${reason}] (${conditionData.windSpeed} km/h, gusts ${conditionData.windGusts ?? 'N/A'} km/h)`);
         } else {
           console.log(`[Hybrid] AEMET measurements + ${conditionSource} condition`);
@@ -2892,11 +2902,13 @@ async function fetchAllAlertsWithCache(): Promise<ParsedCapAlert[] | null> {
     const metaData = await metaResponse.json();
 
     if (metaData.estado !== 200 || !metaData.datos) {
-      console.warn(`[Alerts] API returned estado: ${metaData.estado}`);
+      console.warn(`[Alerts] API returned estado: ${metaData.estado}, datos: ${metaData.datos ? 'present' : 'missing'}`);
+      console.warn(`[Alerts] Full response: ${JSON.stringify(metaData).substring(0, 500)}`);
       return alertsCache?.alerts || null;
     }
 
     // Step 2: Fetch TAR archive from datos URL
+    console.log(`[Alerts] Fetching TAR from: ${metaData.datos}`);
     const controller2 = new AbortController();
     const timeoutId2 = setTimeout(() => controller2.abort(), 15000);
 
@@ -2912,12 +2924,32 @@ async function fetchAllAlertsWithCache(): Promise<ParsedCapAlert[] | null> {
       return alertsCache?.alerts || null;
     }
 
-    // Get response as text (TAR archive with embedded XML)
-    const tarContent = await dataResponse.text();
+    // Log response headers to debug content type
+    const contentType = dataResponse.headers.get('content-type');
+    const contentLength = dataResponse.headers.get('content-length');
+    console.log(`[Alerts] Response headers: content-type="${contentType}", content-length="${contentLength}"`);
+
+    // Get response - try arrayBuffer first to handle binary TAR properly
+    const arrayBuffer = await dataResponse.arrayBuffer();
+    console.log(`[Alerts] Received response: ${arrayBuffer.byteLength} bytes`);
+
+    // Convert to string for parsing
+    const tarContent = new TextDecoder('utf-8').decode(arrayBuffer);
+    console.log(`[Alerts] Decoded TAR content: ${tarContent.length} chars`);
+
+    // Debug: Show content if small (likely error or empty) or first 500 chars
+    if (tarContent.length < 500) {
+      console.log(`[Alerts] TAR content preview: "${tarContent.substring(0, 500)}"`);
+    } else {
+      // Show start and check if it contains XML
+      const hasXml = tarContent.includes('<?xml');
+      const xmlCount = (tarContent.match(/<alert/g) || []).length;
+      console.log(`[Alerts] TAR contains XML: ${hasXml}, alert tags found: ${xmlCount}`);
+    }
 
     // Parse CAP alerts from TAR content
     const parsedAlerts = parseCapAlertsFromTar(tarContent);
-    console.log(`[Alerts] Parsed ${parsedAlerts.length} total alerts, caching...`);
+    console.log(`[Alerts] Parsed ${parsedAlerts.length} total alerts from TAR, caching...`);
 
     // Update cache
     alertsCache = {

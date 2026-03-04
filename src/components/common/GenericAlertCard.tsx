@@ -50,7 +50,7 @@ export interface GenericAlertCardProps {
   description: string;
   /** Callback when card is pressed */
   onPress: () => void;
-  /** Whether to show severity badge (default: true) */
+  /** Whether to show severity badge (default: false) */
   showSeverityBadge?: boolean;
   /** Whether to show chevron arrow (default: true) */
   showChevron?: boolean;
@@ -73,7 +73,7 @@ export function GenericAlertCard({
   title,
   description,
   onPress,
-  showSeverityBadge = true,
+  showSeverityBadge = false,
   showChevron = true,
   pulseDuration: customPulseDuration,
 }: GenericAlertCardProps) {
@@ -141,7 +141,7 @@ export function GenericAlertCard({
             {/* Text content */}
             <View style={styles.textContainer}>
               <Text style={styles.title}>{title}</Text>
-              <Text style={styles.description} numberOfLines={2}>
+              <Text style={styles.description} numberOfLines={3}>
                 {description}
               </Text>
             </View>

@@ -25,7 +25,7 @@ export function CoastalAlertCard({ alert, onPress }: CoastalAlertCardProps) {
       title={t('result.coastalAlert')}
       description={t('result.coastalAlertDesc')}
       onPress={onPress}
-      showSeverityBadge={true}
+      showSeverityBadge={false}
       showChevron={true}
     />
   );
