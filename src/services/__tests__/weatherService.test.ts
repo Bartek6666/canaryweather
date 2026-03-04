@@ -851,6 +851,7 @@ describe('fetchCoastalAlerts', () => {
   }) => {
     const now = new Date();
     const endTime = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24h from now
+    // Mock XML matches actual AEMET CAP format with correct valueName fields
     return `<?xml version="1.0" encoding="UTF-8"?>
 <alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
   <identifier>${params.id}</identifier>
@@ -863,12 +864,12 @@ describe('fetchCoastalAlerts', () => {
     <area>
       <areaDesc>Costa de Tenerife</areaDesc>
       <geocode>
-        <valueName>AEMET_ID</valueName>
+        <valueName>AEMET-Meteoalerta zona</valueName>
         <value>${params.geocode}</value>
       </geocode>
     </area>
     <parameter>
-      <valueName>nivel</valueName>
+      <valueName>AEMET-Meteoalerta nivel</valueName>
       <value>${params.nivel}</value>
     </parameter>
   </info>

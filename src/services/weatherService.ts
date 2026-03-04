@@ -2275,16 +2275,34 @@ export async function fetchLiveWeather(
       let weatherData = aemetResult.data;
 
       if (conditionData) {
+        // Check if AEMET observation is stale (> 2 hours old)
+        const observationAge = aemetResult.timestamp
+          ? Date.now() - new Date(aemetResult.timestamp).getTime()
+          : 0;
+        const isStaleObservation = observationAge > 2 * 60 * 60 * 1000; // 2 hours
+        const staleHours = Math.round(observationAge / (60 * 60 * 1000) * 10) / 10;
+
+        if (isStaleObservation) {
+          console.log(`[AEMET] Observation is ${staleHours}h old (stale)`);
+        }
+
         // Merge: AEMET measurements + WeatherAPI/Open-Meteo condition
-        // Also use condition source wind data if AEMET doesn't have it (some stations lack wind sensors)
-        const useExternalWind = aemetResult.data.windSpeed === 0 && conditionData.windSpeed !== undefined;
+        // Use external wind data when:
+        // 1. AEMET station reports 0 (likely missing sensor), OR
+        // 2. AEMET observation is stale (> 2 hours old) and external source has higher wind speed
+        const aemetWindMissing = aemetResult.data.windSpeed === 0;
+        const externalHasStrongerWind = isStaleObservation &&
+          conditionData.windSpeed !== undefined &&
+          conditionData.windSpeed > aemetResult.data.windSpeed;
+        const useExternalWind = (aemetWindMissing || externalHasStrongerWind) &&
+          conditionData.windSpeed !== undefined;
 
         weatherData = {
           ...aemetResult.data,
           weatherCode: conditionData.weatherCode,
           condition: conditionData.condition,
           conditionLabelKey: conditionData.conditionLabelKey,
-          // Use external wind data when AEMET station reports 0 (likely missing sensor)
+          // Use external wind data when AEMET data is missing or stale
           ...(useExternalWind && {
             windSpeed: conditionData.windSpeed,
             windGusts: conditionData.windGusts,
@@ -2292,7 +2310,8 @@ export async function fetchLiveWeather(
         };
 
         if (useExternalWind) {
-          console.log(`[Hybrid] AEMET measurements + ${conditionSource} condition + ${conditionSource} wind (${conditionData.windSpeed} km/h, gusts ${conditionData.windGusts ?? 'N/A'} km/h)`);
+          const reason = aemetWindMissing ? 'missing sensor' : `stale data (${staleHours}h old)`;
+          console.log(`[Hybrid] AEMET measurements + ${conditionSource} condition + ${conditionSource} wind [${reason}] (${conditionData.windSpeed} km/h, gusts ${conditionData.windGusts ?? 'N/A'} km/h)`);
         } else {
           console.log(`[Hybrid] AEMET measurements + ${conditionSource} condition`);
         }
@@ -2809,6 +2828,10 @@ function parseCapAlertsFromTar(tarContent: string): ParsedCapAlert[] {
         areaDesc,
         geocode,
       });
+      // Debug: Log parsed wind alerts
+      if (fenomeno.toLowerCase().includes('viento')) {
+        console.log(`[Alerts] Parsed wind alert: geocode="${geocode}", fenomeno="${fenomeno}", nivel="${nivel}", area="${areaDesc}"`);
+      }
     }
   }
 
@@ -2937,7 +2960,13 @@ export async function fetchCoastalAlerts(
   const now = new Date();
   const coastalAlerts = allAlerts
     .filter((alert) => {
-      const matchesIsland = islandGeocodes.some(code => alert.geocode === code);
+      // Use startsWith for geocode matching - AEMET may return codes with different suffixes
+      const alertGeocode = alert.geocode?.trim() || '';
+      const matchesIsland = islandGeocodes.some(code =>
+        alertGeocode === code ||
+        alertGeocode.startsWith(code.replace('C', '')) ||
+        code.startsWith(alertGeocode)
+      );
       if (!matchesIsland) return false;
 
       const phenomenon = mapAemetPhenomenon(alert.fenomeno);
@@ -2996,20 +3025,45 @@ export async function fetchWindAlerts(
   const allAlerts = await fetchAllAlertsWithCache();
   if (!allAlerts) return null;
 
+  // Debug: Log all alerts with wind-related keywords
+  console.log(`[WindAlerts] Checking ${allAlerts.length} total alerts for ${island}`);
+  console.log(`[WindAlerts] Expected geocodes: ${islandGeocodes.join(', ')}`);
+
+  // Debug: Show all wind-related alerts
+  const windRelatedAlerts = allAlerts.filter(a =>
+    a.fenomeno?.toLowerCase().includes('viento') ||
+    a.fenomeno?.toLowerCase().includes('wind')
+  );
+  console.log(`[WindAlerts] Wind-related alerts found: ${windRelatedAlerts.length}`);
+  windRelatedAlerts.forEach(a => {
+    console.log(`[WindAlerts] - geocode: "${a.geocode}", fenomeno: "${a.fenomeno}", nivel: "${a.nivel}", fin: "${a.fin}"`);
+  });
+
   const now = new Date();
   const windAlerts = allAlerts
     .filter((alert) => {
-      const matchesIsland = islandGeocodes.some(code => alert.geocode === code);
-      if (!matchesIsland) return false;
-
+      // Use startsWith for geocode matching - AEMET may return codes with different suffixes
+      const alertGeocode = alert.geocode?.trim() || '';
+      const matchesIsland = islandGeocodes.some(code =>
+        alertGeocode === code ||
+        alertGeocode.startsWith(code.replace('C', '')) ||
+        code.startsWith(alertGeocode)
+      );
       const phenomenon = mapAemetPhenomenon(alert.fenomeno);
-      if (phenomenon !== 'wind') return false;
-
-      // Skip green/verde alerts
-      if (alert.nivel?.toLowerCase() === 'verde' || alert.nivel?.toLowerCase() === 'green') return false;
-
+      const isWind = phenomenon === 'wind';
+      const isGreen = alert.nivel?.toLowerCase() === 'verde' || alert.nivel?.toLowerCase() === 'green';
       const endTime = new Date(alert.fin);
-      return endTime > now;
+      const notExpired = endTime > now;
+
+      // Debug: Log why alerts are filtered out
+      if (isWind) {
+        console.log(`[WindAlerts] Evaluating: geocode="${alert.geocode}", matchesIsland=${matchesIsland}, isGreen=${isGreen}, notExpired=${notExpired}`);
+      }
+
+      if (!matchesIsland) return false;
+      if (!isWind) return false;
+      if (isGreen) return false;
+      return notExpired;
     })
     .map((alert): CoastalAlert => ({
       id: alert.id,
@@ -3064,7 +3118,13 @@ export async function fetchSnowAlerts(
   const now = new Date();
   const snowAlerts = allAlerts
     .filter((alert) => {
-      const matchesIsland = islandGeocodes.some(code => alert.geocode === code);
+      // Use startsWith for geocode matching - AEMET may return codes with different suffixes
+      const alertGeocode = alert.geocode?.trim() || '';
+      const matchesIsland = islandGeocodes.some(code =>
+        alertGeocode === code ||
+        alertGeocode.startsWith(code.replace('C', '')) ||
+        code.startsWith(alertGeocode)
+      );
       if (!matchesIsland) return false;
 
       const phenomenon = mapAemetPhenomenon(alert.fenomeno);
