@@ -30,7 +30,7 @@ export function AlertCard({ type = 'calima', visible = true }: AlertCardProps) {
         description={t('result.calimaDesc')}
         onPress={() => setShowInfoModal(true)}
         showSeverityBadge={false}
-        showChevron={false}
+        showChevron={true}
       />
       <CalimaInfoModal
         visible={showInfoModal}

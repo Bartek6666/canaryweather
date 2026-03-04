@@ -21,7 +21,7 @@ import * as Haptics from 'expo-haptics';
 import { colors, spacing, typography, glass, glassText, borderRadius, gradients, getSunChanceColor, liveCard } from '../constants/theme';
 import { AlertCard, AlertDetailModal, ClickableGlassCard, CoastalAlertCard, GlassCard, SnowAlertCard, SunChanceGauge, SunChanceModal, WeatherIcon, WeatherEffects, WindAlertCard } from '../components';
 import locationsMapping from '../constants/locations_mapping.json';
-import { calculateSunChanceWithFallback, SunChanceWithFallback, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult, calculateInterpolatedMonthlyStats, InterpolatedMonthlyStatsResult, fetchMostSevereCoastalAlert, fetchMostSevereWindAlert, fetchMostSevereSnowAlert, applyMuddyRainDetection, validateWeatherWithNearbyStation, WeatherValidationResult } from '../services/weatherService';
+import { calculateSunChanceWithFallback, SunChanceWithFallback, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult, calculateInterpolatedMonthlyStats, InterpolatedMonthlyStatsResult, fetchMostSevereCoastalAlert, fetchMostSevereWindAlert, fetchMostSevereSnowAlert, validateWeatherWithNearbyStation, WeatherValidationResult } from '../services/weatherService';
 import { supabase } from '../services/supabase';
 import { trackResultView, trackAlertDetailsView } from '../services/analyticsService';
 import { SunChanceResult, MonthlyStats, LiveWeatherData, WeatherCondition, CoastalAlert } from '../types';
@@ -382,12 +382,8 @@ export default function ResultScreen({ navigation, route }: Props) {
   // Calima alert state (connected to Open-Meteo Air Quality API)
   const [calimaStatus, setCalimaStatus] = useState<CalimaStatus | null>(null);
 
-  // Apply "Lluvia de Barro" (Mud Rain) detection when both weather and calima data are available
-  // This is a unique Canary Islands phenomenon: Saharan dust (PM10 > 50) + rain = mud rain
-  const displayLiveData = useMemo(() => {
-    if (!liveData) return null;
-    return applyMuddyRainDetection(liveData, calimaStatus);
-  }, [liveData, calimaStatus]);
+  // Display live weather data directly (Calima alerts are shown via AlertCard)
+  const displayLiveData = liveData;
 
   // Sun Chance info modal state
   const [showSunChanceModal, setShowSunChanceModal] = useState(false);
