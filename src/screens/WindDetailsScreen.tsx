@@ -55,12 +55,17 @@ const BEAUFORT_SCALE: BeaufortScale[] = [
 ];
 
 function getBeaufortFromSpeed(speedKmh: number): BeaufortScale {
+  const speed = Math.round(Number(speedKmh));
+  if (isNaN(speed) || speed < 0) {
+    return BEAUFORT_SCALE[0];
+  }
   for (const scale of BEAUFORT_SCALE) {
-    if (speedKmh >= scale.minSpeed && speedKmh <= scale.maxSpeed) {
+    if (speed >= scale.minSpeed && speed <= scale.maxSpeed) {
       return scale;
     }
   }
-  return BEAUFORT_SCALE[0];
+  // Return highest scale if above all defined ranges
+  return BEAUFORT_SCALE[BEAUFORT_SCALE.length - 1];
 }
 
 export default function WindDetailsScreen({ navigation, route }: Props) {
@@ -225,8 +230,18 @@ export default function WindDetailsScreen({ navigation, route }: Props) {
             </View>
           </View>
 
+          {/* Trade Wind Stability Card */}
+          {stability && stability.sampleCount > 0 && (
+            <TradeWindStabilityCard
+              stability={stability}
+              monthName={monthName}
+              month={month}
+              delay={450}
+            />
+          )}
+
           {/* Historical Context Card */}
-          <GlassCard style={styles.contextCard} delay={450}>
+          <GlassCard style={styles.contextCard} delay={550}>
             <View style={styles.contextInner}>
               <View style={styles.contextHeader}>
                 <Ionicons name="time-outline" size={20} color={colors.rain} />
@@ -241,16 +256,6 @@ export default function WindDetailsScreen({ navigation, route }: Props) {
               </Text>
             </View>
           </GlassCard>
-
-          {/* Trade Wind Stability Card */}
-          {stability && stability.sampleCount > 0 && (
-            <TradeWindStabilityCard
-              stability={stability}
-              monthName={monthName}
-              month={month}
-              delay={550}
-            />
-          )}
 
           {/* Island Wind Ranking */}
           {islandRanking.length > 0 && (
