@@ -569,7 +569,9 @@ export default function ResultScreen({ navigation, route }: Props) {
 
     const loadWindAlert = async () => {
       try {
+        console.log('[WindAlert] Fetching for island:', station.island);
         const alert = await fetchMostSevereWindAlert(station.island);
+        console.log('[WindAlert] Result:', alert ? `${alert.severity} - ${alert.headline}` : 'No alerts');
         setWindAlert(alert);
       } catch (e) {
         console.error('[WindAlert] Error fetching alerts:', e);
@@ -590,6 +592,7 @@ export default function ResultScreen({ navigation, route }: Props) {
 
     // Only fetch snow alerts for high altitude locations (like Teide)
     const isHighAltitude = (station as Record<string, unknown>).isHighAltitude ?? false;
+    console.log('[SnowAlert] Station:', station.name, 'isHighAltitude:', isHighAltitude, 'island:', station.island);
     if (!isHighAltitude) {
       setSnowAlert(null);
       return;
@@ -597,7 +600,9 @@ export default function ResultScreen({ navigation, route }: Props) {
 
     const loadSnowAlert = async () => {
       try {
+        console.log('[SnowAlert] Fetching snow alerts for', station.island);
         const alert = await fetchMostSevereSnowAlert(station.island);
+        console.log('[SnowAlert] Result:', alert ? `${alert.severity} - ${alert.headline}` : 'No alerts');
         setSnowAlert(alert);
       } catch (e) {
         console.error('[SnowAlert] Error fetching alerts:', e);
