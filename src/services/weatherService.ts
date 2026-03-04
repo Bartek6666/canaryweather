@@ -2714,6 +2714,47 @@ const AEMET_ISLAND_GEOCODES: Record<string, string[]> = {
   'El Hierro': ['659501', '659501C'],
 };
 
+// Island center latitudes for determining north/south coast
+// Used to filter coastal alerts by zone (e.g., "Costa - Norte" vs "Costa - Sur")
+const ISLAND_CENTER_LATITUDES: Record<string, number> = {
+  'Gran Canaria': 27.95,   // North: Las Palmas ~28.1, South: Maspalomas ~27.76
+  'Tenerife': 28.30,       // North: Puerto de la Cruz ~28.4, South: Los Cristianos ~28.05
+  'Fuerteventura': 28.40,  // North: Corralejo ~28.73, South: Morro Jable ~28.05
+  'Lanzarote': 29.00,      // Relatively small, less relevant
+  'La Palma': 28.68,       // East/West more relevant than N/S
+  'La Gomera': 28.10,      // Small island
+  'El Hierro': 27.75,      // Small island
+};
+
+/**
+ * Determines if a coastal alert matches the user's location based on coast zone.
+ * AEMET issues separate alerts for "Costa - Norte" and "Costa - Sur" zones.
+ * This function filters out alerts that don't apply to the user's coast.
+ */
+function doesCoastalAlertMatchLocation(areaDesc: string, lat: number | undefined, island: string): boolean {
+  // If no latitude provided, show all alerts for the island (backwards compatibility)
+  if (lat === undefined) return true;
+
+  const centerLat = ISLAND_CENTER_LATITUDES[island];
+  // If we don't have center data for this island, show all alerts
+  if (!centerLat) return true;
+
+  const areaLower = areaDesc.toLowerCase();
+  const isNorthAlert = areaLower.includes('norte') || areaLower.includes('north');
+  const isSouthAlert = areaLower.includes('sur') || areaLower.includes('south');
+
+  // If alert doesn't specify north/south, it applies to the whole island
+  if (!isNorthAlert && !isSouthAlert) return true;
+
+  const isUserInNorth = lat > centerLat;
+
+  // Match alert zone to user location
+  if (isNorthAlert && isUserInNorth) return true;
+  if (isSouthAlert && !isUserInNorth) return true;
+
+  return false;
+}
+
 // Note: Uses AEMET_API_KEY already defined above in this file
 
 /** Maps AEMET nivel to AlertSeverity */
@@ -2975,10 +3016,12 @@ async function fetchAllAlertsWithCache(): Promise<ParsedCapAlert[] | null> {
  * Uses shared cache to avoid rate limiting
  *
  * @param island Island name to filter alerts
+ * @param lat Optional latitude to filter by coast zone (north/south)
  * @returns Array of CoastalAlert or null if request fails
  */
 export async function fetchCoastalAlerts(
-  island: string
+  island: string,
+  lat?: number
 ): Promise<CoastalAlert[] | null> {
   const islandGeocodes = AEMET_ISLAND_GEOCODES[island];
   if (!islandGeocodes) {
@@ -3005,7 +3048,15 @@ export async function fetchCoastalAlerts(
       if (phenomenon !== 'coastal') return false;
 
       const endTime = new Date(alert.fin);
-      return endTime > now;
+      if (endTime <= now) return false;
+
+      // Filter by coast zone (north/south) based on user latitude
+      if (!doesCoastalAlertMatchLocation(alert.areaDesc, lat, island)) {
+        console.log(`[CoastalAlerts] Skipping alert for wrong coast: "${alert.areaDesc}" (user lat: ${lat})`);
+        return false;
+      }
+
+      return true;
     })
     .map((alert): CoastalAlert => ({
       id: alert.id,
@@ -3022,18 +3073,22 @@ export async function fetchCoastalAlerts(
   const severityOrder: Record<AlertSeverity, number> = { red: 3, orange: 2, yellow: 1 };
   coastalAlerts.sort((a, b) => severityOrder[b.severity] - severityOrder[a.severity]);
 
-  console.log(`[CoastalAlerts] Found ${coastalAlerts.length} alerts for ${island}`);
+  console.log(`[CoastalAlerts] Found ${coastalAlerts.length} alerts for ${island} (lat: ${lat ?? 'not provided'})`);
   return coastalAlerts;
 }
 
 /**
  * Returns the most severe coastal alert for a location
  * Use this to display a single alert card in the UI
+ *
+ * @param island Island name to filter alerts
+ * @param lat Optional latitude to filter by coast zone (north/south)
  */
 export async function fetchMostSevereCoastalAlert(
-  island: string
+  island: string,
+  lat?: number
 ): Promise<CoastalAlert | null> {
-  const alerts = await fetchCoastalAlerts(island);
+  const alerts = await fetchCoastalAlerts(island, lat);
   if (!alerts || alerts.length === 0) return null;
   return alerts[0]; // Already sorted by severity
 }

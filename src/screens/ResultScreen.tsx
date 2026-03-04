@@ -546,9 +546,12 @@ export default function ResultScreen({ navigation, route }: Props) {
       return;
     }
 
+    // Use user's actual location if available, otherwise fall back to station location
+    const lat = locationCoords?.lat ?? station.latitude;
+
     const loadCoastalAlert = async () => {
       try {
-        const alert = await fetchMostSevereCoastalAlert(station.island);
+        const alert = await fetchMostSevereCoastalAlert(station.island, lat);
         setCoastalAlert(alert);
       } catch (e) {
         console.error('[CoastalAlert] Error fetching alerts:', e);
@@ -561,7 +564,7 @@ export default function ResultScreen({ navigation, route }: Props) {
     // Refresh coastal alerts every 30 minutes
     const interval = setInterval(loadCoastalAlert, 30 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [station]);
+  }, [station, locationCoords]);
 
   // Fetch wind alerts from AEMET Meteoalerta
   useEffect(() => {
@@ -708,7 +711,8 @@ export default function ResultScreen({ navigation, route }: Props) {
       // Refresh coastal alerts (only for coastal locations)
       const isCoastal = (station as Record<string, unknown>).isCoastal ?? true;
       if (isCoastal) {
-        const alert = await fetchMostSevereCoastalAlert(station.island);
+        const lat = locationCoords?.lat ?? station.latitude;
+        const alert = await fetchMostSevereCoastalAlert(station.island, lat);
         setCoastalAlert(alert);
       }
 
@@ -727,7 +731,7 @@ export default function ResultScreen({ navigation, route }: Props) {
     } finally {
       setIsRefreshing(false);
     }
-  }, [station, stationId]);
+  }, [station, stationId, locationCoords]);
 
   const summary = useMemo(() => {
     const sunChance = sunChanceResult?.sun_chance ?? 0;
