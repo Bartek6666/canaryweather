@@ -604,7 +604,8 @@
     {"name": "Giniginamar", "island": "Fuerteventura", "coords": {"lat": 28.2011, "lon": -14.0747}},
     {"name": "Tarajalejo", "island": "Fuerteventura", "coords": {"lat": 28.1913, "lon": -14.1184}},
     {"name": "La Lajita", "island": "Fuerteventura", "coords": {"lat": 28.1834, "lon": -14.1520}},
-    {"name": "Ajuy", "island": "Fuerteventura", "coords": {"lat": 28.4028, "lon": -14.1531}}
+    {"name": "Ajuy", "island": "Fuerteventura", "coords": {"lat": 28.4028, "lon": -14.1531}},
+    {"name": "Aguas Verdes", "island": "Fuerteventura", "coords": {"lat": 28.7119, "lon": -14.0208}}
   ],
   "altitudeCorrection": {
     "description": "Temperature decreases by 0.6°C per 100m of elevation difference",
