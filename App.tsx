@@ -1,6 +1,6 @@
 import './src/i18n'; // Initialize i18n first
 import React, { useEffect, useState, useCallback } from 'react';
-import { View } from 'react-native';
+import { View, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { NavigationContainer } from '@react-navigation/native';
@@ -70,7 +70,9 @@ export default function App() {
         // - API data preloading
 
         // Simulate minimum splash duration for branding (optional)
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Android gets extra 1 second for splash screen display
+        const splashDuration = Platform.OS === 'android' ? 2000 : 1000;
+        await new Promise(resolve => setTimeout(resolve, splashDuration));
       } catch (e) {
         console.warn('Error loading app resources:', e);
         setHasSeenOnboarding(false);

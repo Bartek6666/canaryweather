@@ -102,6 +102,11 @@
     "summaryWindy": "Możliwy silniejszy wiatr.",
     "summaryHot": "Upalne temperatury - pamiętaj o nawodnieniu.",
     "summaryMild": "Przyjemna, łagodna temperatura.",
+    "summaryDetailed": "W {{month}} {{name}} cieszy się słońcem przez {{sunChance}}% dni. Średnia temperatura wynosi {{tmax}}–{{tmin}}°C. {{windText}}, a deszcz pada średnio {{rainDays}} dni w miesiącu.",
+    "summaryWindCalm": "Wiatr jest słaby ({{speed}} km/h)",
+    "summaryWindModerate": "Wiatr jest umiarkowany ({{speed}} km/h)",
+    "summaryWindStrong": "Wiatr jest silny ({{speed}} km/h)",
+    "summaryBasedOn10Years": "Na podstawie danych z ostatnich 10 lat.",
     "nearestAemetStation": "Najbliższa stacja AEMET",
     "highAltitudeFallback": "Brak stacji wysokogórskiej AEMET. Dane pogodowe ze stacji {{station}}.",
     "dataFromStation": "Dane ze stacji {{station}}"

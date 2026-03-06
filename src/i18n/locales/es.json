@@ -90,6 +90,11 @@
     "summaryWindy": "Posible viento fuerte.",
     "summaryHot": "Temperaturas calurosas - mantente hidratado.",
     "summaryMild": "Temperatura agradable y suave.",
+    "summaryDetailed": "En {{month}}, {{name}} disfruta del sol el {{sunChance}}% de los días. La temperatura media oscila entre {{tmax}} y {{tmin}}°C. {{windText}}, con lluvia una media de {{rainDays}} días al mes.",
+    "summaryWindCalm": "Los vientos son suaves ({{speed}} km/h)",
+    "summaryWindModerate": "Los vientos son moderados ({{speed}} km/h)",
+    "summaryWindStrong": "Los vientos son fuertes ({{speed}} km/h)",
+    "summaryBasedOn10Years": "Basado en datos históricos de 10 años.",
     "nearestAemetStation": "Estación AEMET más cercana",
     "highAltitudeFallback": "No hay estación AEMET de alta montaña disponible. Datos meteorológicos de {{station}}.",
     "dataFromStation": "Datos de la estación {{station}}"

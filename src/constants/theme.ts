@@ -230,8 +230,11 @@ export const glassTokens = {
   borderRadius: 24,
   borderColor: 'rgba(255, 255, 255, 0.2)',
   borderColorLight: 'rgba(255, 255, 255, 0.3)',
+  borderColorSubtle: 'rgba(255, 255, 255, 0.12)',
+  borderColorFaint: 'rgba(255, 255, 255, 0.1)',
   bgDefault: 'rgba(255, 255, 255, 0.15)',
   bgSubtle: 'rgba(255, 255, 255, 0.1)',
+  bgFaint: 'rgba(255, 255, 255, 0.08)',
   bgElevated: 'rgba(255, 255, 255, 0.18)',
   blurIntensity: 30,
 } as const;

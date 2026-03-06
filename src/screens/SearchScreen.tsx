@@ -25,7 +25,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
-import { theme, colors, spacing, typography, glass, glassTokens, glassText, borderRadius, gradients, shadows } from '../constants/theme';
+import { colors, spacing, typography, glass, glassTokens, glassText, borderRadius, gradients, shadows } from '../constants/theme';
 import locationsMapping from '../constants/locations_mapping.json';
 import { findNearestStations, findNearestStation as findNearestStationService, NearbyStation } from '../services/weatherService';
 import { GlassCard, HeroLogo, LanguageSwitcher, LocationPrompt } from '../components';
@@ -301,7 +301,13 @@ export default function SearchScreen({ navigation }: Props) {
   }, [navigation, geocodeQuery, geocodeCoords, trackGeocode]);
 
   // Handle quick place selection from popular destinations
-  const handleSelectPlace = useCallback((stationId: string, placeName: string, islandName: string) => {
+  // Now accepts coords directly from islandsData for accurate weather fetching
+  const handleSelectPlace = useCallback((
+    stationId: string,
+    placeName: string,
+    islandName: string,
+    coords: { lat: number; lon: number }
+  ) => {
     Keyboard.dismiss();
 
     // Track analytics
@@ -316,14 +322,10 @@ export default function SearchScreen({ navigation }: Props) {
     setGeocodeResults([]);
     setSearchMode('idle');
 
-    // Find the city in our database to get coordinates
-    const cities = locationsMapping.cities as City[];
-    const city = cities.find(c => c.name === placeName);
-
     navigation.navigate('Result', {
       stationId,
       locationName: placeName,
-      locationCoords: city?.coords,
+      locationCoords: coords,
     });
   }, [navigation, trackPopular]);
 
@@ -425,89 +427,91 @@ export default function SearchScreen({ navigation }: Props) {
   }, []);
 
   // Islands with their top 3 popular destinations
+  // Popular destinations with coordinates for accurate weather fetching
+  // Coordinates ensure WeatherAPI returns weather for the actual location, not the distant station
   const islandsData = useMemo(() => [
     {
       key: 'tenerife',
       icon: 'volcano' as const,
       places: [
-        { name: 'Costa Adeje', stationId: 'C419X' },
-        { name: 'Los Cristianos', stationId: 'C419X' },
-        { name: 'Playa de las Américas', stationId: 'C419X' },
-        { name: 'Puerto de la Cruz', stationId: 'C459Z' },
-        { name: 'Santa Cruz de Tenerife', stationId: 'C449C' },
-        { name: 'Los Gigantes', stationId: 'C419X' },
+        { name: 'Costa Adeje', stationId: 'C419X', coords: { lat: 28.0783, lon: -16.7260 } },
+        { name: 'Los Cristianos', stationId: 'C419X', coords: { lat: 28.0519, lon: -16.7150 } },
+        { name: 'Playa de las Américas', stationId: 'C419X', coords: { lat: 28.0560, lon: -16.7330 } },
+        { name: 'Puerto de la Cruz', stationId: 'C459Z', coords: { lat: 28.4167, lon: -16.5489 } },
+        { name: 'Santa Cruz de Tenerife', stationId: 'C449C', coords: { lat: 28.4636, lon: -16.2518 } },
+        { name: 'Los Gigantes', stationId: 'C419X', coords: { lat: 28.2469, lon: -16.8411 } },
       ],
     },
     {
       key: 'granCanaria',
       icon: 'beach' as const,
       places: [
-        { name: 'Maspalomas', stationId: 'C689E' },
-        { name: 'Playa del Inglés', stationId: 'C689E' },
-        { name: 'Las Palmas', stationId: 'C649I' },
-        { name: 'Puerto Rico', stationId: 'C629X' },
-        { name: 'Mogán', stationId: 'C629X' },
-        { name: 'Puerto de las Nieves', stationId: 'C658L' },
+        { name: 'Maspalomas', stationId: 'C689E', coords: { lat: 27.7600, lon: -15.5867 } },
+        { name: 'Playa del Inglés', stationId: 'C689E', coords: { lat: 27.7569, lon: -15.5689 } },
+        { name: 'Las Palmas', stationId: 'C649I', coords: { lat: 28.1235, lon: -15.4363 } },
+        { name: 'Puerto Rico', stationId: 'C629X', coords: { lat: 27.7892, lon: -15.7097 } },
+        { name: 'Mogán', stationId: 'C629X', coords: { lat: 27.82, lon: -15.76 } },
+        { name: 'Puerto de las Nieves', stationId: 'C658L', coords: { lat: 28.1000, lon: -15.7083 } },
       ],
     },
     {
       key: 'fuerteventura',
       icon: 'surfing' as const,
       places: [
-        { name: 'Corralejo', stationId: 'C249I' },
-        { name: 'Costa Calma', stationId: 'C249I' },
-        { name: 'Morro Jable', stationId: 'C249I' },
-        { name: 'Caleta de Fuste', stationId: 'C249I' },
-        { name: 'El Cotillo', stationId: 'C249I' },
-        { name: 'Betancuria', stationId: 'C249I' },
+        { name: 'Corralejo', stationId: 'C249I', coords: { lat: 28.7300, lon: -13.8678 } },
+        { name: 'Costa Calma', stationId: 'C249I', coords: { lat: 28.1586, lon: -14.2278 } },
+        { name: 'Morro Jable', stationId: 'C249I', coords: { lat: 28.0514, lon: -14.3514 } },
+        { name: 'Caleta de Fuste', stationId: 'C249I', coords: { lat: 28.3983, lon: -13.8633 } },
+        { name: 'El Cotillo', stationId: 'C249I', coords: { lat: 28.6861, lon: -14.0089 } },
+        { name: 'Betancuria', stationId: 'C249I', coords: { lat: 28.4258, lon: -14.0569 } },
       ],
     },
     {
       key: 'lanzarote',
       icon: 'terrain' as const,
       places: [
-        { name: 'Puerto del Carmen', stationId: 'C029O' },
-        { name: 'Playa Blanca', stationId: 'C029O' },
-        { name: 'Costa Teguise', stationId: 'C029O' },
-        { name: 'Arrecife', stationId: 'C029O' },
-        { name: 'Yaiza', stationId: 'C029O' },
-        { name: 'Orzola', stationId: 'C038N' },
+        { name: 'Puerto del Carmen', stationId: 'C029O', coords: { lat: 28.9217, lon: -13.6656 } },
+        { name: 'Playa Blanca', stationId: 'C029O', coords: { lat: 28.8600, lon: -13.8300 } },
+        { name: 'Costa Teguise', stationId: 'C029O', coords: { lat: 28.9983, lon: -13.5028 } },
+        { name: 'Arrecife', stationId: 'C029O', coords: { lat: 28.9630, lon: -13.5477 } },
+        { name: 'Yaiza', stationId: 'C029O', coords: { lat: 28.9531, lon: -13.7650 } },
+        { name: 'Orzola', stationId: 'C038N', coords: { lat: 29.2167, lon: -13.4500 } },
       ],
     },
     {
       key: 'laPalma',
       icon: 'pine-tree' as const,
       places: [
-        { name: 'Los Cancajos', stationId: 'C139E' },
-        { name: 'Puerto de Naos', stationId: 'C139E' },
-        { name: 'Santa Cruz de La Palma', stationId: 'C139E' },
-        { name: 'El Paso', stationId: 'C139E' },
-        { name: 'Fuencaliente', stationId: 'C139E' },
-        { name: 'Garafia', stationId: 'C101A' },
+        { name: 'Los Cancajos', stationId: 'C139E', coords: { lat: 28.6172, lon: -17.7725 } },
+        { name: 'Puerto de Naos', stationId: 'C139E', coords: { lat: 28.5981, lon: -17.9067 } },
+        { name: 'Santa Cruz de La Palma', stationId: 'C139E', coords: { lat: 28.6825, lon: -17.7644 } },
+        { name: 'El Paso', stationId: 'C139E', coords: { lat: 28.6500, lon: -17.8833 } },
+        { name: 'Fuencaliente', stationId: 'C139E', coords: { lat: 28.4833, lon: -17.8500 } },
+        { name: 'Garafia', stationId: 'C101A', coords: { lat: 28.7833, lon: -17.9167 } },
       ],
     },
     {
       key: 'laGomera',
       icon: 'forest' as const,
       places: [
-        { name: 'Valle Gran Rey', stationId: 'C329B' },
-        { name: 'Playa de Santiago', stationId: 'C329B' },
-        { name: 'San Sebastián', stationId: 'C329B' },
-        { name: 'Hermigua', stationId: 'C329B' },
-        { name: 'Agulo', stationId: 'C329B' },
-        { name: 'Alojera', stationId: 'C329B' },
+        { name: 'Valle Gran Rey', stationId: 'C329B', coords: { lat: 28.0922, lon: -17.3342 } },
+        { name: 'Playa de Santiago', stationId: 'C329B', coords: { lat: 28.0267, lon: -17.1944 } },
+        { name: 'San Sebastián', stationId: 'C329B', coords: { lat: 28.0911, lon: -17.1103 } },
+        { name: 'Hermigua', stationId: 'C329B', coords: { lat: 28.1681, lon: -17.1917 } },
+        { name: 'Agulo', stationId: 'C329B', coords: { lat: 28.1833, lon: -17.1833 } },
+        { name: 'Alojera', stationId: 'C329B', coords: { lat: 28.1333, lon: -17.3167 } },
       ],
     },
     {
       key: 'elHierro',
       icon: 'waves' as const,
       places: [
-        { name: 'La Restinga', stationId: 'C929I' },
-        { name: 'La Frontera', stationId: 'C929I' },
-        { name: 'Villa de Valverde', stationId: 'C929I' },
-        { name: 'El Pinar', stationId: 'C929I' },
-        { name: 'Sabinosa', stationId: 'C929I' },
-        { name: 'La Caleta', stationId: 'C929I' },
+        { name: 'La Restinga', stationId: 'C929I', coords: { lat: 27.6458, lon: -17.9875 } },
+        { name: 'La Frontera', stationId: 'C929I', coords: { lat: 27.7561, lon: -18.0039 } },
+        { name: 'Villa de Valverde', stationId: 'C929I', coords: { lat: 27.8092, lon: -17.9153 } },
+        { name: 'El Pinar', stationId: 'C929I', coords: { lat: 27.7000, lon: -17.9833 } },
+        { name: 'Sabinosa', stationId: 'C929I', coords: { lat: 27.7500, lon: -18.1000 } },
+        { name: 'La Caleta', stationId: 'C929I', coords: { lat: 27.7800, lon: -18.0200 } },
       ],
     },
   ], []);
@@ -754,7 +758,7 @@ export default function SearchScreen({ navigation }: Props) {
                             <TouchableOpacity
                               key={place.name}
                               activeOpacity={0.8}
-                              onPress={() => handleSelectPlace(place.stationId, place.name, t(`islands.${selectedIsland}`))}
+                              onPress={() => handleSelectPlace(place.stationId, place.name, t(`islands.${selectedIsland}`), place.coords)}
                             >
                               <GlassCard style={styles.placeItem} variant="subtle" delay={200 + index * 100}>
                                 <View style={styles.placeItemInner}>

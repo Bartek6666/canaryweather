@@ -18,13 +18,13 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 
-import { colors, spacing, typography, glass, glassText, borderRadius, gradients, getSunChanceColor, liveCard } from '../constants/theme';
+import { colors, spacing, typography, glass, glassTokens, glassText, borderRadius, gradients, getSunChanceColor, liveCard } from '../constants/theme';
 import { AlertCard, AlertDetailModal, ClickableGlassCard, CoastalAlertCard, GlassCard, SnowAlertCard, SunChanceGauge, SunChanceModal, WeatherIcon, WeatherEffects, WindAlertCard } from '../components';
 import locationsMapping from '../constants/locations_mapping.json';
 import { calculateSunChanceWithFallback, SunChanceWithFallback, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult, calculateInterpolatedMonthlyStats, InterpolatedMonthlyStatsResult, fetchMostSevereCoastalAlert, fetchMostSevereWindAlert, fetchMostSevereSnowAlert, validateWeatherWithNearbyStation, WeatherValidationResult } from '../services/weatherService';
 import { supabase } from '../services/supabase';
 import { trackResultView, trackAlertDetailsView } from '../services/analyticsService';
-import { SunChanceResult, MonthlyStats, LiveWeatherData, WeatherCondition, CoastalAlert } from '../types';
+import { SunChanceResult, MonthlyStats, LiveWeatherData, WeatherCondition, CoastalAlert, StationMapping } from '../types';
 import { MONTH_KEYS } from '../i18n';
 import { RootStackParamList } from '../../App';
 
@@ -360,7 +360,7 @@ const YearHistoryItem = React.memo(function YearHistoryItem({ data, month, delay
 });
 
 export default function ResultScreen({ navigation, route }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { stationId, locationName, locationCoords, isHighAltitudeFallback } = route.params;
   const [isLoading, setIsLoading] = useState(true);
   const [sunChanceResult, setSunChanceResult] = useState<SunChanceResult | null>(null);
@@ -417,7 +417,11 @@ export default function ResultScreen({ navigation, route }: Props) {
   // Pull-to-refresh state
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const station = useMemo(() => (locationsMapping.stations as Record<string, any>)[stationId], [stationId]);
+  const station = useMemo(() => (locationsMapping.stations as Record<string, StationMapping>)[stationId], [stationId]);
+
+  // Memoize station properties to avoid repeated casting
+  const isCoastal = useMemo(() => (station?.isCoastal as boolean | undefined) ?? true, [station]);
+  const isHighAltitude = useMemo(() => (station?.isHighAltitude as boolean | undefined) ?? false, [station]);
 
   const fetchYearlyData = useCallback(async (month: number) => {
     const currentYear = new Date().getFullYear();
@@ -459,15 +463,22 @@ export default function ResultScreen({ navigation, route }: Props) {
   }, [stationId, locationName, station]);
 
   // Fetch live weather data from Open-Meteo
+  // Use user's location coords (if available) for accurate weather conditions,
+  // but station ID for AEMET measurements
   useEffect(() => {
     if (!station) return;
+
+    // Use user's selected location for weather conditions (more accurate than station coords)
+    // Fall back to station coords if locationCoords not provided
+    const weatherLat = locationCoords?.lat ?? station.latitude;
+    const weatherLon = locationCoords?.lon ?? station.longitude;
 
     const loadLiveWeather = async (forceRefresh: boolean = false) => {
       setIsLoadingLive(true);
       setLiveError(false);
 
       try {
-        const result = await fetchLiveWeather(station.latitude, station.longitude, stationId, forceRefresh);
+        const result = await fetchLiveWeather(weatherLat, weatherLon, stationId, forceRefresh);
 
         if (result) {
           setLiveData(result.data);
@@ -478,8 +489,8 @@ export default function ResultScreen({ navigation, route }: Props) {
           // Only validate on fresh data, not cached
           if (!result.isFromCache) {
             const validation = await validateWeatherWithNearbyStation(
-              station.latitude,
-              station.longitude,
+              weatherLat,
+              weatherLon,
               result,
               stationId
             );
@@ -508,15 +519,19 @@ export default function ResultScreen({ navigation, route }: Props) {
     // Auto-refresh every 5 minutes - always fetch fresh data (bypass cache)
     const interval = setInterval(() => loadLiveWeather(true), 5 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [station, stationId]);
+  }, [station, stationId, locationCoords]);
 
   // Fetch Calima status from Open-Meteo Air Quality API
+  // Use user's location coords for accurate local air quality
   useEffect(() => {
     if (!station) return;
 
+    const calimaLat = locationCoords?.lat ?? station.latitude;
+    const calimaLon = locationCoords?.lon ?? station.longitude;
+
     const loadCalimaStatus = async () => {
       try {
-        const status = await fetchCalimaStatus(station.latitude, station.longitude);
+        const status = await fetchCalimaStatus(calimaLat, calimaLon);
         setCalimaStatus(status);
       } catch (e) {
         console.error('[Calima] Error fetching status:', e);
@@ -529,14 +544,13 @@ export default function ResultScreen({ navigation, route }: Props) {
     // Refresh calima status every 30 minutes
     const interval = setInterval(loadCalimaStatus, 30 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [station]);
+  }, [station, locationCoords]);
 
   // Fetch coastal alerts from AEMET Meteoalerta (only for coastal stations)
   useEffect(() => {
     if (!station) return;
 
     // Only fetch coastal alerts for coastal locations
-    const isCoastal = (station as Record<string, unknown>).isCoastal ?? true; // Default to true for backwards compatibility
     if (!isCoastal) {
       setCoastalAlert(null);
       return;
@@ -560,7 +574,7 @@ export default function ResultScreen({ navigation, route }: Props) {
     // Refresh coastal alerts every 30 minutes
     const interval = setInterval(loadCoastalAlert, 30 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [station, locationCoords]);
+  }, [station, locationCoords, isCoastal]);
 
   // Fetch wind alerts from AEMET Meteoalerta
   useEffect(() => {
@@ -568,9 +582,7 @@ export default function ResultScreen({ navigation, route }: Props) {
 
     const loadWindAlert = async () => {
       try {
-        console.log('[WindAlert] Fetching for island:', station.island);
         const alert = await fetchMostSevereWindAlert(station.island);
-        console.log('[WindAlert] Result:', alert ? `${alert.severity} - ${alert.headline}` : 'No alerts');
         setWindAlert(alert);
       } catch (e) {
         console.error('[WindAlert] Error fetching alerts:', e);
@@ -590,8 +602,6 @@ export default function ResultScreen({ navigation, route }: Props) {
     if (!station) return;
 
     // Only fetch snow alerts for high altitude locations (like Teide)
-    const isHighAltitude = (station as Record<string, unknown>).isHighAltitude ?? false;
-    console.log('[SnowAlert] Station:', station.name, 'isHighAltitude:', isHighAltitude, 'island:', station.island);
     if (!isHighAltitude) {
       setSnowAlert(null);
       return;
@@ -599,9 +609,7 @@ export default function ResultScreen({ navigation, route }: Props) {
 
     const loadSnowAlert = async () => {
       try {
-        console.log('[SnowAlert] Fetching snow alerts for', station.island);
         const alert = await fetchMostSevereSnowAlert(station.island);
-        console.log('[SnowAlert] Result:', alert ? `${alert.severity} - ${alert.headline}` : 'No alerts');
         setSnowAlert(alert);
       } catch (e) {
         console.error('[SnowAlert] Error fetching alerts:', e);
@@ -614,7 +622,7 @@ export default function ResultScreen({ navigation, route }: Props) {
     // Refresh snow alerts every 30 minutes
     const interval = setInterval(loadSnowAlert, 30 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [station]);
+  }, [station, isHighAltitude]);
 
   // Haptic feedback for severe alerts (orange/red) - coastal
   useEffect(() => {
@@ -686,11 +694,15 @@ export default function ResultScreen({ navigation, route }: Props) {
   const handleRefresh = useCallback(async () => {
     if (!station) return;
 
+    // Use user's selected location for weather conditions
+    const refreshLat = locationCoords?.lat ?? station.latitude;
+    const refreshLon = locationCoords?.lon ?? station.longitude;
+
     setIsRefreshing(true);
 
     try {
       // Fetch fresh weather data, bypassing cache
-      const result = await fetchLiveWeather(station.latitude, station.longitude, stationId, true);
+      const result = await fetchLiveWeather(refreshLat, refreshLon, stationId, true);
 
       if (result) {
         setLiveData(result.data);
@@ -701,11 +713,10 @@ export default function ResultScreen({ navigation, route }: Props) {
       }
 
       // Also refresh Calima status
-      const calimaResult = await fetchCalimaStatus(station.latitude, station.longitude);
+      const calimaResult = await fetchCalimaStatus(refreshLat, refreshLon);
       setCalimaStatus(calimaResult);
 
       // Refresh coastal alerts (only for coastal locations)
-      const isCoastal = (station as Record<string, unknown>).isCoastal ?? true;
       if (isCoastal) {
         const lat = locationCoords?.lat ?? station.latitude;
         const alert = await fetchMostSevereCoastalAlert(station.island, lat);
@@ -717,7 +728,6 @@ export default function ResultScreen({ navigation, route }: Props) {
       setWindAlert(windAlertResult);
 
       // Refresh snow alerts (only for high altitude locations)
-      const isHighAltitude = (station as Record<string, unknown>).isHighAltitude ?? false;
       if (isHighAltitude) {
         const snowAlertResult = await fetchMostSevereSnowAlert(station.island);
         setSnowAlert(snowAlertResult);
@@ -727,41 +737,46 @@ export default function ResultScreen({ navigation, route }: Props) {
     } finally {
       setIsRefreshing(false);
     }
-  }, [station, stationId, locationCoords]);
+  }, [station, stationId, locationCoords, isCoastal, isHighAltitude]);
 
   const summary = useMemo(() => {
     const sunChance = sunChanceResult?.sun_chance ?? 0;
-    const windSpeed = displayLiveData?.windSpeed ?? 0;
-    const avgTemp = currentStats?.avg_tmax ?? 0;
+    const avgTmax = currentStats?.avg_tmax ?? interpolatedStats?.stats?.avg_tmax ?? 0;
+    const avgTmin = currentStats?.avg_tmin ?? interpolatedStats?.stats?.avg_tmin ?? 0;
+    const avgWind = interpolatedStats?.stats?.avg_wind ?? 0;
+    const rainDays = interpolatedStats?.stats?.rain_days ?? currentStats?.rain_days ?? 0;
     const displayName = locationName || station?.name;
 
-    const parts: string[] = [];
+    // Get month name - use locative form for Polish
+    const monthKey = MONTH_KEYS[selectedMonth - 1];
+    const currentLanguage = i18n.language;
+    const monthName = currentLanguage === 'pl'
+      ? t(`monthsLocative.${monthKey}`)
+      : t(`months.${monthKey}`);
 
-    // Sun condition
-    if (sunChance >= 80) {
-      parts.push(t('result.summaryExcellent', { name: displayName }));
-    } else if (sunChance >= 60) {
-      parts.push(t('result.summarySunny'));
-    } else if (sunChance >= 40) {
-      parts.push(t('result.summaryModerate'));
+    // Determine wind description based on speed
+    let windText: string;
+    if (avgWind < 10) {
+      windText = t('result.summaryWindCalm', { speed: avgWind.toFixed(0) });
+    } else if (avgWind < 20) {
+      windText = t('result.summaryWindModerate', { speed: avgWind.toFixed(0) });
     } else {
-      parts.push(t('result.summaryCloudy'));
+      windText = t('result.summaryWindStrong', { speed: avgWind.toFixed(0) });
     }
 
-    // Temperature condition
-    if (avgTemp >= 28) {
-      parts.push(t('result.summaryHot'));
-    } else if (avgTemp >= 18 && avgTemp < 28) {
-      parts.push(t('result.summaryMild'));
-    }
+    // Build the detailed summary
+    const detailedSummary = t('result.summaryDetailed', {
+      month: monthName,
+      name: displayName,
+      sunChance: sunChance.toFixed(0),
+      tmax: avgTmax.toFixed(0),
+      tmin: avgTmin.toFixed(0),
+      windText: windText,
+      rainDays: rainDays.toFixed(0),
+    });
 
-    // Wind condition
-    if (windSpeed > 20) {
-      parts.push(t('result.summaryWindy'));
-    }
-
-    return parts.join(' ');
-  }, [sunChanceResult?.sun_chance, displayLiveData?.windSpeed, currentStats?.avg_tmax, locationName, station?.name, t]);
+    return detailedSummary;
+  }, [sunChanceResult?.sun_chance, currentStats, interpolatedStats, locationName, station?.name, selectedMonth, t, i18n.language]);
 
   if (!station) return (
     <View style={styles.container}>
@@ -803,7 +818,7 @@ export default function ResultScreen({ navigation, route }: Props) {
             <View style={styles.headerLocation}>
               <Ionicons name="location" size={14} color={colors.primary} />
               <Text style={styles.headerIsland}>
-                {locationName ? station.island : station.island}
+                {station.island}
               </Text>
             </View>
             <View style={styles.headerStation}>
@@ -1108,14 +1123,14 @@ const styles = StyleSheet.create({
   // FIGMA: STYLE_TARGET — Year history item (glassmorphism timeline)
   yearItem: {
     marginBottom: spacing.sm,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: glassTokens.bgFaint,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    borderColor: glassTokens.borderColorSubtle,
     overflow: 'hidden',
   },
   yearItemPressed: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: glassTokens.bgDefault,
     borderColor: 'rgba(255, 215, 0, 0.3)',
   },
   yearItemInner: {
@@ -1150,7 +1165,7 @@ const styles = StyleSheet.create({
   },
   sunBarBackground: {
     height: 5,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: glassTokens.bgFaint,
     borderRadius: 3,
     overflow: 'hidden',
     position: 'relative',
@@ -1379,12 +1394,12 @@ const styles = StyleSheet.create({
   cacheIndicatorInner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: glassTokens.bgFaint,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.full,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: glassTokens.borderColorFaint,
   },
   cacheIndicatorText: {
     fontSize: 13,

@@ -90,6 +90,11 @@
     "summaryWindy": "Möglicher starker Wind.",
     "summaryHot": "Heiße Temperaturen - trinken Sie viel.",
     "summaryMild": "Angenehme, milde Temperatur.",
+    "summaryDetailed": "Im {{month}} genießt {{name}} an {{sunChance}}% der Tage Sonnenschein. Die Durchschnittstemperatur liegt zwischen {{tmax}} und {{tmin}}°C. {{windText}}, mit durchschnittlich {{rainDays}} Regentagen pro Monat.",
+    "summaryWindCalm": "Die Winde sind schwach ({{speed}} km/h)",
+    "summaryWindModerate": "Die Winde sind mäßig ({{speed}} km/h)",
+    "summaryWindStrong": "Die Winde sind stark ({{speed}} km/h)",
+    "summaryBasedOn10Years": "Basierend auf 10 Jahren historischer Daten.",
     "nearestAemetStation": "Nächste AEMET-Station",
     "highAltitudeFallback": "Keine AEMET-Hochgebirgsstation vorhanden. Wetterdaten von {{station}}.",
     "dataFromStation": "Daten von Station {{station}}"

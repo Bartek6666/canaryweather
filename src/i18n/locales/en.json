@@ -90,6 +90,11 @@
     "summaryWindy": "Possible strong winds.",
     "summaryHot": "Hot temperatures - stay hydrated.",
     "summaryMild": "Pleasant, mild temperature.",
+    "summaryDetailed": "In {{month}}, {{name}} enjoys sunshine {{sunChance}}% of the time. Average temperature ranges from {{tmax}} to {{tmin}}°C. {{windText}}, with rain on average {{rainDays}} days per month.",
+    "summaryWindCalm": "Winds are light ({{speed}} km/h)",
+    "summaryWindModerate": "Winds are moderate ({{speed}} km/h)",
+    "summaryWindStrong": "Winds are strong ({{speed}} km/h)",
+    "summaryBasedOn10Years": "Based on 10 years of historical data.",
     "nearestAemetStation": "Nearest AEMET station",
     "highAltitudeFallback": "No AEMET high-altitude station available. Weather data from {{station}}.",
     "dataFromStation": "Data from {{station}} station"
