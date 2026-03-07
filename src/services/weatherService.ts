@@ -1500,14 +1500,15 @@ export async function getBestWeeksForStation(stationId: string): Promise<WeeklyB
     }
   }
 
-  // Sort by score, then by temperature (higher temp preferred when scores are close)
+  // Sort by sun chance first, then by temperature when sun chance is equal
   const topWeeks = weeklyData
     .sort((a, b) => {
-      // If scores are very close (within 5 points), prefer higher temperature
-      if (Math.abs(a.score - b.score) < 5) {
-        return b.avgTmax - a.avgTmax;
+      // Primary sort: sun chance (higher = better)
+      if (a.sunChance !== b.sunChance) {
+        return b.sunChance - a.sunChance;
       }
-      return b.score - a.score;
+      // Secondary sort: temperature (higher = better for tourists)
+      return b.avgTmax - a.avgTmax;
     })
     .slice(0, 3);
 
