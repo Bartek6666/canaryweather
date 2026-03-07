@@ -1500,9 +1500,15 @@ export async function getBestWeeksForStation(stationId: string): Promise<WeeklyB
     }
   }
 
-  // Sort by score and get top 3
+  // Sort by score, then by temperature (higher temp preferred when scores are close)
   const topWeeks = weeklyData
-    .sort((a, b) => b.score - a.score)
+    .sort((a, b) => {
+      // If scores are very close (within 5 points), prefer higher temperature
+      if (Math.abs(a.score - b.score) < 5) {
+        return b.avgTmax - a.avgTmax;
+      }
+      return b.score - a.score;
+    })
     .slice(0, 3);
 
   // Convert day of year to raw date components (formatting done in UI layer)

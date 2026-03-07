@@ -208,7 +208,7 @@
     "north_south_context_south": "El sur de la isla es típicamente más seco y soleado. Las montañas bloquean los alisios húmedos, creando un efecto de sombra de lluvia.",
     "historical_context": "Contexto Histórico",
     "historical_description": "Estadísticas de lluvia para {{month}} calculadas a partir de mediciones en la estación {{station}} durante los años {{years}}.",
-    "island_ranking_title": "Lluvia en las Islas Canarias",
+    "island_ranking_title": "Lluvia en las Islas Canarias - precipitaciones totales de todas las estaciones AEMET",
     "island_ranking_month": "en {{month}}"
   },
   "weather": {

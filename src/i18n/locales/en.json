@@ -208,7 +208,7 @@
     "north_south_context_south": "The south of the island is typically drier and sunnier. The mountains block humid trade winds, creating a rain shadow effect.",
     "historical_context": "Historical Context",
     "historical_description": "Rain statistics for {{month}} calculated from measurements at {{station}} station over the years {{years}}.",
-    "island_ranking_title": "Rain in the Canary Islands",
+    "island_ranking_title": "Rain in the Canary Islands - total rainfall from all AEMET stations",
     "island_ranking_month": "in {{month}}"
   },
   "weather": {

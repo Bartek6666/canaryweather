@@ -208,7 +208,7 @@
     "north_south_context_south": "Der Süden der Insel ist typischerweise trockener und sonniger. Die Berge blockieren die feuchten Passatwinde und erzeugen einen Regenschatteneffekt.",
     "historical_context": "Historischer Kontext",
     "historical_description": "Niederschlagsstatistik für {{month}} berechnet aus Messungen an der Station {{station}} in den Jahren {{years}}.",
-    "island_ranking_title": "Regen auf den Kanarischen Inseln",
+    "island_ranking_title": "Regen auf den Kanarischen Inseln - Gesamtniederschlag aller AEMET-Stationen",
     "island_ranking_month": "im {{month}}"
   },
   "weather": {
