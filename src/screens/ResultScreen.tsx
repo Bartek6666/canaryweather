@@ -1255,7 +1255,7 @@ const styles = StyleSheet.create({
   bestTimeStats: { alignItems: 'flex-end' },
   bestTimeStat: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.xs },
   bestTimeValue: { fontSize: 14, fontWeight: '700', marginLeft: spacing.xs },
-  bestTimeTemp: { fontSize: 13, color: colors.tempHot, marginLeft: spacing.xs },
+  bestTimeTemp: { fontSize: 15, fontWeight: '600', color: colors.tempHot, marginLeft: spacing.xs },
   // ─── LIVE WEATHER CARD (Figma Glassmorphism) ─────────────────────────────────
   // FIGMA: STYLE_TARGET — LiveWeatherCard
   liveCard: {
