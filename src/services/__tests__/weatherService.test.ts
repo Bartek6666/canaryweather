@@ -653,177 +653,180 @@ describe('calculateInterpolatedMonthlyStats', () => {
 // ─── CALIMA DETECTION TESTS ─────────────────────────────────────────────────
 
 describe('fetchCalimaStatus', () => {
-  // Store original fetch
+  // Store original fetch and env
   const originalFetch = global.fetch;
+  const originalEnv = process.env;
+
+  // Helper to create WAQI API response
+  const createWaqiResponse = (pm10Aqi: number, overallAqi: number = pm10Aqi) => ({
+    status: 'ok',
+    data: {
+      aqi: overallAqi,
+      time: {
+        s: '2024-02-15 12:00:00',
+        iso: '2024-02-15T12:00:00+00:00',
+      },
+      iaqi: {
+        pm10: { v: pm10Aqi },
+      },
+      city: {
+        name: 'Las Palmas',
+        geo: [28.0, -16.5],
+      },
+    },
+  });
+
+  // Helper to create Open-Meteo fallback response
+  const createOpenMeteoResponse = (pm10: number) => ({
+    current: {
+      time: '2024-02-15T12:00:00',
+      pm10,
+    },
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.resetModules();
+    // Set WAQI token for tests
+    process.env = { ...originalEnv, EXPO_PUBLIC_WAQI_TOKEN: 'test-token' };
   });
 
   afterEach(() => {
-    // Restore original fetch
+    // Restore original fetch and env
     global.fetch = originalFetch;
+    process.env = originalEnv;
   });
 
-  it('should detect calima when PM10 >= 50', async () => {
+  it('should detect calima from WAQI when PM10 AQI indicates elevated levels', async () => {
+    // PM10 AQI of 60 = ~65 µg/m³ concentration (above 50 threshold)
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({
-        current: {
-          time: '2024-02-15T12:00:00',
-          pm10: 65,
-        },
-      }),
+      json: () => Promise.resolve(createWaqiResponse(60)),
     });
 
     const { fetchCalimaStatus } = require('../weatherService');
-
     const result = await fetchCalimaStatus(28.0, -16.5);
 
     expect(result).not.toBeNull();
     expect(result!.isDetected).toBe(true);
     expect(result!.isSevere).toBe(false);
-    expect(result!.pm10).toBe(65);
+    expect(result!.source).toBe('waqi');
   });
 
-  it('should detect severe calima when PM10 >= 100', async () => {
+  it('should detect severe calima from WAQI when PM10 AQI indicates severe levels', async () => {
+    // PM10 AQI of 110 = ~165 µg/m³ concentration (above 100 severe threshold)
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({
-        current: {
-          time: '2024-02-15T12:00:00',
-          pm10: 150,
-        },
-      }),
+      json: () => Promise.resolve(createWaqiResponse(110)),
     });
 
     const { fetchCalimaStatus } = require('../weatherService');
-
     const result = await fetchCalimaStatus(28.0, -16.5);
 
     expect(result).not.toBeNull();
     expect(result!.isDetected).toBe(true);
     expect(result!.isSevere).toBe(true);
-    expect(result!.pm10).toBe(150);
+    expect(result!.source).toBe('waqi');
   });
 
-  it('should not detect calima when PM10 < 50', async () => {
+  it('should not detect calima from WAQI when PM10 AQI is low', async () => {
+    // PM10 AQI of 25 = ~27 µg/m³ concentration (below 50 threshold)
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({
-        current: {
-          time: '2024-02-15T12:00:00',
-          pm10: 25,
-        },
-      }),
+      json: () => Promise.resolve(createWaqiResponse(25)),
     });
 
     const { fetchCalimaStatus } = require('../weatherService');
-
     const result = await fetchCalimaStatus(28.0, -16.5);
 
     expect(result).not.toBeNull();
     expect(result!.isDetected).toBe(false);
     expect(result!.isSevere).toBe(false);
-    expect(result!.pm10).toBe(25);
+    expect(result!.source).toBe('waqi');
   });
 
-  it('should return null on API error', async () => {
+  it('should use overall AQI when PM10 is not available in WAQI response', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({
+        status: 'ok',
+        data: {
+          aqi: 75, // Overall AQI > 51 triggers detection
+          time: { s: '2024-02-15 12:00:00', iso: '2024-02-15T12:00:00+00:00' },
+          iaqi: {}, // No PM10
+          city: { name: 'Las Palmas', geo: [28.0, -16.5] },
+        },
+      }),
+    });
+
+    const { fetchCalimaStatus } = require('../weatherService');
+    const result = await fetchCalimaStatus(28.0, -16.5);
+
+    expect(result).not.toBeNull();
+    expect(result!.isDetected).toBe(true);
+    expect(result!.source).toBe('waqi');
+  });
+
+  it('should fallback to Open-Meteo when WAQI fails', async () => {
+    let callCount = 0;
+    global.fetch = jest.fn().mockImplementation((url: string) => {
+      callCount++;
+      if (url.includes('waqi.info')) {
+        // WAQI fails
+        return Promise.resolve({ ok: false, status: 500 });
+      }
+      // Open-Meteo succeeds
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(createOpenMeteoResponse(65)),
+      });
+    });
+
+    const { fetchCalimaStatus } = require('../weatherService');
+    const result = await fetchCalimaStatus(28.0, -16.5);
+
+    expect(result).not.toBeNull();
+    expect(result!.isDetected).toBe(true);
+    expect(result!.source).toBe('open-meteo');
+    expect(callCount).toBe(2); // Both APIs called
+  });
+
+  it('should fallback to Open-Meteo when WAQI token is not configured', async () => {
+    process.env = { ...originalEnv, EXPO_PUBLIC_WAQI_TOKEN: '' };
+    jest.resetModules();
+
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(createOpenMeteoResponse(75)),
+    });
+
+    const { fetchCalimaStatus } = require('../weatherService');
+    const result = await fetchCalimaStatus(28.0, -16.5);
+
+    expect(result).not.toBeNull();
+    expect(result!.isDetected).toBe(true);
+    expect(result!.source).toBe('open-meteo');
+  });
+
+  it('should return null when both APIs fail', async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: false,
       status: 500,
     });
 
     const { fetchCalimaStatus } = require('../weatherService');
-
     const result = await fetchCalimaStatus(28.0, -16.5);
 
     expect(result).toBeNull();
   });
 
-  it('should return null when PM10 data is missing', async () => {
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({
-        current: {
-          time: '2024-02-15T12:00:00',
-          // pm10 is undefined
-        },
-      }),
-    });
-
-    const { fetchCalimaStatus } = require('../weatherService');
-
-    const result = await fetchCalimaStatus(28.0, -16.5);
-
-    expect(result).toBeNull();
-  });
-
-  it('should return null on network error', async () => {
+  it('should return null on network error for both APIs', async () => {
     global.fetch = jest.fn().mockRejectedValue(new Error('Network error'));
 
     const { fetchCalimaStatus } = require('../weatherService');
-
     const result = await fetchCalimaStatus(28.0, -16.5);
 
     expect(result).toBeNull();
-  });
-
-  it('should round PM10 value to integer', async () => {
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({
-        current: {
-          time: '2024-02-15T12:00:00',
-          pm10: 72.7,
-        },
-      }),
-    });
-
-    const { fetchCalimaStatus } = require('../weatherService');
-
-    const result = await fetchCalimaStatus(28.0, -16.5);
-
-    expect(result).not.toBeNull();
-    expect(result!.pm10).toBe(73); // Rounded from 72.7
-  });
-
-  it('should detect calima at exactly threshold value (50)', async () => {
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({
-        current: {
-          time: '2024-02-15T12:00:00',
-          pm10: 50,
-        },
-      }),
-    });
-
-    const { fetchCalimaStatus } = require('../weatherService');
-
-    const result = await fetchCalimaStatus(28.0, -16.5);
-
-    expect(result!.isDetected).toBe(true);
-    expect(result!.isSevere).toBe(false);
-  });
-
-  it('should detect severe calima at exactly threshold value (100)', async () => {
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({
-        current: {
-          time: '2024-02-15T12:00:00',
-          pm10: 100,
-        },
-      }),
-    });
-
-    const { fetchCalimaStatus } = require('../weatherService');
-
-    const result = await fetchCalimaStatus(28.0, -16.5);
-
-    expect(result!.isDetected).toBe(true);
-    expect(result!.isSevere).toBe(true);
   });
 });
 

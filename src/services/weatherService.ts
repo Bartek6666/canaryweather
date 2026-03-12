@@ -1812,6 +1812,7 @@ export function applyMuddyRainDetection(
 
 const AEMET_API_KEY = process.env.EXPO_PUBLIC_AEMET_API_KEY || '';
 const WEATHERAPI_KEY = process.env.EXPO_PUBLIC_WEATHERAPI_KEY || '';
+const WAQI_TOKEN = process.env.EXPO_PUBLIC_WAQI_TOKEN || '';
 
 // ─── AEMET API HELPER ─────────────────────────────────────────────────────────
 
@@ -2623,9 +2624,10 @@ export async function validateWeatherWithNearbyStation(
   return result;
 }
 
-// ─── CALIMA DETECTION (Open-Meteo Air Quality API) ────────────────────────────
+// ─── CALIMA DETECTION (WAQI + Open-Meteo Air Quality API) ─────────────────────
 
 // PM10 thresholds for Calima detection (µg/m³)
+// WAQI uses real station measurements, so thresholds are accurate
 const PM10_CALIMA_THRESHOLD = 50; // Elevated dust levels
 const PM10_SEVERE_CALIMA_THRESHOLD = 100; // Severe Calima conditions
 
@@ -2634,6 +2636,26 @@ export interface CalimaStatus {
   isSevere: boolean;
   pm10: number;
   timestamp: string;
+  source: 'waqi' | 'open-meteo';
+}
+
+interface WAQIResponse {
+  status: string;
+  data: {
+    aqi: number;
+    time: {
+      s: string; // Local time string, e.g., "2024-03-12 09:00:00"
+      iso: string; // ISO timestamp
+    };
+    iaqi: {
+      pm10?: { v: number };
+      pm25?: { v: number };
+    };
+    city: {
+      name: string;
+      geo: [number, number];
+    };
+  };
 }
 
 interface OpenMeteoAirQualityResponse {
@@ -2644,13 +2666,136 @@ interface OpenMeteoAirQualityResponse {
 }
 
 /**
- * Fetches current air quality data to detect Calima (Saharan dust storm)
- * Uses Open-Meteo Air Quality API (free, no API key required)
+ * Fetches Calima status from WAQI (World Air Quality Index) API
+ * Uses real station measurements from 49 stations in Canary Islands
  * @param lat Latitude
  * @param lon Longitude
  * @returns CalimaStatus or null if request fails
  */
-export async function fetchCalimaStatus(
+async function fetchCalimaFromWAQI(
+  lat: number,
+  lon: number
+): Promise<CalimaStatus | null> {
+  if (!WAQI_TOKEN) {
+    console.warn('[WAQI] No API token configured');
+    return null;
+  }
+
+  const TIMEOUT_MS = 10000;
+
+  try {
+    const url = `https://api.waqi.info/feed/geo:${lat};${lon}/?token=${WAQI_TOKEN}`;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      console.warn(`[WAQI] API error: ${response.status}`);
+      return null;
+    }
+
+    const data: WAQIResponse = await response.json();
+
+    if (data.status !== 'ok' || !data.data) {
+      console.warn('[WAQI] Invalid response status:', data.status);
+      return null;
+    }
+
+    // WAQI returns PM10 in iaqi.pm10.v (individual AQI value, not concentration)
+    // For Calima detection, we need the actual concentration
+    // WAQI AQI to concentration conversion for PM10:
+    // AQI 0-50 = 0-54 µg/m³, AQI 51-100 = 55-154 µg/m³, etc.
+    const pm10Aqi = data.data.iaqi.pm10?.v;
+
+    if (pm10Aqi === undefined) {
+      // If PM10 not available, try using overall AQI as indicator
+      // High AQI during Calima episodes typically exceeds 100
+      const overallAqi = data.data.aqi;
+      console.log(`[WAQI] No PM10 data, using overall AQI: ${overallAqi}`);
+
+      // Convert overall AQI to approximate PM10 for Calima detection
+      // During Calima, PM10 is the dominant pollutant
+      return {
+        isDetected: overallAqi >= 51, // "Moderate" or worse
+        isSevere: overallAqi >= 101, // "Unhealthy for Sensitive Groups" or worse
+        pm10: overallAqi, // Use AQI as proxy
+        timestamp: data.data.time.iso || data.data.time.s,
+        source: 'waqi',
+      };
+    }
+
+    // Convert PM10 AQI back to concentration (approximate)
+    // US EPA PM10 AQI breakpoints: https://www.airnow.gov/aqi/aqi-basics/
+    const pm10Concentration = convertPM10AqiToConcentration(pm10Aqi);
+
+    console.log(`[WAQI] PM10 AQI: ${pm10Aqi}, estimated concentration: ${pm10Concentration} µg/m³`);
+
+    return {
+      isDetected: pm10Concentration >= PM10_CALIMA_THRESHOLD,
+      isSevere: pm10Concentration >= PM10_SEVERE_CALIMA_THRESHOLD,
+      pm10: Math.round(pm10Concentration),
+      timestamp: data.data.time.iso || data.data.time.s,
+      source: 'waqi',
+    };
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        console.warn('[WAQI] Request timed out');
+      } else {
+        console.warn('[WAQI] Network error -', error.message);
+      }
+    }
+    return null;
+  }
+}
+
+/**
+ * Converts PM10 AQI value back to approximate concentration (µg/m³)
+ * Based on US EPA AQI breakpoints for PM10
+ * https://www.airnow.gov/aqi/aqi-basics/
+ */
+function convertPM10AqiToConcentration(aqi: number): number {
+  // AQI breakpoints for PM10 (24-hour average):
+  // AQI 0-50 = 0-54 µg/m³
+  // AQI 51-100 = 55-154 µg/m³
+  // AQI 101-150 = 155-254 µg/m³
+  // AQI 151-200 = 255-354 µg/m³
+  // AQI 201-300 = 355-424 µg/m³
+  // AQI 301-500 = 425-604 µg/m³
+
+  if (aqi <= 50) {
+    return (aqi / 50) * 54;
+  } else if (aqi <= 100) {
+    return 55 + ((aqi - 51) / 49) * 99;
+  } else if (aqi <= 150) {
+    return 155 + ((aqi - 101) / 49) * 99;
+  } else if (aqi <= 200) {
+    return 255 + ((aqi - 151) / 49) * 99;
+  } else if (aqi <= 300) {
+    return 355 + ((aqi - 201) / 99) * 69;
+  } else {
+    return 425 + ((aqi - 301) / 199) * 179;
+  }
+}
+
+/**
+ * Fetches Calima status from Open-Meteo Air Quality API (fallback)
+ * Uses model-based predictions, less accurate during Calima episodes
+ * @param lat Latitude
+ * @param lon Longitude
+ * @returns CalimaStatus or null if request fails
+ */
+async function fetchCalimaFromOpenMeteo(
   lat: number,
   lon: number
 ): Promise<CalimaStatus | null> {
@@ -2673,14 +2818,14 @@ export async function fetchCalimaStatus(
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      console.warn(`Open-Meteo Air Quality API error: ${response.status}`);
+      console.warn(`[Open-Meteo AQ] API error: ${response.status}`);
       return null;
     }
 
     const data: OpenMeteoAirQualityResponse = await response.json();
 
     if (!data.current || data.current.pm10 === undefined) {
-      console.warn('Open-Meteo Air Quality API: No PM10 data available');
+      console.warn('[Open-Meteo AQ] No PM10 data available');
       return null;
     }
 
@@ -2691,17 +2836,41 @@ export async function fetchCalimaStatus(
       isSevere: pm10 >= PM10_SEVERE_CALIMA_THRESHOLD,
       pm10: Math.round(pm10),
       timestamp: data.current.time,
+      source: 'open-meteo',
     };
   } catch (error) {
     if (error instanceof Error) {
       if (error.name === 'AbortError') {
-        console.warn('Open-Meteo Air Quality API: Request timed out');
+        console.warn('[Open-Meteo AQ] Request timed out');
       } else {
-        console.warn('Open-Meteo Air Quality API: Network error -', error.message);
+        console.warn('[Open-Meteo AQ] Network error -', error.message);
       }
     }
     return null;
   }
+}
+
+/**
+ * Fetches current air quality data to detect Calima (Saharan dust storm)
+ * Primary source: WAQI API (real station measurements from 49 stations in Canary Islands)
+ * Fallback: Open-Meteo Air Quality API (model-based, less accurate during Calima)
+ * @param lat Latitude
+ * @param lon Longitude
+ * @returns CalimaStatus or null if all sources fail
+ */
+export async function fetchCalimaStatus(
+  lat: number,
+  lon: number
+): Promise<CalimaStatus | null> {
+  // Try WAQI first (real station measurements)
+  const waqiResult = await fetchCalimaFromWAQI(lat, lon);
+  if (waqiResult) {
+    return waqiResult;
+  }
+
+  // Fallback to Open-Meteo (model-based)
+  console.log('[Calima] WAQI unavailable, falling back to Open-Meteo');
+  return fetchCalimaFromOpenMeteo(lat, lon);
 }
 
 // ─── COASTAL ALERTS (AEMET Meteoalerta API) ────────────────────────────────────
