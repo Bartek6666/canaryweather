@@ -391,6 +391,7 @@ export default function ResultScreen({ navigation, route }: Props) {
   // Coastal alert state (AEMET Meteoalerta for high waves)
   const [coastalAlert, setCoastalAlert] = useState<CoastalAlert | null>(null);
   const [selectedAlert, setSelectedAlert] = useState<CoastalAlert | null>(null);
+  const [selectedAlertType, setSelectedAlertType] = useState<'coastal' | 'wind' | 'snow'>('coastal');
   const [showAlertModal, setShowAlertModal] = useState(false);
 
   // Wind alert state (AEMET Meteoalerta for strong winds)
@@ -661,6 +662,7 @@ export default function ResultScreen({ navigation, route }: Props) {
   // Handle opening alert detail modal
   const handleAlertPress = useCallback((alert: CoastalAlert, alertType: 'coastal' | 'wind' | 'snow' = 'coastal') => {
     setSelectedAlert(alert);
+    setSelectedAlertType(alertType);
     setShowAlertModal(true);
     // Track analytics
     trackAlertDetailsView({ severity: alert.severity, alertType });
@@ -1054,6 +1056,7 @@ export default function ResultScreen({ navigation, route }: Props) {
       <AlertDetailModal
         visible={showAlertModal}
         alert={selectedAlert}
+        alertType={selectedAlertType}
         onClose={() => setShowAlertModal(false)}
       />
     </View>

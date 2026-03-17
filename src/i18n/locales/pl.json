@@ -280,17 +280,14 @@
     "close": "Rozumiem"
   },
   "alerts": {
-    "coastalPhenomena": "Zjawiska Przybrzeżne",
+    "titleCoastal": "Wysokie Fale",
+    "titleWind": "Silny Wiatr",
+    "titleSnow": "Opady Śniegu",
     "severityYellow": "Ostrzeżenie Żółte",
     "severityOrange": "Ostrzeżenie Pomarańczowe",
     "severityRed": "Ostrzeżenie Czerwone",
-    "validityPeriod": "Okres Obowiązywania",
-    "from": "Od",
-    "to": "Do",
-    "affectedArea": "Obszar Objęty Ostrzeżeniem",
-    "officialAemetMessage": "Oficjalny Komunikat AEMET",
     "noDescriptionAvailable": "Brak szczegółowego opisu.",
-    "dataSource": "Źródło danych: AEMET Meteoalerta",
+    "dataSource": "Źródło: AEMET Meteoalerta",
     "close": "Zamknij"
   }
 }

@@ -254,17 +254,14 @@
     "unknown": "Unknown"
   },
   "alerts": {
-    "coastalPhenomena": "Coastal Phenomena",
+    "titleCoastal": "High Waves",
+    "titleWind": "Strong Winds",
+    "titleSnow": "Snowfall",
     "severityYellow": "Yellow Warning",
     "severityOrange": "Orange Warning",
     "severityRed": "Red Warning",
-    "validityPeriod": "Validity Period",
-    "from": "From",
-    "to": "To",
-    "affectedArea": "Affected Area",
-    "officialAemetMessage": "Official AEMET Message",
     "noDescriptionAvailable": "No detailed description available.",
-    "dataSource": "Data source: AEMET Meteoalerta",
+    "dataSource": "Source: AEMET Meteoalerta",
     "close": "Close"
   }
 }

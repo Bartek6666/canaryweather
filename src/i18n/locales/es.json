@@ -254,17 +254,14 @@
     "unknown": "Desconocido"
   },
   "alerts": {
-    "coastalPhenomena": "Fenómenos Costeros",
+    "titleCoastal": "Olas Altas",
+    "titleWind": "Vientos Fuertes",
+    "titleSnow": "Nevadas",
     "severityYellow": "Aviso Amarillo",
     "severityOrange": "Aviso Naranja",
     "severityRed": "Aviso Rojo",
-    "validityPeriod": "Período de Validez",
-    "from": "Desde",
-    "to": "Hasta",
-    "affectedArea": "Zona Afectada",
-    "officialAemetMessage": "Mensaje Oficial de AEMET",
     "noDescriptionAvailable": "No hay descripción detallada disponible.",
-    "dataSource": "Fuente de datos: AEMET Meteoalerta",
+    "dataSource": "Fuente: AEMET Meteoalerta",
     "close": "Cerrar"
   }
 }

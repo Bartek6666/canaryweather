@@ -254,17 +254,14 @@
     "unknown": "Unbekannt"
   },
   "alerts": {
-    "coastalPhenomena": "Küstenphänomene",
+    "titleCoastal": "Hohe Wellen",
+    "titleWind": "Starker Wind",
+    "titleSnow": "Schneefall",
     "severityYellow": "Gelbe Warnung",
     "severityOrange": "Orange Warnung",
     "severityRed": "Rote Warnung",
-    "validityPeriod": "Gültigkeitszeitraum",
-    "from": "Von",
-    "to": "Bis",
-    "affectedArea": "Betroffenes Gebiet",
-    "officialAemetMessage": "Offizielle AEMET-Meldung",
     "noDescriptionAvailable": "Keine detaillierte Beschreibung verfügbar.",
-    "dataSource": "Datenquelle: AEMET Meteoalerta",
+    "dataSource": "Quelle: AEMET Meteoalerta",
     "close": "Schließen"
   }
 }
