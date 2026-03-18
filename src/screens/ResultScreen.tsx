@@ -1016,8 +1016,13 @@ export default function ResultScreen({ navigation, route }: Props) {
         {weatherDiscrepancy && weatherDiscrepancy.hasDiscrepancy && weatherDiscrepancy.alternativeData && (
           <View style={styles.discrepancyWarning}>
             <View style={styles.discrepancyContent}>
-              <Ionicons name="warning" size={18} color={colors.warning} />
+              <Ionicons name="information-circle" size={20} color={colors.primary} />
               <View style={styles.discrepancyTextContainer}>
+                <Text style={styles.discrepancyTitle}>
+                  {weatherDiscrepancy.discrepancyWarning === 'weather_discrepancy_rain'
+                    ? t('result.weatherDiscrepancyRainTitle')
+                    : t('result.weatherDiscrepancyWindTitle')}
+                </Text>
                 <Text style={styles.discrepancyText}>
                   {weatherDiscrepancy.discrepancyWarning === 'weather_discrepancy_rain'
                     ? t('result.weatherDiscrepancyRain', { station: weatherDiscrepancy.alternativeData.stationName })
@@ -1441,13 +1446,13 @@ const styles = StyleSheet.create({
     marginLeft: spacing.xs,
     fontWeight: '500',
   },
-  // Weather discrepancy warning (nearby station has different conditions)
+  // Weather discrepancy info (nearby station has different conditions)
   discrepancyWarning: {
     marginBottom: spacing.md,
-    backgroundColor: 'rgba(255, 152, 0, 0.12)',
+    backgroundColor: 'rgba(100, 181, 246, 0.15)',
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255, 152, 0, 0.3)',
+    borderColor: 'rgba(100, 181, 246, 0.3)',
     padding: spacing.md,
   },
   discrepancyContent: {
@@ -1458,14 +1463,20 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: spacing.sm,
   },
+  discrepancyTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.primary,
+    marginBottom: 4,
+  },
   discrepancyText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.warning,
-    lineHeight: 20,
+    fontSize: 13,
+    fontWeight: '400',
+    color: colors.textSecondary,
+    lineHeight: 18,
   },
   discrepancyDetail: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
     color: colors.textPrimary,
     marginTop: spacing.xs,
