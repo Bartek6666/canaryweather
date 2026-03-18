@@ -30,6 +30,7 @@ export type RootStackParamList = {
     locationName?: string;
     locationCoords?: { lat: number; lon: number };
     isHighAltitudeFallback?: boolean;
+    isCoastal?: boolean;
   };
   WindDetails: {
     stationId: string;

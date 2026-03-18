@@ -110,6 +110,7 @@ export interface City {
     lon: number;
   };
   isHighAltitude?: boolean;
+  isCoastal?: boolean;
 }
 
 export interface LocationsMapping {

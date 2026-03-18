@@ -361,7 +361,7 @@ const YearHistoryItem = React.memo(function YearHistoryItem({ data, month, delay
 
 export default function ResultScreen({ navigation, route }: Props) {
   const { t, i18n } = useTranslation();
-  const { stationId, locationName, locationCoords, isHighAltitudeFallback } = route.params;
+  const { stationId, locationName, locationCoords, isHighAltitudeFallback, isCoastal: isCoastalParam } = route.params;
   const [isLoading, setIsLoading] = useState(true);
   const [sunChanceResult, setSunChanceResult] = useState<SunChanceResult | null>(null);
   const [sunChanceFallback, setSunChanceFallback] = useState<SunChanceWithFallback['fallbackStation'] | null>(null);
@@ -421,17 +421,22 @@ export default function ResultScreen({ navigation, route }: Props) {
   const station = useMemo(() => (locationsMapping.stations as Record<string, StationMapping>)[stationId], [stationId]);
 
   // Memoize station properties to avoid repeated casting
-  // IMPORTANT: Default to false (not coastal) for safety - coastal alerts should only show
-  // for explicitly marked coastal stations
+  // IMPORTANT: Use city's isCoastal when explicitly passed (for inland cities like Betancuria),
+  // otherwise fall back to station's isCoastal. Default to false for safety.
   const isCoastal = useMemo(() => {
+    // Priority 1: Use explicitly passed isCoastal from city data (for inland cities)
+    if (typeof isCoastalParam === 'boolean') return isCoastalParam;
+
+    // Priority 2: Use station's isCoastal value
     const value = station?.isCoastal;
     // Ensure boolean type (guard against string "false" from JSON parsing issues)
     if (typeof value === 'boolean') return value;
     if (value === 'true') return true;
     if (value === 'false') return false;
+
     // Default to false (safer - don't show coastal alerts for unknown locations)
     return false;
-  }, [station]);
+  }, [station, isCoastalParam]);
   const isHighAltitude = useMemo(() => (station?.isHighAltitude as boolean | undefined) ?? false, [station]);
 
   const fetchYearlyData = useCallback(async (month: number) => {
@@ -563,7 +568,7 @@ export default function ResultScreen({ navigation, route }: Props) {
 
     // Only fetch coastal alerts for coastal locations
     // Debug log to help diagnose issues with coastal alert filtering
-    console.log(`[CoastalAlert] Station: ${station.name}, stationId: ${stationId}, isCoastal: ${isCoastal}, station.isCoastal raw: ${station.isCoastal}`);
+    console.log(`[CoastalAlert] Station: ${station.name}, stationId: ${stationId}, isCoastal: ${isCoastal}, isCoastalParam: ${isCoastalParam}, station.isCoastal: ${station.isCoastal}`);
 
     if (!isCoastal) {
       console.log(`[CoastalAlert] Skipping fetch for non-coastal location: ${locationName}`);

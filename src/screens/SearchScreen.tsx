@@ -44,6 +44,7 @@ type RootStackParamList = {
     locationName?: string;
     locationCoords?: { lat: number; lon: number };
     isHighAltitudeFallback?: boolean;
+    isCoastal?: boolean;
   };
 };
 
@@ -59,6 +60,7 @@ interface CityResult {
   coords: { lat: number; lon: number };
   score: number;
   isHighAltitude?: boolean;
+  isCoastal?: boolean;
 }
 
 type SearchMode = 'cities' | 'geocode' | 'no_results' | 'idle';
@@ -103,6 +105,7 @@ function searchCities(query: string): CityResult[] {
         coords: city.coords,
         score: bestScore,
         isHighAltitude: city.isHighAltitude,
+        isCoastal: city.isCoastal,
       });
     }
   }
@@ -272,6 +275,8 @@ export default function SearchScreen({ navigation }: Props) {
         locationName: city.name,
         locationCoords: city.coords,
         isHighAltitudeFallback: nearest.isHighAltitudeFallback,
+        // Pass isCoastal from city if explicitly defined (for inland cities)
+        isCoastal: city.isCoastal,
       });
     }
   }, [navigation, searchQuery, cityResults.length, trackAutocomplete]);
