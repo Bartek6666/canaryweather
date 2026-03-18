@@ -421,7 +421,17 @@ export default function ResultScreen({ navigation, route }: Props) {
   const station = useMemo(() => (locationsMapping.stations as Record<string, StationMapping>)[stationId], [stationId]);
 
   // Memoize station properties to avoid repeated casting
-  const isCoastal = useMemo(() => (station?.isCoastal as boolean | undefined) ?? true, [station]);
+  // IMPORTANT: Default to false (not coastal) for safety - coastal alerts should only show
+  // for explicitly marked coastal stations
+  const isCoastal = useMemo(() => {
+    const value = station?.isCoastal;
+    // Ensure boolean type (guard against string "false" from JSON parsing issues)
+    if (typeof value === 'boolean') return value;
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    // Default to false (safer - don't show coastal alerts for unknown locations)
+    return false;
+  }, [station]);
   const isHighAltitude = useMemo(() => (station?.isHighAltitude as boolean | undefined) ?? false, [station]);
 
   const fetchYearlyData = useCallback(async (month: number) => {
@@ -552,7 +562,11 @@ export default function ResultScreen({ navigation, route }: Props) {
     if (!station) return;
 
     // Only fetch coastal alerts for coastal locations
+    // Debug log to help diagnose issues with coastal alert filtering
+    console.log(`[CoastalAlert] Station: ${station.name}, stationId: ${stationId}, isCoastal: ${isCoastal}, station.isCoastal raw: ${station.isCoastal}`);
+
     if (!isCoastal) {
+      console.log(`[CoastalAlert] Skipping fetch for non-coastal location: ${locationName}`);
       setCoastalAlert(null);
       return;
     }
