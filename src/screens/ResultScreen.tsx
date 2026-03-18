@@ -361,7 +361,7 @@ const YearHistoryItem = React.memo(function YearHistoryItem({ data, month, delay
 
 export default function ResultScreen({ navigation, route }: Props) {
   const { t, i18n } = useTranslation();
-  const { stationId, locationName, locationCoords, isHighAltitudeFallback, isCoastal: isCoastalParam } = route.params;
+  const { stationId, locationName, locationCoords, isHighAltitudeFallback, isCoastal: isCoastalParam, isHighAltitude: isHighAltitudeParam } = route.params;
   const [isLoading, setIsLoading] = useState(true);
   const [sunChanceResult, setSunChanceResult] = useState<SunChanceResult | null>(null);
   const [sunChanceFallback, setSunChanceFallback] = useState<SunChanceWithFallback['fallbackStation'] | null>(null);
@@ -437,7 +437,19 @@ export default function ResultScreen({ navigation, route }: Props) {
     // Default to false (safer - don't show coastal alerts for unknown locations)
     return false;
   }, [station, isCoastalParam]);
-  const isHighAltitude = useMemo(() => (station?.isHighAltitude as boolean | undefined) ?? false, [station]);
+
+  // Use city's isHighAltitude when explicitly passed (for mountain peaks like Pico de las Nieves),
+  // otherwise fall back to station's isHighAltitude or isHighAltitudeFallback
+  const isHighAltitude = useMemo(() => {
+    // Priority 1: Use explicitly passed isHighAltitude from city data
+    if (typeof isHighAltitudeParam === 'boolean') return isHighAltitudeParam;
+    // Priority 2: Use station's isHighAltitude
+    if (typeof station?.isHighAltitude === 'boolean') return station.isHighAltitude;
+    // Priority 3: Use fallback flag (when high altitude station was too far)
+    if (isHighAltitudeFallback) return true;
+    // Default to false
+    return false;
+  }, [station, isHighAltitudeParam, isHighAltitudeFallback]);
 
   const fetchYearlyData = useCallback(async (month: number) => {
     const currentYear = new Date().getFullYear();

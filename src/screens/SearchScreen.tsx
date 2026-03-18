@@ -45,6 +45,7 @@ type RootStackParamList = {
     locationCoords?: { lat: number; lon: number };
     isHighAltitudeFallback?: boolean;
     isCoastal?: boolean;
+    isHighAltitude?: boolean;
   };
 };
 
@@ -277,6 +278,8 @@ export default function SearchScreen({ navigation }: Props) {
         isHighAltitudeFallback: nearest.isHighAltitudeFallback,
         // Pass isCoastal from city if explicitly defined (for inland cities)
         isCoastal: city.isCoastal,
+        // Pass isHighAltitude from city (for mountain peaks like Pico de las Nieves)
+        isHighAltitude: city.isHighAltitude,
       });
     }
   }, [navigation, searchQuery, cityResults.length, trackAutocomplete]);
