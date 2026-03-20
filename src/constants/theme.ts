@@ -312,7 +312,8 @@ export const glassText = {
 
 export const gradients = {
   // FIGMA: Main app background gradient
-  main: ['#001645', '#4B9AC6'] as const,
+  // ORIGINAL: ['#001645', '#4B9AC6']
+  main: ['#0050AA', '#002D70'] as const,
 
   // Time-of-day backgrounds (SearchScreen) - legacy, kept for reference
   morning: ['#FF9A9E', '#FECFEF', '#FECFEF'] as const,
