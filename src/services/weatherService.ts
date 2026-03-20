@@ -2718,20 +2718,11 @@ async function fetchCalimaFromWAQI(
     const pm10Aqi = data.data.iaqi.pm10?.v;
 
     if (pm10Aqi === undefined) {
-      // If PM10 not available, try using overall AQI as indicator
-      // High AQI during Calima episodes typically exceeds 100
-      const overallAqi = data.data.aqi;
-      console.log(`[WAQI] No PM10 data, using overall AQI: ${overallAqi}`);
-
-      // Convert overall AQI to approximate PM10 for Calima detection
-      // During Calima, PM10 is the dominant pollutant
-      return {
-        isDetected: overallAqi >= 51, // "Moderate" or worse
-        isSevere: overallAqi >= 101, // "Unhealthy for Sensitive Groups" or worse
-        pm10: overallAqi, // Use AQI as proxy
-        timestamp: data.data.time.iso || data.data.time.s,
-        source: 'waqi',
-      };
+      // If PM10 not available from WAQI, don't use overall AQI as fallback
+      // Overall AQI can be elevated due to other pollutants (ozone, NO2, SO2)
+      // that are NOT related to Calima. Let Open-Meteo handle it instead.
+      console.log(`[WAQI] No PM10 data available, falling back to Open-Meteo`);
+      return null;
     }
 
     // Convert PM10 AQI back to concentration (approximate)

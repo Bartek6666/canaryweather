@@ -745,26 +745,40 @@ describe('fetchCalimaStatus', () => {
     expect(result!.source).toBe('waqi');
   });
 
-  it('should use overall AQI when PM10 is not available in WAQI response', async () => {
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({
-        status: 'ok',
-        data: {
-          aqi: 75, // Overall AQI > 51 triggers detection
-          time: { s: '2024-02-15 12:00:00', iso: '2024-02-15T12:00:00+00:00' },
-          iaqi: {}, // No PM10
-          city: { name: 'Las Palmas', geo: [28.0, -16.5] },
-        },
-      }),
+  it('should fallback to Open-Meteo when WAQI has no PM10 data', async () => {
+    let callCount = 0;
+    global.fetch = jest.fn().mockImplementation((url: string) => {
+      callCount++;
+      if (url.includes('waqi.info')) {
+        // WAQI returns data but without PM10
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({
+            status: 'ok',
+            data: {
+              aqi: 75, // Overall AQI - should NOT be used for Calima detection
+              time: { s: '2024-02-15 12:00:00', iso: '2024-02-15T12:00:00+00:00' },
+              iaqi: {}, // No PM10
+              city: { name: 'Las Palmas', geo: [28.0, -16.5] },
+            },
+          }),
+        });
+      }
+      // Open-Meteo succeeds with elevated PM10
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(createOpenMeteoResponse(65)),
+      });
     });
 
     const { fetchCalimaStatus } = require('../weatherService');
     const result = await fetchCalimaStatus(28.0, -16.5);
 
+    // Should use Open-Meteo as fallback, not WAQI overall AQI
     expect(result).not.toBeNull();
     expect(result!.isDetected).toBe(true);
-    expect(result!.source).toBe('waqi');
+    expect(result!.source).toBe('open-meteo');
+    expect(callCount).toBe(2); // Both APIs called
   });
 
   it('should fallback to Open-Meteo when WAQI fails', async () => {
