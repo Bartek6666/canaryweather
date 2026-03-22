@@ -54,11 +54,9 @@ interface LiveWeatherCardProps {
   isLoading: boolean;
   hasError: boolean;
   isFromCache?: boolean;
-  isInterpolated?: boolean;
-  interpolationStations?: Array<{ name: string; weight: number }>;
 }
 
-const LiveWeatherCard = React.memo(function LiveWeatherCard({ data, isLoading, hasError, isFromCache = false, isInterpolated = false, interpolationStations = [] }: LiveWeatherCardProps) {
+const LiveWeatherCard = React.memo(function LiveWeatherCard({ data, isLoading, hasError, isFromCache = false }: LiveWeatherCardProps) {
   const { t } = useTranslation();
   const pulseAnim = useRef(new Animated.Value(0.4)).current;
   const skeletonAnim = useRef(new Animated.Value(0.3)).current;
@@ -380,9 +378,6 @@ export default function ResultScreen({ navigation, route }: Props) {
   const [isLoadingLive, setIsLoadingLive] = useState(true);
   const [liveError, setLiveError] = useState(false);
   const [isFromCache, setIsFromCache] = useState(false);
-  // Interpolation state - when location is far from station
-  const [isInterpolated, setIsInterpolated] = useState(false);
-  const [interpolationStations, setInterpolationStations] = useState<Array<{ name: string; weight: number }>>([]);
 
   // Calima alert state (connected to Open-Meteo Air Quality API)
   const [calimaStatus, setCalimaStatus] = useState<CalimaStatus | null>(null);
@@ -528,12 +523,6 @@ export default function ResultScreen({ navigation, route }: Props) {
           if (interpolatedResult) {
             resultData = interpolatedResult.data;
             resultIsFromCache = interpolatedResult.isFromCache;
-            setIsInterpolated(!interpolatedResult.isSingleStation);
-            setInterpolationStations(
-              interpolatedResult.isSingleStation
-                ? []
-                : interpolatedResult.stations.map(s => ({ name: s.name, weight: s.weight }))
-            );
           }
         } else {
           // Use single station for nearby locations
@@ -543,8 +532,6 @@ export default function ResultScreen({ navigation, route }: Props) {
             resultData = result.data;
             resultIsFromCache = result.isFromCache;
           }
-          setIsInterpolated(false);
-          setInterpolationStations([]);
         }
 
         if (resultData) {
@@ -570,8 +557,6 @@ export default function ResultScreen({ navigation, route }: Props) {
           setIsFromCache(false);
           setLiveError(true);
           setWeatherDiscrepancy(null);
-          setIsInterpolated(false);
-          setInterpolationStations([]);
         }
       } catch (e) {
         console.error('[LiveWeather] Error fetching data:', e);
@@ -579,8 +564,6 @@ export default function ResultScreen({ navigation, route }: Props) {
         setIsFromCache(false);
         setLiveError(true);
         setWeatherDiscrepancy(null);
-        setIsInterpolated(false);
-        setInterpolationStations([]);
       } finally {
         setIsLoadingLive(false);
       }
@@ -792,12 +775,6 @@ export default function ResultScreen({ navigation, route }: Props) {
           setLiveData(interpolatedResult.data);
           setIsFromCache(interpolatedResult.isFromCache);
           setLiveError(false);
-          setIsInterpolated(!interpolatedResult.isSingleStation);
-          setInterpolationStations(
-            interpolatedResult.isSingleStation
-              ? []
-              : interpolatedResult.stations.map(s => ({ name: s.name, weight: s.weight }))
-          );
         } else {
           setLiveError(true);
         }
@@ -808,8 +785,6 @@ export default function ResultScreen({ navigation, route }: Props) {
           setLiveData(result.data);
           setIsFromCache(result.isFromCache);
           setLiveError(false);
-          setIsInterpolated(false);
-          setInterpolationStations([]);
         } else {
           setLiveError(true);
         }
@@ -1085,8 +1060,6 @@ export default function ResultScreen({ navigation, route }: Props) {
           isLoading={isLoadingLive}
           hasError={liveError}
           isFromCache={isFromCache}
-          isInterpolated={isInterpolated}
-          interpolationStations={interpolationStations}
         />
 
         {/* Weather Discrepancy Warning - shows when nearby station has different conditions */}
