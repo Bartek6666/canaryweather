@@ -25,6 +25,17 @@ import { MONTH_KEYS } from '../i18n';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'RainDetails'>;
 
+// Map island names from data to translation keys
+const ISLAND_TRANSLATION_KEYS: Record<string, string> = {
+  'Tenerife': 'tenerife',
+  'Gran Canaria': 'granCanaria',
+  'Fuerteventura': 'fuerteventura',
+  'Lanzarote': 'lanzarote',
+  'La Palma': 'laPalma',
+  'La Gomera': 'laGomera',
+  'El Hierro': 'elHierro',
+};
+
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const GAUGE_SIZE = Math.min(SCREEN_WIDTH * 0.75, 300);
 const STROKE_WIDTH = 10;
@@ -253,13 +264,15 @@ export default function RainDetailsScreen({ navigation, route }: Props) {
                 <View style={styles.rankingHeader}>
                   <MaterialCommunityIcons name="podium" size={20} color={colors.rain} />
                   <View style={styles.rankingTitleContainer}>
-                    <Text style={styles.rankingTitle}>{t('rain.island_ranking_title')}</Text>
-                    <Text style={styles.rankingSubtitle}>
-                      {t('rain.island_ranking_month', {
+                    <Text style={styles.rankingTitle}>
+                      {t('rain.island_ranking_title', {
                         month: i18n.language === 'pl'
                           ? t(`monthsLocative.${MONTH_KEYS[month - 1]}`)
                           : monthName
                       })}
+                    </Text>
+                    <Text style={styles.rankingSubtitle}>
+                      {t('rain.island_ranking_month')}
                     </Text>
                   </View>
                 </View>
@@ -267,6 +280,8 @@ export default function RainDetailsScreen({ navigation, route }: Props) {
                   const isCurrentIsland = item.island === island;
                   const maxValue = islandRanking[0]?.value || 1;
                   const barWidth = maxValue > 0 ? (item.value / maxValue) * 100 : 0;
+                  const translationKey = ISLAND_TRANSLATION_KEYS[item.island];
+                  const translatedIsland = translationKey ? t(`islands.${translationKey}`) : item.island;
 
                   return (
                     <View key={item.island} style={styles.rankingRow}>
@@ -275,7 +290,7 @@ export default function RainDetailsScreen({ navigation, route }: Props) {
                         styles.rankingIsland,
                         isCurrentIsland && styles.rankingIslandCurrent
                       ]}>
-                        {item.island}
+                        {translatedIsland}
                       </Text>
                       <View style={styles.rankingBarContainer}>
                         <View style={[
@@ -288,7 +303,7 @@ export default function RainDetailsScreen({ navigation, route }: Props) {
                         styles.rankingValue,
                         isCurrentIsland && styles.rankingValueCurrent
                       ]}>
-                        {item.value} {t('rain.days_short')}
+                        {item.value} mm
                       </Text>
                     </View>
                   );

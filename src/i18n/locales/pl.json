@@ -205,8 +205,8 @@
       "violentStorm": "Gwałtowny sztorm",
       "hurricane": "Huragan"
     },
-    "island_ranking_title": "Wiatr na Wyspach Kanaryjskich",
-    "island_ranking_month": "w {{month}}"
+    "island_ranking_title": "Wiatr na Wyspach Kanaryjskich w {{month}}",
+    "island_ranking_month": "średnia prędkość wiatru ze wszystkich stacji AEMET"
   },
   "rain": {
     "days_without_rain": "Dni bez deszczu",
@@ -226,8 +226,8 @@
     "north_south_context_south": "Południe wyspy jest typowo bardziej suche i słoneczne. Góry blokują wilgotne pasaty, tworząc efekt cienia deszczowego.",
     "historical_context": "Kontekst Historyczny",
     "historical_description": "Statystyki opadów w miesiącu {{month}} obliczone z pomiarów na stacji {{station}} w latach {{years}}.",
-    "island_ranking_title": "Deszcz na Wyspach Kanaryjskich - suma opadów wszystkich stacji AEMET",
-    "island_ranking_month": "w {{month}}"
+    "island_ranking_title": "Deszcz na Wyspach Kanaryjskich w {{month}}",
+    "island_ranking_month": "średnia opadów ze wszystkich stacji AEMET"
   },
   "weather": {
     "sunny": "Słonecznie",

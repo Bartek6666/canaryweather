@@ -13,7 +13,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  ImageBackground,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -34,8 +33,7 @@ import { useSearchAnalytics } from '../hooks/useSearchAnalytics';
 
 const LOCATION_PROMPT_KEY = 'location_prompt_dismissed';
 
-// Background image
-const MAP_BG_SOURCE = require('../../assets/grafika_wulkan_1.png');
+// Background gradient (image removed)
 
 type RootStackParamList = {
   Search: undefined;
@@ -565,18 +563,11 @@ export default function SearchScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      {/* Background: satellite map image + time-of-day gradient overlay */}
-      <ImageBackground
-        source={MAP_BG_SOURCE}
+      {/* Background gradient */}
+      <LinearGradient
+        colors={[...gradients.main]}
         style={StyleSheet.absoluteFillObject}
-        resizeMode="cover"
-        imageStyle={styles.bgImage}
-      >
-        <LinearGradient
-          colors={[...gradients.main]}
-          style={[StyleSheet.absoluteFillObject, styles.bgGradientOverlay]}
-        />
-      </ImageBackground>
+      />
       <View style={styles.overlay} />
 
       <SafeAreaView style={styles.safeArea} edges={['top']}>
