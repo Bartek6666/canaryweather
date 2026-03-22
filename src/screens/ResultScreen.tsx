@@ -842,7 +842,10 @@ export default function ResultScreen({ navigation, route }: Props) {
       windText = t('result.summaryWindStrong', { speed: avgWind.toFixed(0) });
     }
 
-    // Build the detailed summary
+    // Build the detailed summary with proper pluralization for rain days
+    const rainDaysCount = Math.round(rainDays);
+    const rainDaysText = t('result.rainDaysText', { count: rainDaysCount });
+
     const detailedSummary = t('result.summaryDetailed', {
       month: monthName,
       name: displayName,
@@ -850,7 +853,7 @@ export default function ResultScreen({ navigation, route }: Props) {
       tmax: avgTmax.toFixed(0),
       tmin: avgTmin.toFixed(0),
       windText: windText,
-      rainDays: rainDays.toFixed(0),
+      rainDaysText: rainDaysText,
     });
 
     return detailedSummary;

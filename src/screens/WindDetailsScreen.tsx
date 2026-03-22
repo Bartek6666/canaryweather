@@ -260,7 +260,9 @@ export default function WindDetailsScreen({ navigation, route }: Props) {
               </View>
               <Text style={styles.contextText}>
                 {t('wind.historicalDescription', {
-                  month: monthName,
+                  month: i18n.language === 'pl'
+                    ? t(`monthsLocative.${MONTH_KEYS[month - 1]}`)
+                    : monthName,
                   station: stationName,
                   years: '2016-2025'
                 })}
