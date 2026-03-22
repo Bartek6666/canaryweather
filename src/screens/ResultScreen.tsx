@@ -1014,7 +1014,7 @@ export default function ResultScreen({ navigation, route }: Props) {
               <View style={styles.tempCardInner}>
                 <Ionicons name="umbrella-outline" size={28} color={colors.rain} />
                 <Text style={styles.tempLabel}>{t('result.rainyDays')}</Text>
-                <Text style={[styles.tempValue, styles.tempValueRain]}>{interpolatedStats.stats.rain_days} {t('result.daysUnit')}</Text>
+                <Text style={[styles.tempValue, styles.tempValueRain]}>{t('result.rainDaysText', { count: Math.round(interpolatedStats.stats.rain_days) })}</Text>
                 <Ionicons name="chevron-forward" size={14} color={colors.textMuted} style={styles.cardChevron} />
               </View>
             </ClickableGlassCard>
