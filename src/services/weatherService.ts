@@ -963,7 +963,7 @@ export async function getWindRankingByIsland(month: number): Promise<IslandRanki
  */
 export async function getRainRankingByIsland(month: number): Promise<IslandRanking[]> {
   // Check cache first
-  const cacheKey = `rain_ranking_v1_${month}`;
+  const cacheKey = `rain_ranking_v2_${month}`;
   try {
     const cached = await AsyncStorage.getItem(cacheKey);
     if (cached) {
@@ -1008,11 +1008,11 @@ export async function getRainRankingByIsland(month: number): Promise<IslandRanki
 
     const RAIN_THRESHOLD = 0.1;
 
-    // Calculate average rainy days per island for the specified month
-    const islandStats: Map<string, { rainyDays: number; totalDays: number; years: Set<number>; stationCount: number }> = new Map();
+    // Calculate average precipitation (mm) per island for the specified month
+    const islandStats: Map<string, { totalPrecip: number; totalDays: number; years: Set<number>; stationCount: number }> = new Map();
 
     for (const [island, stationIds] of stationsByIsland) {
-      islandStats.set(island, { rainyDays: 0, totalDays: 0, years: new Set(), stationCount: stationIds.length });
+      islandStats.set(island, { totalPrecip: 0, totalDays: 0, years: new Set(), stationCount: stationIds.length });
     }
 
     for (const row of data) {
@@ -1029,20 +1029,19 @@ export async function getRainRankingByIsland(month: number): Promise<IslandRanki
       if (stats) {
         stats.totalDays++;
         stats.years.add(date.getFullYear());
-        if (row.precip > RAIN_THRESHOLD) {
-          stats.rainyDays++;
-        }
+        stats.totalPrecip += row.precip;
       }
     }
 
-    // Build ranking sorted by rainy days (descending - rainiest first)
+    // Build ranking sorted by precipitation (descending - rainiest first)
     const ranking: IslandRanking[] = [];
     for (const [island, stats] of islandStats) {
       const yearsCount = stats.years.size || 1;
       if (stats.totalDays > 0) {
+        // Average monthly precipitation per year
         ranking.push({
           island,
-          value: Math.round(stats.rainyDays / yearsCount),
+          value: Math.round(stats.totalPrecip / yearsCount),
           stationCount: stats.stationCount,
         });
       }
@@ -1350,6 +1349,172 @@ export async function calculateInterpolatedMonthlyStats(
       rain_days: r.stats.rain_days,
     })),
     isSingleStation: false,
+  };
+}
+
+// ─── INTERPOLATED LIVE WEATHER ────────────────────────────────────────────────
+
+const LIVE_INTERPOLATION_THRESHOLD_KM = 10; // Use interpolation if nearest station > 10km
+
+export interface InterpolatedLiveWeatherResult {
+  data: LiveWeatherData;
+  stations: Array<{
+    stationId: string;
+    name: string;
+    distance: number;
+    weight: number;
+  }>;
+  isSingleStation: boolean;
+  isFromCache: boolean;
+}
+
+/**
+ * Fetches and interpolates live weather data from nearest stations
+ * - If closest station < 10km: uses only that station
+ * - Otherwise: weighted average from 2-3 nearest stations
+ * @param lat Target latitude
+ * @param lon Target longitude
+ * @returns Interpolated live weather data, or null if all stations fail
+ */
+export async function interpolateLiveWeather(
+  lat: number,
+  lon: number
+): Promise<InterpolatedLiveWeatherResult | null> {
+  // Find 3 nearest stations (exclude high altitude by default)
+  const nearestStations = findNearestStations(lat, lon, 3, true);
+
+  if (nearestStations.length === 0) {
+    console.warn('[InterpolateLive] No nearby stations found');
+    return null;
+  }
+
+  const closestStation = nearestStations[0];
+
+  // If closest station is within threshold, use single station
+  if (closestStation.distance < LIVE_INTERPOLATION_THRESHOLD_KM) {
+    const result = await fetchLiveWeather(
+      closestStation.latitude!,
+      closestStation.longitude!,
+      closestStation.stationId
+    );
+
+    if (!result) {
+      return null;
+    }
+
+    return {
+      data: result.data,
+      stations: [{
+        stationId: closestStation.stationId,
+        name: closestStation.name,
+        distance: closestStation.distance,
+        weight: 1,
+      }],
+      isSingleStation: true,
+      isFromCache: result.isFromCache,
+    };
+  }
+
+  // Fetch live weather from all nearest stations in parallel
+  console.log(`[InterpolateLive] Location ${closestStation.distance.toFixed(1)}km from nearest station, using interpolation`);
+
+  const weatherPromises = nearestStations.map(station =>
+    fetchLiveWeather(
+      station.latitude!,
+      station.longitude!,
+      station.stationId
+    ).then(result => ({ station, result }))
+  );
+
+  const results = await Promise.all(weatherPromises);
+
+  // Filter out stations with no data
+  const validResults = results.filter(r => r.result !== null) as Array<{
+    station: NearbyStation;
+    result: LiveWeatherResult;
+  }>;
+
+  if (validResults.length === 0) {
+    console.warn('[InterpolateLive] All stations failed');
+    return null;
+  }
+
+  // If only one station has data, use it directly
+  if (validResults.length === 1) {
+    return {
+      data: validResults[0].result.data,
+      stations: [{
+        stationId: validResults[0].station.stationId,
+        name: validResults[0].station.name,
+        distance: validResults[0].station.distance,
+        weight: 1,
+      }],
+      isSingleStation: true,
+      isFromCache: validResults[0].result.isFromCache,
+    };
+  }
+
+  // Calculate weights based on distances
+  const distances = validResults.map(r => r.station.distance);
+  const weights = calculateDistanceWeights(distances);
+
+  // Interpolate weather data
+  let interpolatedTemp = 0;
+  let interpolatedHumidity = 0;
+  let interpolatedWindSpeed = 0;
+  let interpolatedWindGusts = 0;
+  let gustsCount = 0;
+  let interpolatedPrecip = 0;
+  let precipCount = 0;
+
+  // For condition, use the one from the closest station (most relevant)
+  const primaryData = validResults[0].result.data;
+
+  validResults.forEach((r, index) => {
+    const w = weights[index];
+    const data = r.result.data;
+
+    interpolatedTemp += data.temperature * w;
+    interpolatedHumidity += data.humidity * w;
+    interpolatedWindSpeed += data.windSpeed * w;
+
+    if (data.windGusts !== undefined) {
+      interpolatedWindGusts += data.windGusts * w;
+      gustsCount++;
+    }
+
+    if (data.precipitation !== undefined) {
+      interpolatedPrecip += data.precipitation * w;
+      precipCount++;
+    }
+  });
+
+  const interpolatedData: LiveWeatherData = {
+    temperature: Math.round(interpolatedTemp),
+    humidity: Math.round(interpolatedHumidity),
+    windSpeed: Math.round(interpolatedWindSpeed),
+    windGusts: gustsCount > 0 ? Math.round(interpolatedWindGusts) : undefined,
+    precipitation: precipCount > 0 ? Math.round(interpolatedPrecip * 10) / 10 : undefined,
+    // Use condition from closest station (most relevant for location)
+    weatherCode: primaryData.weatherCode,
+    condition: primaryData.condition,
+    conditionLabelKey: primaryData.conditionLabelKey,
+    timestamp: primaryData.timestamp,
+  };
+
+  const stationNames = validResults.map(r => r.station.name).join(', ');
+  console.log(`[InterpolateLive] Interpolated from ${validResults.length} stations: ${stationNames}`);
+
+  return {
+    data: interpolatedData,
+    stations: validResults.map((r, i) => ({
+      stationId: r.station.stationId,
+      name: r.station.name,
+      distance: r.station.distance,
+      weight: Math.round(weights[i] * 100) / 100,
+    })),
+    isSingleStation: false,
+    isFromCache: validResults.some(r => r.result.isFromCache),
   };
 }
 
@@ -1996,6 +2161,7 @@ interface OpenMeteoConditionResult {
   isNight: boolean;
   windSpeed?: number;
   windGusts?: number;
+  temperature?: number; // Temperature in °C for fallback when AEMET is stale
 }
 
 /**
@@ -2006,7 +2172,7 @@ async function fetchOpenMeteoCondition(lat: number, lon: number): Promise<OpenMe
   const TIMEOUT_MS = 8000;
 
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=weather_code,is_day,wind_speed_10m,wind_gusts_10m&timezone=auto`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=weather_code,is_day,wind_speed_10m,wind_gusts_10m,temperature_2m&timezone=auto`;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -2041,6 +2207,7 @@ async function fetchOpenMeteoCondition(lat: number, lon: number): Promise<OpenMe
       isNight,
       windSpeed: data.current.wind_speed_10m !== undefined ? Math.round(data.current.wind_speed_10m) : undefined,
       windGusts: data.current.wind_gusts_10m !== undefined ? Math.round(data.current.wind_gusts_10m) : undefined,
+      temperature: data.current.temperature_2m !== undefined ? Math.round(data.current.temperature_2m) : undefined,
     };
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
@@ -2190,7 +2357,7 @@ async function fetchWeatherAPICondition(lat: number, lon: number): Promise<OpenM
     const isNight = data.current.is_day === 0;
     const { condition, labelKey } = mapWeatherAPICode(data.current.condition.code, isNight);
 
-    console.log(`[WeatherAPI] Condition: ${data.current.condition.text} (code ${data.current.condition.code}), wind ${Math.round(data.current.wind_kph)} km/h, gusts ${Math.round(data.current.gust_kph)} km/h`);
+    console.log(`[WeatherAPI] Condition: ${data.current.condition.text} (code ${data.current.condition.code}), wind ${Math.round(data.current.wind_kph)} km/h, gusts ${Math.round(data.current.gust_kph)} km/h, temp ${Math.round(data.current.temp_c)}°C`);
 
     return {
       weatherCode: data.current.condition.code,
@@ -2199,6 +2366,7 @@ async function fetchWeatherAPICondition(lat: number, lon: number): Promise<OpenM
       isNight,
       windSpeed: Math.round(data.current.wind_kph),
       windGusts: Math.round(data.current.gust_kph),
+      temperature: Math.round(data.current.temp_c),
     };
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
@@ -2283,14 +2451,17 @@ export async function fetchLiveWeather(
       let weatherData = aemetResult.data;
 
       if (conditionData) {
-        // Check if AEMET observation is stale (> 2 hours old)
+        // Check if AEMET observation is stale
         const observationAge = aemetResult.timestamp
           ? Date.now() - new Date(aemetResult.timestamp).getTime()
           : 0;
-        const isStaleObservation = observationAge > 2 * 60 * 60 * 1000; // 2 hours
+        const isStaleObservation = observationAge > 2 * 60 * 60 * 1000; // 2 hours - for wind fallback
+        const isVeryStaleObservation = observationAge > 3 * 60 * 60 * 1000; // 3 hours - for temperature fallback
         const staleHours = Math.round(observationAge / (60 * 60 * 1000) * 10) / 10;
 
-        if (isStaleObservation) {
+        if (isVeryStaleObservation) {
+          console.log(`[AEMET] Observation is ${staleHours}h old (very stale - using external temperature)`);
+        } else if (isStaleObservation) {
           console.log(`[AEMET] Observation is ${staleHours}h old (stale)`);
         }
 
@@ -2311,6 +2482,10 @@ export async function fetchLiveWeather(
         const useExternalWind = (aemetWindMissing || externalHasStrongerWind || significantWindDiscrepancy) &&
           conditionData.windSpeed !== undefined;
 
+        // Use external temperature when AEMET data is very stale (> 3 hours old)
+        const useExternalTemperature = isVeryStaleObservation &&
+          conditionData.temperature !== undefined;
+
         weatherData = {
           ...aemetResult.data,
           weatherCode: conditionData.weatherCode,
@@ -2321,15 +2496,30 @@ export async function fetchLiveWeather(
             windSpeed: conditionData.windSpeed,
             windGusts: conditionData.windGusts,
           }),
+          // Use external temperature when AEMET data is very stale (> 3h)
+          ...(useExternalTemperature && {
+            temperature: conditionData.temperature,
+          }),
         };
 
-        if (useExternalWind) {
-          const reason = aemetWindMissing
-            ? 'missing sensor'
-            : significantWindDiscrepancy
-              ? `significant discrepancy: AEMET ${aemetResult.data.windSpeed} vs ${conditionSource} ${conditionData.windSpeed} km/h`
-              : `stale data (${staleHours}h old)`;
-          console.log(`[Hybrid] AEMET measurements + ${conditionSource} condition + ${conditionSource} wind [${reason}] (${conditionData.windSpeed} km/h, gusts ${conditionData.windGusts ?? 'N/A'} km/h)`);
+        if (useExternalWind || useExternalTemperature) {
+          const windReason = useExternalWind
+            ? aemetWindMissing
+              ? 'missing sensor'
+              : significantWindDiscrepancy
+                ? `discrepancy: AEMET ${aemetResult.data.windSpeed} vs ${conditionSource} ${conditionData.windSpeed} km/h`
+                : `stale data (${staleHours}h old)`
+            : null;
+          const tempReason = useExternalTemperature ? `stale data (${staleHours}h old)` : null;
+
+          const parts = [`[Hybrid] AEMET measurements + ${conditionSource} condition`];
+          if (useExternalWind) {
+            parts.push(`+ ${conditionSource} wind [${windReason}] (${conditionData.windSpeed} km/h, gusts ${conditionData.windGusts ?? 'N/A'} km/h)`);
+          }
+          if (useExternalTemperature) {
+            parts.push(`+ ${conditionSource} temp [${tempReason}] (${conditionData.temperature}°C)`);
+          }
+          console.log(parts.join(' '));
         } else {
           console.log(`[Hybrid] AEMET measurements + ${conditionSource} condition`);
         }

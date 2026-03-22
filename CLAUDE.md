@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Implementation Notes
+
+**IMPORTANT:** Na początku każdej sesji sprawdź plik `docs/implementation-notes.md` - zawiera historię decyzji implementacyjnych i notatki z poprzednich sesji.
+
 ## Project Overview
 
 Canary Weather is a React Native/Expo mobile app for checking current and historical weather on the Canary Islands. It uses AEMET (Spanish meteorological service) as the primary data source, with 10 years of historical data from 19 weather stations stored in Supabase.
