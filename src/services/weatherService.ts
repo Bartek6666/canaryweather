@@ -1374,11 +1374,13 @@ export interface InterpolatedLiveWeatherResult {
  * - Otherwise: weighted average from 2-3 nearest stations
  * @param lat Target latitude
  * @param lon Target longitude
+ * @param forceRefresh If true, bypass cache and fetch fresh data
  * @returns Interpolated live weather data, or null if all stations fail
  */
 export async function interpolateLiveWeather(
   lat: number,
-  lon: number
+  lon: number,
+  forceRefresh: boolean = false
 ): Promise<InterpolatedLiveWeatherResult | null> {
   // Find 3 nearest stations (exclude high altitude by default)
   const nearestStations = findNearestStations(lat, lon, 3, true);
@@ -1395,7 +1397,8 @@ export async function interpolateLiveWeather(
     const result = await fetchLiveWeather(
       closestStation.latitude!,
       closestStation.longitude!,
-      closestStation.stationId
+      closestStation.stationId,
+      forceRefresh
     );
 
     if (!result) {
@@ -1422,7 +1425,8 @@ export async function interpolateLiveWeather(
     fetchLiveWeather(
       station.latitude!,
       station.longitude!,
-      station.stationId
+      station.stationId,
+      forceRefresh
     ).then(result => ({ station, result }))
   );
 

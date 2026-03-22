@@ -769,7 +769,7 @@ export default function ResultScreen({ navigation, route }: Props) {
     try {
       // Fetch fresh weather data, bypassing cache
       if (shouldInterpolate) {
-        const interpolatedResult = await interpolateLiveWeather(refreshLat, refreshLon);
+        const interpolatedResult = await interpolateLiveWeather(refreshLat, refreshLon, true);
 
         if (interpolatedResult) {
           setLiveData(interpolatedResult.data);
