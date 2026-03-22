@@ -223,19 +223,6 @@ const LiveWeatherCard = React.memo(function LiveWeatherCard({ data, isLoading, h
           </View>
         </View>
       )}
-      {/* Interpolation indicator - when data comes from multiple stations */}
-      {isInterpolated && interpolationStations.length > 0 && (
-        <View style={styles.cacheIndicator}>
-          <View style={styles.cacheIndicatorInner}>
-            <MaterialCommunityIcons name="map-marker-multiple" size={12} color={colors.primary} />
-            <Text style={styles.cacheIndicatorText}>
-              {t('result.interpolatedData', {
-                stations: interpolationStations.map(s => s.name).join(', ')
-              })}
-            </Text>
-          </View>
-        </View>
-      )}
     </View>
   );
 });
