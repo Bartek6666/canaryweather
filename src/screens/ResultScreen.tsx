@@ -21,7 +21,7 @@ import * as Haptics from 'expo-haptics';
 import { colors, spacing, typography, glass, glassTokens, glassText, borderRadius, gradients, getSunChanceColor, liveCard } from '../constants/theme';
 import { AlertCard, AlertDetailModal, ClickableGlassCard, CoastalAlertCard, GlassCard, SnowAlertCard, SunChanceGauge, SunChanceModal, WeatherIcon, WeatherEffects, WindAlertCard } from '../components';
 import locationsMapping from '../constants/locations_mapping.json';
-import { calculateSunChanceWithFallback, SunChanceWithFallback, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult, calculateInterpolatedMonthlyStats, InterpolatedMonthlyStatsResult, fetchMostSevereCoastalAlert, fetchMostSevereWindAlert, fetchMostSevereSnowAlert, validateWeatherWithNearbyStation, WeatherValidationResult } from '../services/weatherService';
+import { calculateSunChanceWithFallback, SunChanceWithFallback, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult, calculateInterpolatedMonthlyStats, InterpolatedMonthlyStatsResult, fetchMostSevereCoastalAlert, fetchMostSevereWindAlert, fetchMostSevereSnowAlert, validateWeatherWithNearbyStation, WeatherValidationResult, interpolateLiveWeather, InterpolatedLiveWeatherResult, findNearestStations } from '../services/weatherService';
 import { supabase } from '../services/supabase';
 import { trackResultView, trackAlertDetailsView } from '../services/analyticsService';
 import { SunChanceResult, MonthlyStats, LiveWeatherData, WeatherCondition, CoastalAlert, StationMapping } from '../types';
@@ -54,9 +54,11 @@ interface LiveWeatherCardProps {
   isLoading: boolean;
   hasError: boolean;
   isFromCache?: boolean;
+  isInterpolated?: boolean;
+  interpolationStations?: Array<{ name: string; weight: number }>;
 }
 
-const LiveWeatherCard = React.memo(function LiveWeatherCard({ data, isLoading, hasError, isFromCache = false }: LiveWeatherCardProps) {
+const LiveWeatherCard = React.memo(function LiveWeatherCard({ data, isLoading, hasError, isFromCache = false, isInterpolated = false, interpolationStations = [] }: LiveWeatherCardProps) {
   const { t } = useTranslation();
   const pulseAnim = useRef(new Animated.Value(0.4)).current;
   const skeletonAnim = useRef(new Animated.Value(0.3)).current;
@@ -221,6 +223,19 @@ const LiveWeatherCard = React.memo(function LiveWeatherCard({ data, isLoading, h
           </View>
         </View>
       )}
+      {/* Interpolation indicator - when data comes from multiple stations */}
+      {isInterpolated && interpolationStations.length > 0 && (
+        <View style={styles.cacheIndicator}>
+          <View style={styles.cacheIndicatorInner}>
+            <MaterialCommunityIcons name="map-marker-multiple" size={12} color={colors.primary} />
+            <Text style={styles.cacheIndicatorText}>
+              {t('result.interpolatedData', {
+                stations: interpolationStations.map(s => s.name).join(', ')
+              })}
+            </Text>
+          </View>
+        </View>
+      )}
     </View>
   );
 });
@@ -378,6 +393,9 @@ export default function ResultScreen({ navigation, route }: Props) {
   const [isLoadingLive, setIsLoadingLive] = useState(true);
   const [liveError, setLiveError] = useState(false);
   const [isFromCache, setIsFromCache] = useState(false);
+  // Interpolation state - when location is far from station
+  const [isInterpolated, setIsInterpolated] = useState(false);
+  const [interpolationStations, setInterpolationStations] = useState<Array<{ name: string; weight: number }>>([]);
 
   // Calima alert state (connected to Open-Meteo Air Quality API)
   const [calimaStatus, setCalimaStatus] = useState<CalimaStatus | null>(null);
@@ -493,6 +511,7 @@ export default function ResultScreen({ navigation, route }: Props) {
   // Fetch live weather data from Open-Meteo
   // Use user's location coords (if available) for accurate weather conditions,
   // but station ID for AEMET measurements
+  // When location is far from station (>10km), use interpolation from multiple stations
   useEffect(() => {
     if (!station) return;
 
@@ -501,34 +520,71 @@ export default function ResultScreen({ navigation, route }: Props) {
     const weatherLat = locationCoords?.lat ?? station.latitude;
     const weatherLon = locationCoords?.lon ?? station.longitude;
 
+    // Check distance to nearest station to decide if interpolation is needed
+    const nearestStations = findNearestStations(weatherLat, weatherLon, 1, true);
+    const distanceToNearest = nearestStations.length > 0 ? nearestStations[0].distance : 0;
+    const shouldInterpolate = distanceToNearest >= 10; // 10km threshold
+
     const loadLiveWeather = async (forceRefresh: boolean = false) => {
       setIsLoadingLive(true);
       setLiveError(false);
 
       try {
-        const result = await fetchLiveWeather(weatherLat, weatherLon, stationId, forceRefresh);
+        let resultData: LiveWeatherData | null = null;
+        let resultIsFromCache = false;
 
-        if (result) {
-          setLiveData(result.data);
-          setIsFromCache(result.isFromCache);
+        if (shouldInterpolate) {
+          // Use interpolation for locations far from any station
+          console.log(`[LiveWeather] Location ${distanceToNearest.toFixed(1)}km from nearest station, using interpolation`);
+          const interpolatedResult = await interpolateLiveWeather(weatherLat, weatherLon);
+
+          if (interpolatedResult) {
+            resultData = interpolatedResult.data;
+            resultIsFromCache = interpolatedResult.isFromCache;
+            setIsInterpolated(!interpolatedResult.isSingleStation);
+            setInterpolationStations(
+              interpolatedResult.isSingleStation
+                ? []
+                : interpolatedResult.stations.map(s => ({ name: s.name, weight: s.weight }))
+            );
+          }
+        } else {
+          // Use single station for nearby locations
+          const result = await fetchLiveWeather(weatherLat, weatherLon, stationId, forceRefresh);
+
+          if (result) {
+            resultData = result.data;
+            resultIsFromCache = result.isFromCache;
+          }
+          setIsInterpolated(false);
+          setInterpolationStations([]);
+        }
+
+        if (resultData) {
+          setLiveData(resultData);
+          setIsFromCache(resultIsFromCache);
           setLiveError(false);
 
           // Validate weather with nearby station (detect discrepancies like Tuineje problem)
-          // Only validate on fresh data, not cached
-          if (!result.isFromCache) {
+          // Only validate on fresh data, not cached, and not interpolated
+          if (!resultIsFromCache && !shouldInterpolate) {
             const validation = await validateWeatherWithNearbyStation(
               weatherLat,
               weatherLon,
-              result,
+              { data: resultData, isFromCache: resultIsFromCache },
               stationId
             );
             setWeatherDiscrepancy(validation.hasDiscrepancy ? validation : null);
+          } else {
+            setWeatherDiscrepancy(null);
           }
         } else {
           setLiveData(null);
           setIsFromCache(false);
           setLiveError(true);
           setWeatherDiscrepancy(null);
+          setIsInterpolated(false);
+          setInterpolationStations([]);
         }
       } catch (e) {
         console.error('[LiveWeather] Error fetching data:', e);
@@ -536,6 +592,8 @@ export default function ResultScreen({ navigation, route }: Props) {
         setIsFromCache(false);
         setLiveError(true);
         setWeatherDiscrepancy(null);
+        setIsInterpolated(false);
+        setInterpolationStations([]);
       } finally {
         setIsLoadingLive(false);
       }
@@ -731,18 +789,43 @@ export default function ResultScreen({ navigation, route }: Props) {
     const refreshLat = locationCoords?.lat ?? station.latitude;
     const refreshLon = locationCoords?.lon ?? station.longitude;
 
+    // Check if interpolation is needed
+    const nearestStations = findNearestStations(refreshLat, refreshLon, 1, true);
+    const distanceToNearest = nearestStations.length > 0 ? nearestStations[0].distance : 0;
+    const shouldInterpolate = distanceToNearest >= 10;
+
     setIsRefreshing(true);
 
     try {
       // Fetch fresh weather data, bypassing cache
-      const result = await fetchLiveWeather(refreshLat, refreshLon, stationId, true);
+      if (shouldInterpolate) {
+        const interpolatedResult = await interpolateLiveWeather(refreshLat, refreshLon);
 
-      if (result) {
-        setLiveData(result.data);
-        setIsFromCache(result.isFromCache);
-        setLiveError(false);
+        if (interpolatedResult) {
+          setLiveData(interpolatedResult.data);
+          setIsFromCache(interpolatedResult.isFromCache);
+          setLiveError(false);
+          setIsInterpolated(!interpolatedResult.isSingleStation);
+          setInterpolationStations(
+            interpolatedResult.isSingleStation
+              ? []
+              : interpolatedResult.stations.map(s => ({ name: s.name, weight: s.weight }))
+          );
+        } else {
+          setLiveError(true);
+        }
       } else {
-        setLiveError(true);
+        const result = await fetchLiveWeather(refreshLat, refreshLon, stationId, true);
+
+        if (result) {
+          setLiveData(result.data);
+          setIsFromCache(result.isFromCache);
+          setLiveError(false);
+          setIsInterpolated(false);
+          setInterpolationStations([]);
+        } else {
+          setLiveError(true);
+        }
       }
 
       // Also refresh Calima status
@@ -1010,7 +1093,14 @@ export default function ResultScreen({ navigation, route }: Props) {
         )}
 
         {/* Live Weather Card — real-time data from Open-Meteo */}
-        <LiveWeatherCard data={displayLiveData} isLoading={isLoadingLive} hasError={liveError} isFromCache={isFromCache} />
+        <LiveWeatherCard
+          data={displayLiveData}
+          isLoading={isLoadingLive}
+          hasError={liveError}
+          isFromCache={isFromCache}
+          isInterpolated={isInterpolated}
+          interpolationStations={interpolationStations}
+        />
 
         {/* Weather Discrepancy Warning - shows when nearby station has different conditions */}
         {weatherDiscrepancy && weatherDiscrepancy.hasDiscrepancy && weatherDiscrepancy.alternativeData && (

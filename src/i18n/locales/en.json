@@ -37,6 +37,7 @@
     "offline": "OFFLINE",
     "cached": "CACHED",
     "offlineData": "Last update: {{time}} - pull to refresh",
+    "interpolatedData": "Averaged from: {{stations}}",
     "noLiveData": "Station data temporarily unavailable",
     "checkConnection": "Please try again in a moment",
     "calimaAlert": "Alert: Calima",

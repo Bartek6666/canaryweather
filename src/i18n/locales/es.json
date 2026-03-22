@@ -37,6 +37,7 @@
     "offline": "SIN CONEXIÓN",
     "cached": "ARCHIVADO",
     "offlineData": "Última actualización: {{time}} - desliza para actualizar",
+    "interpolatedData": "Promedio de: {{stations}}",
     "noLiveData": "Datos de la estación no disponibles",
     "checkConnection": "Inténtalo de nuevo en unos minutos",
     "calimaAlert": "Alerta: Calima",

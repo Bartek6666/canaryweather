@@ -116,7 +116,33 @@ npx jest src/services/__tests__/weatherService.test.ts --testNamePattern="interp
 
 ---
 
+## 2026-03-22: Integracja interpolateLiveWeather w UI
+
+**Plik:** `src/screens/ResultScreen.tsx`
+
+**Zmiany:**
+1. Import `interpolateLiveWeather`, `InterpolatedLiveWeatherResult`, `findNearestStations`
+2. Nowy state: `isInterpolated`, `interpolationStations`
+3. Logika w `loadLiveWeather`:
+   - Sprawdza odległość do najbliższej stacji
+   - Jeśli >= 10km → używa `interpolateLiveWeather()`
+   - W przeciwnym razie → standardowe `fetchLiveWeather()`
+4. Logika w `handleRefresh` (pull-to-refresh) - analogiczna
+5. Nowy prop w `LiveWeatherCard`: `isInterpolated`, `interpolationStations`
+6. Wizualny wskaźnik interpolacji pod kartą pogody
+
+**Tłumaczenia dodane:**
+- `result.interpolatedData` w en/pl/es/de.json
+
+**Jak to działa:**
+- Użytkownik szuka lokalizacji daleko od stacji (np. > 10km)
+- App automatycznie pobiera dane z 2-3 najbliższych stacji
+- Interpoluje wartości (temperatura, wilgotność, wiatr)
+- Wyświetla info "Uśrednione z: Station1, Station2"
+
+---
+
 ## TODO / Przyszłe ulepszenia
 
-- [ ] Użyć `interpolateLiveWeather()` w UI (obecnie tylko eksportowana)
+- [x] ~~Użyć `interpolateLiveWeather()` w UI~~ (zrobione 2026-03-22)
 - [ ] Rozważyć interpolację warunków pogodowych (nie tylko z najbliższej stacji)
