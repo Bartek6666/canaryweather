@@ -142,6 +142,57 @@ npx jest src/services/__tests__/weatherService.test.ts --testNamePattern="interp
 
 ---
 
+## 2026-03-22: Poprawki gramatyczne w polskich tłumaczeniach
+
+### Problem 1: Miejscownik miesięcy
+**Błąd:** "Średnia prędkość wiatru w miesiącu Marzec" (mianownik)
+**Poprawka:** "Średnia prędkość wiatru w marcu" (miejscownik)
+
+**Rozwiązanie:**
+- Wykorzystano istniejącą sekcję `monthsLocative` w pl.json
+- Zmodyfikowano kod w ekranach, aby dla języka polskiego używać `t('monthsLocative.${monthKey}')` zamiast `t('months.${monthKey}')`
+
+**Zmienione pliki:**
+- `src/i18n/locales/pl.json` - zmieniono "w miesiącu {{month}}" na "w {{month}}"
+- `src/screens/WindDetailsScreen.tsx:262-265` - warunkowy miejscownik dla PL
+- `src/screens/RainDetailsScreen.tsx:251-254` - warunkowy miejscownik dla PL
+
+**Klucze już obsługujące miejscownik (w kodzie):**
+- `result.summaryDetailed` (ResultScreen.tsx:831-833)
+- `wind.stabilityDesc_*` (TradeWindStabilityCard.tsx:50-52)
+- `wind.island_ranking_title` (WindDetailsScreen.tsx:279-283)
+- `rain.island_ranking_title` (RainDetailsScreen.tsx:271-273)
+
+---
+
+### Problem 2: Pluralizacja "dni/dzień"
+**Błąd:** "deszcz pada średnio 1 dni w miesiącu"
+**Poprawka:** "deszcz pada średnio 1 dzień w miesiącu"
+
+**Rozwiązanie:**
+- Dodano klucze pluralizacji w i18next:
+  ```json
+  "rainDaysText_one": "{{count}} dzień",
+  "rainDaysText_few": "{{count}} dni",
+  "rainDaysText_many": "{{count}} dni"
+  ```
+- Użyto `t('result.rainDaysText', { count: X })` zamiast `${X} ${t('result.daysUnit')}`
+
+**Zmienione pliki:**
+- `src/i18n/locales/pl.json` - dodano rainDaysText_one/few/many
+- `src/i18n/locales/en.json` - dodano rainDaysText_one/other
+- `src/i18n/locales/de.json` - dodano rainDaysText_one/other
+- `src/i18n/locales/es.json` - dodano rainDaysText_one/other
+- `src/screens/ResultScreen.tsx:846-856` - pluralizacja w summaryDetailed
+- `src/screens/ResultScreen.tsx:1017` - pluralizacja w karcie "Dni deszczowe"
+
+**Polskie reguły pluralizacji (i18next):**
+- `_one`: n == 1 → "dzień"
+- `_few`: n % 10 ∈ {2,3,4} && n % 100 ∉ {12,13,14} → "dni"
+- `_many`: pozostałe → "dni"
+
+---
+
 ## TODO / Przyszłe ulepszenia
 
 - [x] ~~Użyć `interpolateLiveWeather()` w UI~~ (zrobione 2026-03-22)
