@@ -368,6 +368,7 @@ export default function ResultScreen({ navigation, route }: Props) {
   const [monthlyStats, setMonthlyStats] = useState<MonthlyStats[]>([]);
   const [interpolatedStats, setInterpolatedStats] = useState<InterpolatedMonthlyStatsResult | null>(null);
   const [yearlyData, setYearlyData] = useState<YearlyData[]>([]);
+  const [skippedYears, setSkippedYears] = useState<number[]>([]);
   const [bestWeeks, setBestWeeks] = useState<WeeklyBestPeriod[]>([]);
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -451,9 +452,10 @@ export default function ResultScreen({ navigation, route }: Props) {
     return false;
   }, [station, isHighAltitudeParam, isHighAltitudeFallback]);
 
-  const fetchYearlyData = useCallback(async (month: number) => {
+  const fetchYearlyData = useCallback(async (month: number): Promise<{ years: YearlyData[]; skippedYears: number[] }> => {
     const currentYear = new Date().getFullYear();
     const years: YearlyData[] = [];
+    const skippedYears: number[] = [];
     try {
       for (let year = currentYear; year >= currentYear - 9; year--) {
         const start = new Date(year, month - 1, 1).toISOString().split('T')[0];
@@ -464,6 +466,11 @@ export default function ResultScreen({ navigation, route }: Props) {
         const sunnyDays = hasSol ? data.filter(d => d.sol !== null && d.sol > 6 && (d.precip === null || d.precip === 0)).length : data.filter(d => d.precip === null || d.precip === 0).length;
         const validTmax = data.filter(d => d.tmax !== null);
         const validTmin = data.filter(d => d.tmin !== null);
+        // Skip years without any temperature data (both tmax and tmin are null)
+        if (validTmax.length === 0 && validTmin.length === 0) {
+          skippedYears.push(year);
+          continue;
+        }
         years.push({
           year, sunnyDays, totalDays: data.length,
           avgTmax: validTmax.length > 0 ? validTmax.reduce((s, d) => s + (d.tmax || 0), 0) / validTmax.length : 0,
@@ -474,7 +481,7 @@ export default function ResultScreen({ navigation, route }: Props) {
     } catch (e) {
       console.warn('[Offline] Network error fetching yearly data');
     }
-    return years;
+    return { years, skippedYears };
   }, [stationId]);
 
   useEffect(() => { Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start(); }, []);
@@ -733,7 +740,7 @@ export default function ResultScreen({ navigation, route }: Props) {
       setIsLoading(true);
       setSunChanceFallback(null);
       try {
-        const [scWithFallback, stats, yearly, weeks, interpolated] = await Promise.all([
+        const [scWithFallback, stats, yearlyResult, weeks, interpolated] = await Promise.all([
           calculateSunChanceWithFallback(stationId, station.latitude, station.longitude, selectedMonth),
           getMonthlyStats(stationId),
           fetchYearlyData(selectedMonth),
@@ -742,7 +749,10 @@ export default function ResultScreen({ navigation, route }: Props) {
         ]);
         setSunChanceResult(scWithFallback.result);
         setSunChanceFallback(scWithFallback.fallbackStation || null);
-        setMonthlyStats(stats); setYearlyData(yearly); setBestWeeks(weeks);
+        setMonthlyStats(stats);
+        setYearlyData(yearlyResult.years);
+        setSkippedYears(yearlyResult.skippedYears);
+        setBestWeeks(weeks);
         setInterpolatedStats(interpolated);
       } catch (e) { console.error(e); }
       finally { setIsLoading(false); }
@@ -1101,6 +1111,14 @@ export default function ResultScreen({ navigation, route }: Props) {
               <Text style={styles.historyTitle}>{t('result.last10Years')}</Text>
             </View>
             {yearlyData.map((d, index) => <YearHistoryItem key={d.year} data={d} month={selectedMonth} delay={400 + index * 50} />)}
+            {skippedYears.length > 0 && (
+              <View style={styles.missingDataInfo}>
+                <Ionicons name="information-circle-outline" size={18} color={colors.textMuted} />
+                <Text style={styles.missingDataText}>
+                  {t('result.missingYearsInfo', { years: skippedYears.join(', ') })}
+                </Text>
+              </View>
+            )}
           </View>
         )}
 
@@ -1211,6 +1229,23 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.2)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
+  },
+  missingDataInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  missingDataText: {
+    ...typography.bodySmall,
+    color: colors.textMuted,
+    marginLeft: spacing.sm,
+    flex: 1,
   },
   // FIGMA: STYLE_TARGET — Year history item (glassmorphism timeline)
   yearItem: {

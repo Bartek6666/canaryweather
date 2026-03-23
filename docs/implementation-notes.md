@@ -4,6 +4,46 @@ Ten plik zawiera notatki z implementacji i decyzji technicznych. Sprawdzaj go na
 
 ---
 
+## 2026-03-23: Fix - Zerowe temperatury w karcie "Ostatnie 10 lat"
+
+### Problem
+Dla miejscowości Maspalomas (stacja C689E), w karcie "Ostatnie 10 lat" na ekranie wyników, lata 2021-2025 pokazywały temperatury 0°/0° zamiast rzeczywistych wartości.
+
+### Diagnoza
+Sprawdzono dane w Supabase dla stacji C689E:
+- 2021-2025: dane istnieją (31 rekordów/miesiąc), ale `tmax` i `tmin` są `null`
+- 2016-2020: dane kompletne z temperaturami
+
+Porównanie z innymi stacjami (Las Palmas C649I, Tenerife Sur C447A) wykazało, że mają pełne dane - problem dotyczy tylko stacji C689E. AEMET przestał dostarczać dane temperatur dla tej stacji od 2021.
+
+### Rozwiązanie
+Zmodyfikowano funkcję `fetchYearlyData` w `ResultScreen.tsx` - dodano warunek pomijający lata bez danych temperatur:
+
+```typescript
+// Skip years without any temperature data (both tmax and tmin are null)
+if (validTmax.length === 0 && validTmin.length === 0) continue;
+```
+
+**Plik:** `src/screens/ResultScreen.tsx:466`
+
+### Efekt
+Zamiast pokazywać mylące "0°/0°", aplikacja teraz pomija lata bez danych temperatur w historii.
+
+### Rozszerzenie: Komunikat o brakujących danych
+
+Dodano informację dla użytkownika o brakujących latach:
+
+1. `fetchYearlyData` zwraca teraz obiekt `{ years, skippedYears }`
+2. Dodano state `skippedYears` do śledzenia pominiętych lat
+3. W sekcji "Ostatnie 10 lat" wyświetlany jest komunikat gdy `skippedYears.length > 0`
+4. Dodano tłumaczenia `result.missingYearsInfo` we wszystkich 4 językach
+
+**Pliki:**
+- `src/screens/ResultScreen.tsx` - logika i UI
+- `src/i18n/locales/*.json` - tłumaczenia
+
+---
+
 ## 2026-03-22: Usprawnienia LiveWeather - fallback temperatury i interpolacja
 
 ### Kontekst
@@ -190,6 +230,45 @@ npx jest src/services/__tests__/weatherService.test.ts --testNamePattern="interp
 - `_one`: n == 1 → "dzień"
 - `_few`: n % 10 ∈ {2,3,4} && n % 100 ∉ {12,13,14} → "dni"
 - `_many`: pozostałe → "dni"
+
+---
+
+## 2026-03-23: Fix - Polska pluralizacja w karcie "Deszcz"
+
+### Problem
+Na karcie "Deszcz" na ekranie wyników wyświetlało się: "Dni deszczowe. 2 days" - mieszanka polskiego i angielskiego.
+
+### Diagnoza
+i18next w wersji 25.x nie używał domyślnie CLDR plural rules dla języka polskiego. Polski wymaga specjalnych form:
+- `_one`: 1 (dzień)
+- `_few`: 2-4, 22-24, 32-34... (dni)
+- `_many`: 0, 5-21, 25-31... (dni)
+
+Bez odpowiedniej konfiguracji, i18next szukał `_other` (angielski fallback) i wyświetlał "days".
+
+### Rozwiązanie
+1. **Dodano `compatibilityJSON: 'v4'`** w konfiguracji i18n:
+   ```typescript
+   i18n.init({
+     compatibilityJSON: 'v4', // Enable CLDR plural rules
+     // ...
+   });
+   ```
+
+2. **Dodano `rainDaysText_other`** jako fallback w pl.json:
+   ```json
+   "rainDaysText_one": "{{count}} dzień",
+   "rainDaysText_few": "{{count}} dni",
+   "rainDaysText_many": "{{count}} dni",
+   "rainDaysText_other": "{{count}} dni"
+   ```
+
+**Pliki:**
+- `src/i18n/index.ts:58` - konfiguracja compatibilityJSON
+- `src/i18n/locales/pl.json:112` - dodano rainDaysText_other
+
+### Efekt
+Teraz "Dni deszczowe" poprawnie wyświetla "2 dni" zamiast "2 days".
 
 ---
 

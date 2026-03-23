@@ -56,6 +56,7 @@ export function getMonthName(monthIndex: number): MonthKey {
 i18n
   .use(initReactI18next)
   .init({
+    compatibilityJSON: 'v4', // Enable CLDR plural rules (required for Polish _one/_few/_many)
     resources: {
       pl: { translation: pl },
       en: { translation: en },

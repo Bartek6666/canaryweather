@@ -79,6 +79,7 @@
     "rainyDays": "Regentage",
     "daysUnit": "Tage",
     "last10Years": "Letzte 10 Jahre",
+    "missingYearsInfo": "AEMET-Temperaturdaten fehlen für Jahre: {{years}}",
     "summary": "Zusammenfassung",
     "bestTimeToVisit": "Beste Reisezeit",
     "top3Weeks": "Top 3 sonnigste Wochen des Jahres",
