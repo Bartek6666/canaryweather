@@ -39,5 +39,3 @@ export function AlertCard({ type = 'calima', visible = true }: AlertCardProps) {
     </>
   );
 }
-
-export default AlertCard;

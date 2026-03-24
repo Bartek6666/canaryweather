@@ -478,7 +478,7 @@ export default function ResultScreen({ navigation, route }: Props) {
           precipDays: data.filter(d => d.precip !== null && d.precip > 0).length,
         });
       }
-    } catch (e) {
+    } catch (error) {
       console.warn('[Offline] Network error fetching yearly data');
     }
     return { years, skippedYears };
@@ -565,8 +565,8 @@ export default function ResultScreen({ navigation, route }: Props) {
           setLiveError(true);
           setWeatherDiscrepancy(null);
         }
-      } catch (e) {
-        console.error('[LiveWeather] Error fetching data:', e);
+      } catch (error) {
+        console.error('[LiveWeather] Error fetching data:', error);
         setLiveData(null);
         setIsFromCache(false);
         setLiveError(true);
@@ -596,8 +596,8 @@ export default function ResultScreen({ navigation, route }: Props) {
       try {
         const status = await fetchCalimaStatus(calimaLat, calimaLon);
         setCalimaStatus(status);
-      } catch (e) {
-        console.error('[Calima] Error fetching status:', e);
+      } catch (error) {
+        console.error('[Calima] Error fetching status:', error);
         setCalimaStatus(null);
       }
     };
@@ -630,8 +630,8 @@ export default function ResultScreen({ navigation, route }: Props) {
       try {
         const alert = await fetchMostSevereCoastalAlert(station.island, lat);
         setCoastalAlert(alert);
-      } catch (e) {
-        console.error('[CoastalAlert] Error fetching alerts:', e);
+      } catch (error) {
+        console.error('[CoastalAlert] Error fetching alerts:', error);
         setCoastalAlert(null);
       }
     };
@@ -651,8 +651,8 @@ export default function ResultScreen({ navigation, route }: Props) {
       try {
         const alert = await fetchMostSevereWindAlert(station.island);
         setWindAlert(alert);
-      } catch (e) {
-        console.error('[WindAlert] Error fetching alerts:', e);
+      } catch (error) {
+        console.error('[WindAlert] Error fetching alerts:', error);
         setWindAlert(null);
       }
     };
@@ -678,8 +678,8 @@ export default function ResultScreen({ navigation, route }: Props) {
       try {
         const alert = await fetchMostSevereSnowAlert(station.island);
         setSnowAlert(alert);
-      } catch (e) {
-        console.error('[SnowAlert] Error fetching alerts:', e);
+      } catch (error) {
+        console.error('[SnowAlert] Error fetching alerts:', error);
         setSnowAlert(null);
       }
     };
@@ -754,7 +754,7 @@ export default function ResultScreen({ navigation, route }: Props) {
         setSkippedYears(yearlyResult.skippedYears);
         setBestWeeks(weeks);
         setInterpolatedStats(interpolated);
-      } catch (e) { console.error(e); }
+      } catch (error) { console.error('[ResultScreen]', error); }
       finally { setIsLoading(false); }
     })();
   }, [stationId, station, selectedMonth, fetchYearlyData]);
@@ -821,7 +821,7 @@ export default function ResultScreen({ navigation, route }: Props) {
         setSnowAlert(snowAlertResult);
       }
     } catch (error) {
-      console.error('Refresh failed:', error);
+      console.error('[ResultScreen] Refresh failed:', error);
     } finally {
       setIsRefreshing(false);
     }

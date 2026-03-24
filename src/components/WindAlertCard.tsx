@@ -30,5 +30,3 @@ export function WindAlertCard({ alert, onPress }: WindAlertCardProps) {
     />
   );
 }
-
-export default WindAlertCard;

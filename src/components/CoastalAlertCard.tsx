@@ -30,5 +30,3 @@ export function CoastalAlertCard({ alert, onPress }: CoastalAlertCardProps) {
     />
   );
 }
-
-export default CoastalAlertCard;

@@ -359,5 +359,3 @@ const styles = StyleSheet.create({
     color: glassText.secondary,
   },
 });
-
-export default SunChanceGauge;

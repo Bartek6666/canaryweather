@@ -185,5 +185,3 @@ const styles = StyleSheet.create({
     zIndex: 99,
   },
 });
-
-export default LanguageSwitcher;

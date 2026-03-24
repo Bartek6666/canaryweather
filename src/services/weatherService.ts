@@ -160,7 +160,7 @@ export async function calculateSunChance(
       };
     }
     data = result.data;
-  } catch (e) {
+  } catch (error) {
     console.warn('[Offline] Network error fetching sun chance data');
     return {
       sunny_days: 0,
@@ -348,7 +348,7 @@ export async function getMonthlyStats(stationId: string): Promise<MonthlyStats[]
       return [];
     }
     data = result.data;
-  } catch (e) {
+  } catch (error) {
     console.warn('[Offline] Network error fetching monthly stats');
     return [];
   }
@@ -392,7 +392,7 @@ export async function getMonthlyStats(stationId: string): Promise<MonthlyStats[]
     const validTmin = monthData.filter((d) => d.tmin !== null);
     const validPrecip = monthData.filter((d) => d.precip !== null);
     const validSol = monthData.filter((d) => d.sol !== null);
-    const validWind = monthData.filter((d) => (d as any).velmedia !== null);
+    const validWind = monthData.filter((d) => d.velmedia !== null);
 
     const avgTmax = validTmax.length > 0
       ? validTmax.reduce((sum, d) => sum + (d.tmax || 0), 0) / validTmax.length
@@ -413,7 +413,7 @@ export async function getMonthlyStats(stationId: string): Promise<MonthlyStats[]
     // Calculate average wind from historical data, or fall back to typical estimate
     // AEMET provides velmedia in m/s, convert to km/h (multiply by 3.6)
     const avgWind = validWind.length > 0
-      ? (validWind.reduce((sum, d) => sum + ((d as any).velmedia || 0), 0) / validWind.length) * 3.6
+      ? (validWind.reduce((sum, d) => sum + (d.velmedia || 0), 0) / validWind.length) * 3.6
       : null; // Will use getTypicalWindSpeed as fallback
 
     const rainDaysTotal = monthData.filter((d) => d.precip !== null && d.precip > 0).length;
@@ -495,7 +495,7 @@ export async function calculateWindStability(
       };
     }
     data = result.data;
-  } catch (e) {
+  } catch (error) {
     console.warn('[Offline] Network error fetching wind stability data');
     return {
       stability: 0,
@@ -642,7 +642,7 @@ export async function calculateRainStats(
       };
     }
     data = result.data;
-  } catch (e) {
+  } catch (error) {
     console.warn('[Offline] Network error fetching rain stats data');
     return {
       daysWithoutRain: 0,
@@ -739,70 +739,6 @@ export interface MonthlyRainComparison {
   totalDays: number; // Days in month
 }
 
-/**
- * Gets rain comparison data for all 12 months
- * Returns average rainy days per month based on 10 years of data
- */
-export async function getMonthlyRainComparison(
-  stationId: string
-): Promise<MonthlyRainComparison[]> {
-  const tenYearsAgo = new Date();
-  tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
-
-  try {
-    const { data, error } = await supabase
-      .from('weather_data')
-      .select('date, precip')
-      .eq('station_id', stationId)
-      .gte('date', tenYearsAgo.toISOString().split('T')[0]);
-
-    if (error || !data) {
-      console.warn('[Offline] Cannot fetch rain comparison data');
-      return [];
-    }
-
-    // Group by month and calculate average rainy days
-    const monthlyData: Map<number, { rainyDays: number; totalDays: number; years: Set<number> }> = new Map();
-
-    for (let m = 1; m <= 12; m++) {
-      monthlyData.set(m, { rainyDays: 0, totalDays: 0, years: new Set() });
-    }
-
-    const RAIN_THRESHOLD = 0.1;
-
-    for (const row of data) {
-      if (row.precip === null) continue;
-      const date = new Date(row.date);
-      const month = date.getMonth() + 1;
-      const year = date.getFullYear();
-      const entry = monthlyData.get(month)!;
-
-      entry.totalDays++;
-      entry.years.add(year);
-      if (row.precip > RAIN_THRESHOLD) {
-        entry.rainyDays++;
-      }
-    }
-
-    // Calculate averages (divide by number of years with data)
-    const result: MonthlyRainComparison[] = [];
-    for (let m = 1; m <= 12; m++) {
-      const entry = monthlyData.get(m)!;
-      const yearsCount = entry.years.size || 1;
-      result.push({
-        month: m,
-        rainyDays: Math.round(entry.rainyDays / yearsCount),
-        totalDays: Math.round(entry.totalDays / yearsCount),
-      });
-    }
-
-    return result;
-  } catch (e) {
-    console.warn('[Offline] Network error fetching rain comparison');
-    return [];
-  }
-}
-
 // ─── ISLAND RANKINGS ──────────────────────────────────────────────────────────
 
 export interface IslandRanking {
@@ -872,7 +808,7 @@ export async function getWindRankingByIsland(month: number): Promise<IslandRanki
         return data;
       }
     }
-  } catch (e) {
+  } catch (error) {
     // Cache read failed, continue with fetch
   }
 
@@ -886,7 +822,7 @@ export async function getWindRankingByIsland(month: number): Promise<IslandRanki
 
     for (const [stationId, station] of Object.entries(stations)) {
       // Skip high altitude stations for fair comparison
-      if ((station as any).isHighAltitude) continue;
+      if (station.isHighAltitude) continue;
 
       const island = station.island;
       if (!stationsByIsland.has(island)) {
@@ -918,7 +854,7 @@ export async function getWindRankingByIsland(month: number): Promise<IslandRanki
       if (date.getMonth() + 1 !== month) continue;
 
       const station = stations[row.station_id];
-      if (!station || (station as any).isHighAltitude) continue;
+      if (!station || station.isHighAltitude) continue;
 
       const island = station.island;
       const stats = islandStats.get(island);
@@ -946,12 +882,12 @@ export async function getWindRankingByIsland(month: number): Promise<IslandRanki
     // Save to cache
     try {
       await AsyncStorage.setItem(cacheKey, JSON.stringify({ data: sortedRanking, timestamp: Date.now() }));
-    } catch (e) {
+    } catch (error) {
       // Cache write failed, continue
     }
 
     return sortedRanking;
-  } catch (e) {
+  } catch (error) {
     console.warn('[Offline] Network error fetching wind ranking');
     return [];
   }
@@ -972,7 +908,7 @@ export async function getRainRankingByIsland(month: number): Promise<IslandRanki
         return data;
       }
     }
-  } catch (e) {
+  } catch (error) {
     // Cache read failed, continue with fetch
   }
 
@@ -986,7 +922,7 @@ export async function getRainRankingByIsland(month: number): Promise<IslandRanki
 
     for (const [stationId, station] of Object.entries(stations)) {
       // Skip high altitude stations for fair comparison
-      if ((station as any).isHighAltitude) continue;
+      if (station.isHighAltitude) continue;
 
       const island = station.island;
       if (!stationsByIsland.has(island)) {
@@ -1022,7 +958,7 @@ export async function getRainRankingByIsland(month: number): Promise<IslandRanki
       if (date.getMonth() + 1 !== month) continue;
 
       const station = stations[row.station_id];
-      if (!station || (station as any).isHighAltitude) continue;
+      if (!station || station.isHighAltitude) continue;
 
       const island = station.island;
       const stats = islandStats.get(island);
@@ -1052,12 +988,12 @@ export async function getRainRankingByIsland(month: number): Promise<IslandRanki
     // Save to cache
     try {
       await AsyncStorage.setItem(cacheKey, JSON.stringify({ data: sortedRanking, timestamp: Date.now() }));
-    } catch (e) {
+    } catch (error) {
       // Cache write failed, continue
     }
 
     return sortedRanking;
-  } catch (e) {
+  } catch (error) {
     console.warn('[Offline] Network error fetching rain ranking');
     return [];
   }
@@ -1586,7 +1522,7 @@ export async function getBestWeeksForStation(stationId: string): Promise<WeeklyB
       return [];
     }
     data = result.data;
-  } catch (e) {
+  } catch (error) {
     console.warn('[Offline] Network error fetching best weeks data');
     return [];
   }
@@ -1947,34 +1883,6 @@ function detectMuddyRain(pm10?: number, precipitation?: number): boolean {
     precipitation !== undefined &&
     precipitation > 0
   );
-}
-
-/**
- * Applies "Lluvia de Barro" (Mud Rain) transformation to weather data
- * This is a unique Canary Islands phenomenon when Saharan dust mixes with rain
- *
- * @param weatherData Live weather data
- * @param calimaStatus Calima detection status (PM10 levels)
- * @returns Updated weather data with muddy-rain condition if applicable
- */
-export function applyMuddyRainDetection(
-  weatherData: LiveWeatherData,
-  calimaStatus: CalimaStatus | null
-): LiveWeatherData {
-  if (!calimaStatus) return weatherData;
-
-  const isMuddyRain = detectMuddyRain(calimaStatus.pm10, weatherData.precipitation);
-
-  if (isMuddyRain) {
-    console.log(`[MuddyRain] Detected! PM10=${calimaStatus.pm10}, precip=${weatherData.precipitation}`);
-    return {
-      ...weatherData,
-      condition: 'muddy-rain',
-      conditionLabelKey: 'muddyRain',
-    };
-  }
-
-  return weatherData;
 }
 
 // ─── API KEYS ─────────────────────────────────────────────────────────────────

@@ -201,10 +201,6 @@ export async function trackSearchEvent(event: SearchAnalyticsEvent): Promise<voi
   }
 }
 
-export async function flushAnalytics(): Promise<void> {
-  await flushEventQueue();
-}
-
 // ─── CONVENIENCE FUNCTIONS ─────────────────────────────────────────────────────
 
 export function trackAutocompleteSelect(params: {

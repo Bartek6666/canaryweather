@@ -26,7 +26,7 @@ import { useTranslation } from 'react-i18next';
 
 import { colors, spacing, typography, glass, glassTokens, glassText, borderRadius, gradients, shadows } from '../constants/theme';
 import locationsMapping from '../constants/locations_mapping.json';
-import { findNearestStations, findNearestStation as findNearestStationService, NearbyStation } from '../services/weatherService';
+import { findNearestStations, findNearestStation, NearbyStation } from '../services/weatherService';
 import { GlassCard, HeroLogo, LanguageSwitcher, LocationPrompt } from '../components';
 import { City } from '../types/weather';
 import { useSearchAnalytics } from '../hooks/useSearchAnalytics';
@@ -153,8 +153,8 @@ export default function SearchScreen({ navigation }: Props) {
           // Small delay for better UX
           setTimeout(() => setShowLocationPrompt(true), 800);
         }
-      } catch (e) {
-        console.warn('Failed to check location prompt status:', e);
+      } catch (error) {
+        console.warn('Failed to check location prompt status:', error);
       }
     };
     checkLocationPrompt();
@@ -249,7 +249,7 @@ export default function SearchScreen({ navigation }: Props) {
     const isHighAltitude = city.isHighAltitude === true;
     const excludeHighAltitude = !isHighAltitude;
     const forceHighAltitude = isHighAltitude;
-    const nearest = findNearestStationService(city.coords.lat, city.coords.lon, excludeHighAltitude, forceHighAltitude);
+    const nearest = findNearestStation(city.coords.lat, city.coords.lon, excludeHighAltitude, forceHighAltitude);
 
     // Track analytics before clearing state
     if (nearest) {
@@ -341,7 +341,7 @@ export default function SearchScreen({ navigation }: Props) {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') { Alert.alert(t('search.locationPermissionTitle'), t('search.locationPermissionMessage')); return; }
       const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      const nearest = findNearestStationService(loc.coords.latitude, loc.coords.longitude);
+      const nearest = findNearestStation(loc.coords.latitude, loc.coords.longitude);
       if (nearest) {
         Alert.alert(
           t('search.nearestStationTitle'),
@@ -385,7 +385,7 @@ export default function SearchScreen({ navigation }: Props) {
       }
 
       const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      const nearest = findNearestStationService(loc.coords.latitude, loc.coords.longitude);
+      const nearest = findNearestStation(loc.coords.latitude, loc.coords.longitude);
 
       // Save dismissal to AsyncStorage
       await AsyncStorage.setItem(LOCATION_PROMPT_KEY, 'true');
@@ -416,7 +416,7 @@ export default function SearchScreen({ navigation }: Props) {
           locationCoords: { lat: loc.coords.latitude, lon: loc.coords.longitude },
         });
       }
-    } catch (e) {
+    } catch (error) {
       Alert.alert(t('common.error'), t('search.locationError'));
     } finally {
       setIsLocationPromptLoading(false);
@@ -426,8 +426,8 @@ export default function SearchScreen({ navigation }: Props) {
   const handleLocationPromptDismiss = useCallback(async () => {
     try {
       await AsyncStorage.setItem(LOCATION_PROMPT_KEY, 'true');
-    } catch (e) {
-      console.warn('Failed to save location prompt dismissal:', e);
+    } catch (error) {
+      console.warn('Failed to save location prompt dismissal:', error);
     }
     setShowLocationPrompt(false);
   }, []);

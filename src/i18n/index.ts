@@ -17,13 +17,6 @@ export const LANGUAGES = {
 
 export type LanguageCode = (typeof LANGUAGES)[keyof typeof LANGUAGES];
 
-export const LANGUAGE_LABELS: Record<LanguageCode, string> = {
-  pl: 'PL',
-  en: 'EN',
-  de: 'DE',
-  es: 'ES',
-};
-
 const LANGUAGE_STORAGE_KEY = '@canary_weather_language';
 
 // Get supported language from device locale
@@ -46,11 +39,6 @@ export const MONTH_KEYS = [
 ] as const;
 
 export type MonthKey = (typeof MONTH_KEYS)[number];
-
-// Helper to get translated month name
-export function getMonthName(monthIndex: number): MonthKey {
-  return MONTH_KEYS[monthIndex] ?? 'january';
-}
 
 // Initialize i18n
 i18n

@@ -30,5 +30,3 @@ export function SnowAlertCard({ alert, onPress }: SnowAlertCardProps) {
     />
   );
 }
-
-export default SnowAlertCard;

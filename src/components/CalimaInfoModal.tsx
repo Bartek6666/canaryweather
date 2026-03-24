@@ -216,5 +216,3 @@ const styles = StyleSheet.create({
     height: spacing.lg,
   },
 });
-
-export default CalimaInfoModal;
