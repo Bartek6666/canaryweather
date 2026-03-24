@@ -272,6 +272,63 @@ Teraz "Dni deszczowe" poprawnie wyświetla "2 dni" zamiast "2 days".
 
 ---
 
+## 2026-03-24: Fix - Fałszywe burze z WeatherAPI
+
+### Problem
+Dla miejscowości na Fuerteventurze (i potencjalnie innych wyspach) karta LiveWeather pokazywała "Burza" mimo bezchmurnej nocy. Problem dotyczył wszystkich lokalizacji na wyspie.
+
+### Diagnoza
+Logi pokazały:
+```
+[AEMET] Live data: 19°C, wind 5 km/h, gusts 7 km/h
+[WeatherAPI] Condition: Patchy light rain in area with thunder (code 1273)
+[Hybrid] AEMET measurements + WeatherAPI condition
+```
+
+WeatherAPI zwracał błędny kod 1273 (burza z deszczem), podczas gdy AEMET nie raportował żadnych opadów (`prec = 0`). Aplikacja bezwarunkowo przyjmowała warunki pogodowe z WeatherAPI.
+
+### Rozwiązanie
+Dodano walidację krzyżową w funkcji `prioritizeWeatherCondition()`:
+
+```typescript
+// VALIDATION: If WeatherAPI says stormy/rainy but AEMET has NO precipitation,
+// the WeatherAPI data is likely wrong - override with clear condition
+const aemetHasNoPrecip = precipitation === undefined || precipitation === 0;
+if (aemetHasNoPrecip && (baseCondition === 'stormy' || baseCondition === 'rainy')) {
+  console.log(`[Priority] Correcting false ${baseCondition}: AEMET reports no precipitation`);
+  return {
+    condition: isNight ? 'clear-night' : 'sunny',
+    labelKey: isNight ? 'clearNight' : 'sunny',
+  };
+}
+```
+
+**Plik:** `src/services/weatherService.ts:1864-1875`
+
+### Logika walidacji
+1. AEMET dostarcza pomiary z czujników (temperatura, wiatr, opady `prec`)
+2. WeatherAPI/Open-Meteo dostarcza warunki pogodowe (satellite/model data)
+3. Jeśli WeatherAPI mówi "stormy" lub "rainy", ale AEMET sensor nie wykrywa opadów → dane WeatherAPI są błędne
+4. W takim przypadku nadpisz warunek na "sunny" (dzień) lub "clear-night" (noc)
+
+### Efekt
+Logi po poprawce:
+```
+[WeatherAPI] Condition: Patchy light rain in area with thunder (code 1273)
+[Hybrid] AEMET measurements + WeatherAPI condition
+[Priority] Correcting false stormy: AEMET reports no precipitation
+[Priority] Overriding stormy → clear-night (precip=0, gusts=7)
+```
+
+Aplikacja teraz poprawnie pokazuje "Bezchmurna noc" zamiast fałszywej burzy.
+
+### Uwagi
+- Walidacja opiera się na zaufaniu do czujników AEMET (ground truth)
+- WeatherAPI może zwracać błędne dane z powodu niedokładności modeli satelitarnych
+- Rozwiązanie działa dla wszystkich lokalizacji, nie tylko Fuerteventury
+
+---
+
 ## TODO / Przyszłe ulepszenia
 
 - [x] ~~Użyć `interpolateLiveWeather()` w UI~~ (zrobione 2026-03-22)
