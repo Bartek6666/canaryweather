@@ -1855,12 +1855,24 @@ function prioritizeWeatherCondition(
   windGusts?: number,
   isNight: boolean = false
 ): { condition: WeatherCondition; labelKey: string } {
-  // Priority: Precipitation detected → force rainy
+  // Priority: Precipitation detected by AEMET sensor → force rainy
   // (Wind information is shown in the side panel with color warning, not via icon change)
   if (precipitation !== undefined && precipitation > 0) {
     return {
       condition: 'rainy',
       labelKey: precipitation > 5 ? 'heavyRain' : 'lightRain',
+    };
+  }
+
+  // VALIDATION: If WeatherAPI says stormy/rainy but AEMET has NO precipitation,
+  // the WeatherAPI data is likely wrong - override with clear condition
+  // This prevents false storm/rain alerts when AEMET sensor shows no rain
+  const aemetHasNoPrecip = precipitation === undefined || precipitation === 0;
+  if (aemetHasNoPrecip && (baseCondition === 'stormy' || baseCondition === 'rainy')) {
+    console.log(`[Priority] Correcting false ${baseCondition}: AEMET reports no precipitation`);
+    return {
+      condition: isNight ? 'clear-night' : 'sunny',
+      labelKey: isNight ? 'clearNight' : 'sunny',
     };
   }
 
