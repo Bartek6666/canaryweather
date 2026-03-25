@@ -329,6 +329,112 @@ Aplikacja teraz poprawnie pokazuje "Bezchmurna noc" zamiast fałszywej burzy.
 
 ---
 
+## 2026-03-25: REFACTOR - Uproszczona architektura Live Weather
+
+### Problem
+Karta Live Weather ciągle pokazywała błędne dane z powodu skomplikowanej logiki łączącej dane z wielu źródeł:
+- AEMET (sensory) + WeatherAPI (warunki) + walidacja krzyżowa + fallbacki
+
+Każda poprawka wprowadzała nowe edge cases. Architektura była zbyt złożona.
+
+### Stara architektura (problematyczna)
+```
+fetchLiveWeather():
+1. Cache check
+2. AEMET → pomiary (temp, wiatr, opady)
+3. WeatherAPI → warunek (ikona)
+4. Merge: AEMET + WeatherAPI
+5. Fallback wiatru gdy AEMET stare (>2h)
+6. Fallback temp gdy AEMET bardzo stare (>3h)
+7. prioritizeWeatherCondition() - walidacja krzyżowa  ← ŹRÓDŁO PROBLEMÓW
+8. Cache fallback
+```
+
+**9+ punktów decyzyjnych** = chaos i niespójne dane.
+
+### Nowa architektura (uproszczona)
+```
+fetchLiveWeather():
+1. Cache check (15 min)
+2. WeatherAPI → WSZYSTKO (temp, wiatr, warunek, humidity)
+3. AEMET (opcjonalnie) → nadpisz temp/humidity jeśli świeże (<1h)
+4. Open-Meteo → fallback gdy WeatherAPI niedostępne
+5. Cache → fallback gdy wszystko zawiedzie
+```
+
+**5 punktów decyzyjnych**, jedno źródło prawdy dla warunków pogodowych.
+
+### Kluczowe zmiany
+
+1. **WeatherAPI jako PRIMARY source** - dostarcza wszystkie dane (temp, wiatr, warunek, humidity)
+2. **AEMET jako OPCJONALNE wzbogacenie** - tylko temp/humidity, tylko gdy dane świeże (<1h)
+3. **Usunięto `prioritizeWeatherCondition()`** - brak walidacji krzyżowej
+4. **Usunięto priorytetyzację warunków w interpolacji** - zaufaj najbliższej stacji
+5. **Usunięto skomplikowane fallbacki wiatru/temperatury**
+
+### Kod
+
+**fetchLiveWeather() - nowa wersja:**
+```typescript
+// PRIMARY: WeatherAPI
+const weatherAPIData = await fetchWeatherAPICondition(lat, lon);
+if (weatherAPIData) {
+  weatherData = { ...weatherAPIData };
+
+  // OPTIONAL: AEMET enrichment (fresh data only)
+  if (stationId && AEMET_API_KEY) {
+    const aemetResult = await fetchAemetLiveWeather(stationId);
+    if (aemetResult && observationAge < ONE_HOUR_MS) {
+      // Use AEMET for temp/humidity (more accurate sensors)
+      weatherData.temperature = aemetResult.data.temperature;
+      weatherData.humidity = aemetResult.data.humidity;
+    }
+  }
+}
+
+// FALLBACK: Open-Meteo
+if (!weatherData) {
+  const openMeteoData = await fetchOpenMeteoCondition(lat, lon);
+  // ...
+}
+```
+
+**interpolateLiveWeather() - uproszczona:**
+```typescript
+// Use condition from closest station (we trust WeatherAPI)
+const primaryData = validResults[0].result.data;
+```
+
+### Usunięte funkcje/logika
+- `prioritizeWeatherCondition()` - całkowicie usunięta
+- Priorytetyzacja warunków w interpolacji (conditionPriority map)
+- Fallbacki wiatru na podstawie staleness
+- Fallbacki temperatury na podstawie staleness
+- Walidacja krzyżowa AEMET vs WeatherAPI
+
+### Nowe logi
+```
+[WeatherAPI] Partly cloudy (code 1003), 20°C, wind 18 km/h, gusts 26 km/h, humidity 63%
+[AEMET] Enriching with fresh sensor data (15min old): 19°C, 65%
+[Live] Data source: WeatherAPI + AEMET
+```
+
+### Efekt
+- Spójne dane - jedno źródło prawdy (WeatherAPI)
+- Prostszy kod - łatwiejszy do debugowania
+- Mniej błędów - brak walidacji krzyżowej która wprowadzała chaos
+- AEMET nadal używane dla dokładniejszych pomiarów temp/humidity (gdy świeże)
+
+### Pliki zmienione
+- `src/services/weatherService.ts`:
+  - `fetchLiveWeather()` - przepisana (~200 → ~80 linii)
+  - `fetchWeatherAPICondition()` - dodano humidity
+  - `fetchOpenMeteoCondition()` - dodano humidity
+  - `interpolateLiveWeather()` - usunięto priorytetyzację
+  - Usunięto `prioritizeWeatherCondition()`
+
+---
+
 ## TODO / Przyszłe ulepszenia
 
 - [x] ~~Użyć `interpolateLiveWeather()` w UI~~ (zrobione 2026-03-22)

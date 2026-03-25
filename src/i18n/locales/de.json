@@ -93,7 +93,7 @@
     "summaryWindy": "Möglicher starker Wind.",
     "summaryHot": "Heiße Temperaturen - trinken Sie viel.",
     "summaryMild": "Angenehme, milde Temperatur.",
-    "summaryDetailed": "Im {{month}} genießt {{name}} an {{sunChance}}% der Tage Sonnenschein. Die Durchschnittstemperatur liegt zwischen {{tmax}} und {{tmin}}°C. {{windText}}, mit durchschnittlich {{rainDaysText}} pro Monat.",
+    "summaryDetailed": "Im {{month}} genießt {{name}} an {{sunChance}}% der Tage Sonnenschein. Die höchste Durchschnittstemperatur beträgt {{tmax}}°C und die niedrigste {{tmin}}°C. {{windText}}, mit durchschnittlich {{rainDaysText}} pro Monat.",
     "rainDaysText_one": "{{count}} Regentag",
     "rainDaysText_other": "{{count}} Regentagen",
     "summaryWindCalm": "Die Winde sind schwach ({{speed}} km/h)",

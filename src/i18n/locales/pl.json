@@ -105,7 +105,7 @@
     "summaryWindy": "Możliwy silniejszy wiatr.",
     "summaryHot": "Upalne temperatury - pamiętaj o nawodnieniu.",
     "summaryMild": "Przyjemna, łagodna temperatura.",
-    "summaryDetailed": "W {{month}} {{name}} cieszy się słońcem przez {{sunChance}}% dni. Średnia temperatura wynosi {{tmax}}–{{tmin}}°C. {{windText}}, a deszcz pada średnio {{rainDaysText}} w miesiącu.",
+    "summaryDetailed": "W {{month}} {{name}} cieszy się słońcem przez {{sunChance}}% dni. Najwyższa średnia temperatura wynosi {{tmax}}°C, a najniższa {{tmin}}°C. {{windText}}, a deszcz pada średnio {{rainDaysText}} w miesiącu.",
     "rainDaysText_one": "{{count}} dzień",
     "rainDaysText_few": "{{count}} dni",
     "rainDaysText_many": "{{count}} dni",

@@ -93,7 +93,7 @@
     "summaryWindy": "Posible viento fuerte.",
     "summaryHot": "Temperaturas calurosas - mantente hidratado.",
     "summaryMild": "Temperatura agradable y suave.",
-    "summaryDetailed": "En {{month}}, {{name}} disfruta del sol el {{sunChance}}% de los días. La temperatura media oscila entre {{tmax}} y {{tmin}}°C. {{windText}}, con lluvia una media de {{rainDaysText}} al mes.",
+    "summaryDetailed": "En {{month}}, {{name}} disfruta del sol el {{sunChance}}% de los días. La temperatura media máxima es de {{tmax}}°C y la mínima de {{tmin}}°C. {{windText}}, con lluvia una media de {{rainDaysText}} al mes.",
     "rainDaysText_one": "{{count}} día",
     "rainDaysText_other": "{{count}} días",
     "summaryWindCalm": "Los vientos son suaves ({{speed}} km/h)",

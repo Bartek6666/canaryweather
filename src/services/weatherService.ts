@@ -1398,7 +1398,8 @@ export async function interpolateLiveWeather(
   const distances = validResults.map(r => r.station.distance);
   const weights = calculateDistanceWeights(distances);
 
-  // Interpolate weather data
+  // Interpolate weather data (numeric values only)
+  // Condition comes from closest station - we trust WeatherAPI's condition data
   let interpolatedTemp = 0;
   let interpolatedHumidity = 0;
   let interpolatedWindSpeed = 0;
@@ -1407,7 +1408,7 @@ export async function interpolateLiveWeather(
   let interpolatedPrecip = 0;
   let precipCount = 0;
 
-  // For condition, use the one from the closest station (most relevant)
+  // Use condition from closest station (most relevant for location)
   const primaryData = validResults[0].result.data;
 
   validResults.forEach((r, index) => {
@@ -1435,7 +1436,7 @@ export async function interpolateLiveWeather(
     windSpeed: Math.round(interpolatedWindSpeed),
     windGusts: gustsCount > 0 ? Math.round(interpolatedWindGusts) : undefined,
     precipitation: precipCount > 0 ? Math.round(interpolatedPrecip * 10) / 10 : undefined,
-    // Use condition from closest station (most relevant for location)
+    // Use condition from closest station (we trust WeatherAPI)
     weatherCode: primaryData.weatherCode,
     condition: primaryData.condition,
     conditionLabelKey: primaryData.conditionLabelKey,
@@ -1834,51 +1835,9 @@ function mapWmoCode(code: number, isNight: boolean = false): WmoMapping {
   return mapping;
 }
 
-// ─── STATE PRIORITIZATION ─────────────────────────────────────────────────────
+// ─── THRESHOLDS ───────────────────────────────────────────────────────────────
 
-// Thresholds for state prioritization
 const GUSTS_WINDY_THRESHOLD = 35; // km/h - threshold for wind warning color and station discrepancy detection
-
-/**
- * Prioritizes weather condition based on real-time sensor data
- * Overrides satellite-based conditions when ground sensors detect:
- * - Precipitation > 0 → forces "rainy" condition
- * - Wind gusts > 35 km/h → forces "windy" condition
- *
- * This ensures the app shows dangerous conditions (rain, strong winds)
- * even when the satellite says "cloudy"
- */
-function prioritizeWeatherCondition(
-  baseCondition: WeatherCondition,
-  baseLabelKey: string,
-  precipitation?: number,
-  windGusts?: number,
-  isNight: boolean = false
-): { condition: WeatherCondition; labelKey: string } {
-  // Priority: Precipitation detected by AEMET sensor → force rainy
-  // (Wind information is shown in the side panel with color warning, not via icon change)
-  if (precipitation !== undefined && precipitation > 0) {
-    return {
-      condition: 'rainy',
-      labelKey: precipitation > 5 ? 'heavyRain' : 'lightRain',
-    };
-  }
-
-  // VALIDATION: If WeatherAPI says stormy/rainy but AEMET has NO precipitation,
-  // the WeatherAPI data is likely wrong - override with clear condition
-  // This prevents false storm/rain alerts when AEMET sensor shows no rain
-  const aemetHasNoPrecip = precipitation === undefined || precipitation === 0;
-  if (aemetHasNoPrecip && (baseCondition === 'stormy' || baseCondition === 'rainy')) {
-    console.log(`[Priority] Correcting false ${baseCondition}: AEMET reports no precipitation`);
-    return {
-      condition: isNight ? 'clear-night' : 'sunny',
-      labelKey: isNight ? 'clearNight' : 'sunny',
-    };
-  }
-
-  // No override needed - keep original condition from AEMET/OpenMeteo
-  return { condition: baseCondition, labelKey: baseLabelKey };
-}
 
 /**
  * Detects "Lluvia de Barro" (Mud Rain) - unique Canary Islands phenomenon
@@ -2085,7 +2044,8 @@ interface OpenMeteoConditionResult {
   isNight: boolean;
   windSpeed?: number;
   windGusts?: number;
-  temperature?: number; // Temperature in °C for fallback when AEMET is stale
+  temperature?: number;
+  humidity?: number;
 }
 
 /**
@@ -2096,7 +2056,7 @@ async function fetchOpenMeteoCondition(lat: number, lon: number): Promise<OpenMe
   const TIMEOUT_MS = 8000;
 
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=weather_code,is_day,wind_speed_10m,wind_gusts_10m,temperature_2m&timezone=auto`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=weather_code,is_day,wind_speed_10m,wind_gusts_10m,temperature_2m,relative_humidity_2m&timezone=auto`;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -2110,19 +2070,21 @@ async function fetchOpenMeteoCondition(lat: number, lon: number): Promise<OpenMe
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      console.warn(`[Open-Meteo Condition] API error: ${response.status}`);
+      console.warn(`[Open-Meteo] API error: ${response.status}`);
       return null;
     }
 
     const data: OpenMeteoResponse = await response.json();
 
     if (!data.current) {
-      console.warn('[Open-Meteo Condition] No current data');
+      console.warn('[Open-Meteo] No current data');
       return null;
     }
 
     const isNight = data.current.is_day === 0;
     const { condition, labelKey } = mapWmoCode(data.current.weather_code, isNight);
+
+    console.log(`[Open-Meteo] ${condition} (WMO ${data.current.weather_code}), ${Math.round(data.current.temperature_2m)}°C, wind ${Math.round(data.current.wind_speed_10m)} km/h`);
 
     return {
       weatherCode: data.current.weather_code,
@@ -2132,12 +2094,13 @@ async function fetchOpenMeteoCondition(lat: number, lon: number): Promise<OpenMe
       windSpeed: data.current.wind_speed_10m !== undefined ? Math.round(data.current.wind_speed_10m) : undefined,
       windGusts: data.current.wind_gusts_10m !== undefined ? Math.round(data.current.wind_gusts_10m) : undefined,
       temperature: data.current.temperature_2m !== undefined ? Math.round(data.current.temperature_2m) : undefined,
+      humidity: data.current.relative_humidity_2m !== undefined ? Math.round(data.current.relative_humidity_2m) : undefined,
     };
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
-      console.warn('[Open-Meteo Condition] Request timed out');
+      console.warn('[Open-Meteo] Request timed out');
     } else {
-      console.warn('[Open-Meteo Condition] Error:', error);
+      console.warn('[Open-Meteo] Error:', error);
     }
     return null;
   }
@@ -2281,7 +2244,7 @@ async function fetchWeatherAPICondition(lat: number, lon: number): Promise<OpenM
     const isNight = data.current.is_day === 0;
     const { condition, labelKey } = mapWeatherAPICode(data.current.condition.code, isNight);
 
-    console.log(`[WeatherAPI] Condition: ${data.current.condition.text} (code ${data.current.condition.code}), wind ${Math.round(data.current.wind_kph)} km/h, gusts ${Math.round(data.current.gust_kph)} km/h, temp ${Math.round(data.current.temp_c)}°C`);
+    console.log(`[WeatherAPI] ${data.current.condition.text} (code ${data.current.condition.code}), ${Math.round(data.current.temp_c)}°C, wind ${Math.round(data.current.wind_kph)} km/h, gusts ${Math.round(data.current.gust_kph)} km/h, humidity ${data.current.humidity}%`);
 
     return {
       weatherCode: data.current.condition.code,
@@ -2291,6 +2254,7 @@ async function fetchWeatherAPICondition(lat: number, lon: number): Promise<OpenM
       windSpeed: Math.round(data.current.wind_kph),
       windGusts: Math.round(data.current.gust_kph),
       temperature: Math.round(data.current.temp_c),
+      humidity: data.current.humidity,
     };
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
@@ -2329,11 +2293,17 @@ export interface LiveWeatherResult {
 }
 
 /**
- * Fetches current weather data - tries AEMET first (more accurate), then Open-Meteo as fallback
- * Falls back to cached data if network fails, then to mock data in dev mode
+ * Fetches current weather data using simplified architecture:
+ * 1. WeatherAPI as PRIMARY source (condition, temp, wind, humidity)
+ * 2. AEMET optionally ENRICHES with fresh sensor data (temp, humidity only)
+ * 3. Open-Meteo as FALLBACK when WeatherAPI unavailable
+ * 4. Cache as final fallback
+ *
+ * NO cross-validation between sources - trust WeatherAPI for conditions.
+ *
  * @param lat Latitude
  * @param lon Longitude
- * @param stationId Station ID for cache key and AEMET lookup
+ * @param stationId Station ID for cache key and optional AEMET enrichment
  * @param forceRefresh If true, skip cache fallback on error (for pull-to-refresh)
  * @returns LiveWeatherResult with data and cache status, or null if all fails
  */
@@ -2350,249 +2320,114 @@ export async function fetchLiveWeather(
   }
 
   // Check in-memory rate limit cache first (15 min TTL)
-  // Skip if forceRefresh is true (pull-to-refresh)
   if (stationId && !forceRefresh) {
     const rateLimitCached = getFromRateLimitCache(stationId);
     if (rateLimitCached) {
-      console.log('[RateLimit] Using cached data (< 15 min old)');
+      console.log('[Cache] Using rate-limited data (< 15 min old)');
       return { data: refreshDayNightCondition(rateLimitCached), isFromCache: true };
     }
   }
 
-  // ─── HYBRID APPROACH: AEMET for measurements + WeatherAPI/Open-Meteo for condition ───
-  if (stationId && AEMET_API_KEY) {
-    const aemetResult = await fetchAemetLiveWeather(stationId);
-    if (aemetResult) {
-      // Fetch accurate weather condition - try WeatherAPI first (more accurate), then Open-Meteo as fallback
-      let conditionData = await fetchWeatherAPICondition(lat, lon);
-      let conditionSource = 'WeatherAPI';
+  // ─── PRIMARY: WeatherAPI ───────────────────────────────────────────────────
+  let weatherData: LiveWeatherData | null = null;
+  let dataSource = '';
 
-      if (!conditionData) {
-        conditionData = await fetchOpenMeteoCondition(lat, lon);
-        conditionSource = 'Open-Meteo';
-      }
+  const weatherAPIData = await fetchWeatherAPICondition(lat, lon);
 
-      let weatherData = aemetResult.data;
-
-      if (conditionData) {
-        // Check if AEMET observation is stale
-        const observationAge = aemetResult.timestamp
-          ? Date.now() - new Date(aemetResult.timestamp).getTime()
-          : 0;
-        const isStaleObservation = observationAge > 2 * 60 * 60 * 1000; // 2 hours - for wind fallback
-        const isVeryStaleObservation = observationAge > 3 * 60 * 60 * 1000; // 3 hours - for temperature fallback
-        const staleHours = Math.round(observationAge / (60 * 60 * 1000) * 10) / 10;
-
-        if (isVeryStaleObservation) {
-          console.log(`[AEMET] Observation is ${staleHours}h old (very stale - using external temperature)`);
-        } else if (isStaleObservation) {
-          console.log(`[AEMET] Observation is ${staleHours}h old (stale)`);
-        }
-
-        // Merge: AEMET measurements + WeatherAPI/Open-Meteo condition
-        // Use external wind data when:
-        // 1. AEMET station reports 0 (likely missing sensor), OR
-        // 2. AEMET observation is stale (> 2 hours old) and external source has higher wind speed, OR
-        // 3. External source shows SIGNIFICANTLY stronger wind (>2x or +15 km/h) - station may be sheltered
-        const aemetWindMissing = aemetResult.data.windSpeed === 0;
-        const externalHasStrongerWind = isStaleObservation &&
-          conditionData.windSpeed !== undefined &&
-          conditionData.windSpeed > aemetResult.data.windSpeed;
-        // Significant discrepancy: external shows >2x wind OR at least 15 km/h more
-        const significantWindDiscrepancy = conditionData.windSpeed !== undefined &&
-          aemetResult.data.windSpeed > 0 &&
-          (conditionData.windSpeed > aemetResult.data.windSpeed * 2 ||
-           conditionData.windSpeed > aemetResult.data.windSpeed + 15);
-        const useExternalWind = (aemetWindMissing || externalHasStrongerWind || significantWindDiscrepancy) &&
-          conditionData.windSpeed !== undefined;
-
-        // Use external temperature when AEMET data is very stale (> 3 hours old)
-        const useExternalTemperature = isVeryStaleObservation &&
-          conditionData.temperature !== undefined;
-
-        weatherData = {
-          ...aemetResult.data,
-          weatherCode: conditionData.weatherCode,
-          condition: conditionData.condition,
-          conditionLabelKey: conditionData.conditionLabelKey,
-          // Use external wind data when AEMET data is missing or stale
-          ...(useExternalWind && {
-            windSpeed: conditionData.windSpeed,
-            windGusts: conditionData.windGusts,
-          }),
-          // Use external temperature when AEMET data is very stale (> 3h)
-          ...(useExternalTemperature && {
-            temperature: conditionData.temperature,
-          }),
-        };
-
-        if (useExternalWind || useExternalTemperature) {
-          const windReason = useExternalWind
-            ? aemetWindMissing
-              ? 'missing sensor'
-              : significantWindDiscrepancy
-                ? `discrepancy: AEMET ${aemetResult.data.windSpeed} vs ${conditionSource} ${conditionData.windSpeed} km/h`
-                : `stale data (${staleHours}h old)`
-            : null;
-          const tempReason = useExternalTemperature ? `stale data (${staleHours}h old)` : null;
-
-          const parts = [`[Hybrid] AEMET measurements + ${conditionSource} condition`];
-          if (useExternalWind) {
-            parts.push(`+ ${conditionSource} wind [${windReason}] (${conditionData.windSpeed} km/h, gusts ${conditionData.windGusts ?? 'N/A'} km/h)`);
-          }
-          if (useExternalTemperature) {
-            parts.push(`+ ${conditionSource} temp [${tempReason}] (${conditionData.temperature}°C)`);
-          }
-          console.log(parts.join(' '));
-        } else {
-          console.log(`[Hybrid] AEMET measurements + ${conditionSource} condition`);
-        }
-      } else {
-        console.log('[AEMET] Using AEMET data (no condition source available)');
-      }
-
-      // Apply state prioritization: real sensor data overrides satellite conditions
-      const prioritized = prioritizeWeatherCondition(
-        weatherData.condition,
-        weatherData.conditionLabelKey,
-        weatherData.precipitation,
-        weatherData.windGusts,
-        isNightTime()
-      );
-
-      if (prioritized.condition !== weatherData.condition) {
-        console.log(`[Priority] Overriding ${weatherData.condition} → ${prioritized.condition} (precip=${weatherData.precipitation}, gusts=${weatherData.windGusts})`);
-        weatherData = {
-          ...weatherData,
-          condition: prioritized.condition,
-          conditionLabelKey: prioritized.labelKey,
-        };
-      }
-
-      // Save to cache on success
-      await saveWeatherToCache(stationId, weatherData);
-      saveToRateLimitCache(stationId, weatherData);
-      return { data: weatherData, isFromCache: false };
-    }
-    console.log('[AEMET] Failed, falling back to Open-Meteo');
-  }
-
-  // ─── FALLBACK TO OPEN-METEO ───────────────────────────────────────────────
-  const TIMEOUT_MS = 10000; // 10 seconds timeout
-
-  try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,wind_gusts_10m,precipitation,is_day&timezone=auto`;
-
-    // Create AbortController for timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
-
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-      },
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      console.warn(`Open-Meteo API error: ${response.status}`);
-      // Try cache fallback (unless force refresh)
-      if (stationId && !forceRefresh) {
-        const cached = await getWeatherFromCache(stationId);
-        if (cached) {
-          console.log('[Cache] Using cached weather data (API error)');
-          return { data: refreshDayNightCondition(cached), isFromCache: true };
-        }
-      }
-      return __DEV__ ? { data: getMockWeatherData(), isFromCache: false } : null;
-    }
-
-    const data: OpenMeteoResponse = await response.json();
-
-    if (!data.current) {
-      console.warn('Open-Meteo API: No current data available');
-      // Try cache fallback (unless force refresh)
-      if (stationId && !forceRefresh) {
-        const cached = await getWeatherFromCache(stationId);
-        if (cached) {
-          console.log('[Cache] Using cached weather data (no API data)');
-          return { data: refreshDayNightCondition(cached), isFromCache: true };
-        }
-      }
-      return __DEV__ ? { data: getMockWeatherData(), isFromCache: false } : null;
-    }
-
-    // Use is_day from API (1 = day, 0 = night) - more accurate than local time heuristic
-    const isNight = data.current.is_day === 0;
-    const { condition, labelKey } = mapWmoCode(data.current.weather_code, isNight);
-
-    let weatherData: LiveWeatherData = {
-      temperature: Math.round(data.current.temperature_2m),
-      humidity: Math.round(data.current.relative_humidity_2m),
-      windSpeed: Math.round(data.current.wind_speed_10m),
-      windGusts: data.current.wind_gusts_10m !== undefined ? Math.round(data.current.wind_gusts_10m) : undefined,
-      precipitation: data.current.precipitation,
-      weatherCode: data.current.weather_code,
-      condition,
-      conditionLabelKey: labelKey,
-      timestamp: data.current.time,
+  if (weatherAPIData) {
+    dataSource = 'WeatherAPI';
+    weatherData = {
+      temperature: weatherAPIData.temperature ?? 0,
+      humidity: weatherAPIData.humidity ?? 0,
+      windSpeed: weatherAPIData.windSpeed ?? 0,
+      windGusts: weatherAPIData.windGusts,
+      weatherCode: weatherAPIData.weatherCode,
+      condition: weatherAPIData.condition,
+      conditionLabelKey: weatherAPIData.conditionLabelKey,
+      timestamp: new Date().toISOString(),
     };
 
-    // Apply state prioritization: real sensor data overrides satellite conditions
-    const prioritized = prioritizeWeatherCondition(
-      weatherData.condition,
-      weatherData.conditionLabelKey,
-      weatherData.precipitation,
-      weatherData.windGusts,
-      isNight
-    );
+    // ─── OPTIONAL: AEMET enrichment (fresh sensor data only) ───
+    if (stationId && AEMET_API_KEY) {
+      const aemetResult = await fetchAemetLiveWeather(stationId);
 
-    if (prioritized.condition !== weatherData.condition) {
-      console.log(`[Priority] Overriding ${weatherData.condition} → ${prioritized.condition}`);
+      if (aemetResult) {
+        const observationAge = aemetResult.timestamp
+          ? Date.now() - new Date(aemetResult.timestamp).getTime()
+          : Infinity;
+        const ONE_HOUR_MS = 60 * 60 * 1000;
+
+        if (observationAge < ONE_HOUR_MS) {
+          // AEMET data is fresh - use it for temp/humidity (more accurate sensors)
+          const ageMinutes = Math.round(observationAge / 60000);
+          console.log(`[AEMET] Enriching with fresh sensor data (${ageMinutes}min old): ${aemetResult.data.temperature}°C, ${aemetResult.data.humidity}%`);
+
+          weatherData = {
+            ...weatherData,
+            temperature: aemetResult.data.temperature,
+            humidity: aemetResult.data.humidity,
+            // Optionally use AEMET precipitation if available (for UI indicator)
+            ...(aemetResult.data.precipitation !== undefined && {
+              precipitation: aemetResult.data.precipitation,
+            }),
+            timestamp: aemetResult.timestamp,
+          };
+          dataSource = 'WeatherAPI + AEMET';
+        } else {
+          const ageHours = Math.round(observationAge / 3600000 * 10) / 10;
+          console.log(`[AEMET] Skipping stale sensor data (${ageHours}h old)`);
+        }
+      }
+    }
+  }
+
+  // ─── FALLBACK: Open-Meteo ──────────────────────────────────────────────────
+  if (!weatherData) {
+    console.log('[WeatherAPI] Failed, trying Open-Meteo...');
+    const openMeteoData = await fetchOpenMeteoCondition(lat, lon);
+
+    if (openMeteoData) {
+      dataSource = 'Open-Meteo';
       weatherData = {
-        ...weatherData,
-        condition: prioritized.condition,
-        conditionLabelKey: prioritized.labelKey,
+        temperature: openMeteoData.temperature ?? 0,
+        humidity: openMeteoData.humidity ?? 0,
+        windSpeed: openMeteoData.windSpeed ?? 0,
+        windGusts: openMeteoData.windGusts,
+        weatherCode: openMeteoData.weatherCode,
+        condition: openMeteoData.condition,
+        conditionLabelKey: openMeteoData.conditionLabelKey,
+        timestamp: new Date().toISOString(),
       };
     }
+  }
 
-    // Save to cache on success
-    if (stationId) {
-      await saveWeatherToCache(stationId, weatherData);
-      saveToRateLimitCache(stationId, weatherData);
-      console.log('[Cache] Weather data saved to cache');
+  // ─── FALLBACK: Cache ───────────────────────────────────────────────────────
+  if (!weatherData && stationId && !forceRefresh) {
+    const cached = await getWeatherFromCache(stationId);
+    if (cached) {
+      console.log('[Cache] Using cached weather data (all APIs failed)');
+      return { data: refreshDayNightCondition(cached), isFromCache: true };
     }
+  }
 
-    return { data: weatherData, isFromCache: false };
-  } catch (error) {
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        console.warn('Open-Meteo API: Request timed out');
-      } else {
-        console.warn('Open-Meteo API: Network error -', error.message);
-      }
-    }
-
-    // Try cache fallback first (unless force refresh)
-    if (stationId && !forceRefresh) {
-      const cached = await getWeatherFromCache(stationId);
-      if (cached) {
-        console.log('[Cache] Using cached weather data (network error)');
-        return { data: refreshDayNightCondition(cached), isFromCache: true };
-      }
-    }
-
-    // Fallback to mock data in development mode
+  // ─── FALLBACK: Mock data (DEV only) ────────────────────────────────────────
+  if (!weatherData) {
     if (__DEV__) {
-      console.log('[DEV] Network failed, using mock weather data');
+      console.log('[DEV] All sources failed, using mock data');
       return { data: getMockWeatherData(), isFromCache: false };
     }
-
     return null;
   }
+
+  // ─── SUCCESS: Save to cache and return ─────────────────────────────────────
+  console.log(`[Live] Data source: ${dataSource}`);
+
+  if (stationId) {
+    await saveWeatherToCache(stationId, weatherData);
+    saveToRateLimitCache(stationId, weatherData);
+  }
+
+  return { data: weatherData, isFromCache: false };
 }
 
 // ─── MULTI-STATION WEATHER VALIDATION (Tuineje Problem Fix) ──────────────────
