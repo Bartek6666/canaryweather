@@ -438,4 +438,4 @@ const primaryData = validResults[0].result.data;
 ## TODO / Przyszłe ulepszenia
 
 - [x] ~~Użyć `interpolateLiveWeather()` w UI~~ (zrobione 2026-03-22)
-- [ ] Rozważyć interpolację warunków pogodowych (nie tylko z najbliższej stacji)
+- [x] ~~Rozważyć interpolację warunków pogodowych~~ (odrzucone 2026-03-26 - uproszczona architektura, zaufaj WeatherAPI z najbliższej stacji)
