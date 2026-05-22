@@ -2791,9 +2791,10 @@ async function fetchCalimaFromOpenMeteo(
 }
 
 /**
- * Fetches current air quality data to detect Calima (Saharan dust storm)
- * Primary source: WAQI API (real station measurements from 49 stations in Canary Islands)
- * Fallback: Open-Meteo Air Quality API (model-based, less accurate during Calima)
+ * Fetches current air quality data to detect Calima (Saharan dust storm).
+ * Queries WAQI (real station measurements) and Open-Meteo (model-based) in parallel.
+ * Prefers WAQI when both are available — Open-Meteo can lag 6-24h after Calima ends,
+ * causing false alarms. Falls back to Open-Meteo only when WAQI is unavailable.
  * @param lat Latitude
  * @param lon Longitude
  * @returns CalimaStatus or null if all sources fail
@@ -2802,15 +2803,32 @@ export async function fetchCalimaStatus(
   lat: number,
   lon: number
 ): Promise<CalimaStatus | null> {
-  // Try WAQI first (real station measurements)
-  const waqiResult = await fetchCalimaFromWAQI(lat, lon);
-  if (waqiResult) {
+  // Fetch from both sources in parallel for better performance
+  const [waqiResult, openMeteoResult] = await Promise.all([
+    fetchCalimaFromWAQI(lat, lon),
+    fetchCalimaFromOpenMeteo(lat, lon),
+  ]);
+
+  // If both sources failed, return null
+  if (!waqiResult && !openMeteoResult) {
+    console.log('[Calima] Both sources unavailable');
+    return null;
+  }
+
+  // If only one source available, use it
+  if (!waqiResult) {
+    console.log('[Calima] Using Open-Meteo (WAQI unavailable)');
+    return openMeteoResult;
+  }
+  if (!openMeteoResult) {
+    console.log('[Calima] Using WAQI (Open-Meteo unavailable)');
     return waqiResult;
   }
 
-  // Fallback to Open-Meteo (model-based)
-  console.log('[Calima] WAQI unavailable, falling back to Open-Meteo');
-  return fetchCalimaFromOpenMeteo(lat, lon);
+  // Both sources available - prefer WAQI (real sensor, updates hourly) over Open-Meteo (model, lags 6-24h after Calima ends)
+  // Open-Meteo can show elevated PM10 for up to 24h after actual Calima clears, causing false alarms
+  console.log(`[Calima] Using WAQI (PM10: ${waqiResult.pm10}) over Open-Meteo (PM10: ${openMeteoResult.pm10})`);
+  return waqiResult;
 }
 
 // ─── COASTAL ALERTS (AEMET Meteoalerta API) ────────────────────────────────────
