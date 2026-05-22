@@ -13,6 +13,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -32,6 +33,7 @@ import { City } from '../types/weather';
 import { useSearchAnalytics } from '../hooks/useSearchAnalytics';
 
 const LOCATION_PROMPT_KEY = 'location_prompt_dismissed';
+const MAX_CANARY_DISTANCE_KM = 150;
 
 // Background gradient (image removed)
 
@@ -81,6 +83,43 @@ function fuzzyMatch(query: string, target: string): number {
   if (t.startsWith(q)) return 90;
   if (t.includes(q)) return 70;
   return 0;
+}
+
+type LocationResult =
+  | { type: 'success'; lat: number; lon: number }
+  | { type: 'services_disabled' }
+  | { type: 'unavailable' };
+
+const LOCATION_TIMEOUT_MS = 10_000;
+
+async function getCurrentLocationWithFallback(): Promise<LocationResult> {
+  try {
+    const servicesEnabled = await Location.hasServicesEnabledAsync();
+    if (!servicesEnabled) return { type: 'services_disabled' };
+  } catch (e) {
+    console.warn('[Location] hasServicesEnabledAsync failed:', e);
+  }
+
+  try {
+    const loc = await Promise.race([
+      Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('location-timeout')), LOCATION_TIMEOUT_MS)
+      ),
+    ]);
+    return { type: 'success', lat: loc.coords.latitude, lon: loc.coords.longitude };
+  } catch (currentError) {
+    console.warn('[Location] getCurrentPositionAsync failed, trying last known:', currentError);
+    try {
+      const lastKnown = await Location.getLastKnownPositionAsync();
+      if (lastKnown) {
+        return { type: 'success', lat: lastKnown.coords.latitude, lon: lastKnown.coords.longitude };
+      }
+    } catch (lastKnownError) {
+      console.error('[Location] getLastKnownPositionAsync failed:', lastKnownError);
+    }
+    return { type: 'unavailable' };
+  }
 }
 
 // Search cities from the cities database
@@ -339,10 +378,31 @@ export default function SearchScreen({ navigation }: Props) {
     setIsLoadingLocation(true);
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') { Alert.alert(t('search.locationPermissionTitle'), t('search.locationPermissionMessage')); return; }
-      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      const nearest = findNearestStation(loc.coords.latitude, loc.coords.longitude);
+      if (status !== 'granted') {
+        Alert.alert(t('search.locationPermissionTitle'), t('search.locationPermissionMessage'));
+        return;
+      }
+
+      const result = await getCurrentLocationWithFallback();
+      if (result.type === 'services_disabled') {
+        Alert.alert(t('common.error'), t('search.locationServicesDisabled'));
+        return;
+      }
+      if (result.type === 'unavailable') {
+        Alert.alert(t('common.error'), t('search.locationUnavailable'));
+        return;
+      }
+
+      const nearest = findNearestStation(result.lat, result.lon);
       if (nearest) {
+        if (nearest.distance > MAX_CANARY_DISTANCE_KM) {
+          Alert.alert(
+            t('locationPrompt.tooFarTitle'),
+            t('locationPrompt.tooFarMessage'),
+            [{ text: t('locationPrompt.tooFarButton'), style: 'default' }]
+          );
+          return;
+        }
         Alert.alert(
           t('search.nearestStationTitle'),
           `${t('search.yourLocation')}\n${nearest.distance} ${t('common.km')} ${t('search.fromNearestStation')}`,
@@ -351,7 +411,6 @@ export default function SearchScreen({ navigation }: Props) {
             {
               text: t('common.select'),
               onPress: () => {
-                // Track GPS selection
                 trackGps({
                   stationId: nearest.stationId,
                   island: nearest.station.island,
@@ -360,19 +419,20 @@ export default function SearchScreen({ navigation }: Props) {
                 navigation.navigate('Result', {
                   stationId: nearest.stationId,
                   locationName: t('search.myLocationLabel'),
-                  locationCoords: { lat: loc.coords.latitude, lon: loc.coords.longitude },
+                  locationCoords: { lat: result.lat, lon: result.lon },
                 });
               },
             },
           ]
         );
       }
-    } catch { Alert.alert(t('common.error'), t('search.locationError')); }
-    finally { setIsLoadingLocation(false); }
+    } catch (error) {
+      console.error('[handleGetLocation] unexpected error:', error);
+      Alert.alert(t('common.error'), t('search.locationError'));
+    } finally {
+      setIsLoadingLocation(false);
+    }
   }, [navigation, t, trackGps]);
-
-  // Location prompt handlers
-  const MAX_DISTANCE_KM = 150; // Max distance to consider user "near" Canary Islands
 
   const handleLocationPromptUse = useCallback(async () => {
     setIsLocationPromptLoading(true);
@@ -380,20 +440,26 @@ export default function SearchScreen({ navigation }: Props) {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert(t('search.locationPermissionTitle'), t('search.locationPermissionMessage'));
-        setIsLocationPromptLoading(false);
         return;
       }
 
-      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      const nearest = findNearestStation(loc.coords.latitude, loc.coords.longitude);
+      const result = await getCurrentLocationWithFallback();
 
-      // Save dismissal to AsyncStorage
       await AsyncStorage.setItem(LOCATION_PROMPT_KEY, 'true');
       setShowLocationPrompt(false);
 
+      if (result.type === 'services_disabled') {
+        Alert.alert(t('common.error'), t('search.locationServicesDisabled'));
+        return;
+      }
+      if (result.type === 'unavailable') {
+        Alert.alert(t('common.error'), t('search.locationUnavailable'));
+        return;
+      }
+
+      const nearest = findNearestStation(result.lat, result.lon);
       if (nearest) {
-        // Check if user is too far from Canary Islands
-        if (nearest.distance > MAX_DISTANCE_KM) {
+        if (nearest.distance > MAX_CANARY_DISTANCE_KM) {
           Alert.alert(
             t('locationPrompt.tooFarTitle'),
             t('locationPrompt.tooFarMessage'),
@@ -402,21 +468,20 @@ export default function SearchScreen({ navigation }: Props) {
           return;
         }
 
-        // Track GPS selection from prompt
         trackGps({
           stationId: nearest.stationId,
           island: nearest.station.island,
           locationName: t('search.myLocationLabel'),
         });
 
-        // Navigate directly to the nearest station with user's location
         navigation.navigate('Result', {
           stationId: nearest.stationId,
           locationName: t('search.myLocationLabel'),
-          locationCoords: { lat: loc.coords.latitude, lon: loc.coords.longitude },
+          locationCoords: { lat: result.lat, lon: result.lon },
         });
       }
     } catch (error) {
+      console.error('[handleLocationPromptUse] unexpected error:', error);
       Alert.alert(t('common.error'), t('search.locationError'));
     } finally {
       setIsLocationPromptLoading(false);
@@ -775,6 +840,22 @@ export default function SearchScreen({ navigation }: Props) {
                 </View>
               )}
 
+              {/* Footer with data source and disclaimer */}
+              <View style={styles.footerSection}>
+                <View style={styles.footerDivider} />
+                <TouchableOpacity
+                  onPress={() => Linking.openURL('https://www.aemet.es/')}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.footerSource}>
+                    {t('footer.dataSource')} (aemet.es)
+                  </Text>
+                </TouchableOpacity>
+                <Text style={styles.footerDisclaimer}>
+                  {t('footer.disclaimer')}
+                </Text>
+              </View>
+
               </View>
             </ScrollView>
           </Animated.View>
@@ -984,5 +1065,31 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
     marginTop: spacing.xs,
+  },
+  // Footer section with disclaimer
+  footerSection: {
+    marginTop: spacing.xl,
+    paddingTop: spacing.md,
+    alignItems: 'center',
+  },
+  footerDivider: {
+    width: 60,
+    height: 1,
+    backgroundColor: colors.textMuted,
+    opacity: 0.3,
+    marginBottom: spacing.md,
+  },
+  footerSource: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    textDecorationLine: 'underline',
+    marginBottom: spacing.xs,
+  },
+  footerDisclaimer: {
+    fontSize: 11,
+    color: colors.textMuted,
+    textAlign: 'center',
+    paddingHorizontal: spacing.xl,
+    lineHeight: 16,
   },
 });

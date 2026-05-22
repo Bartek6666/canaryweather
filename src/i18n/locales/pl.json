@@ -30,7 +30,9 @@
     "locationPermissionTitle": "Brak dostępu",
     "locationPermissionMessage": "Włącz lokalizację w ustawieniach.",
     "nearestStationTitle": "Najbliższa stacja",
-    "locationError": "Nie udało się pobrać lokalizacji."
+    "locationError": "Nie udało się pobrać lokalizacji.",
+    "locationServicesDisabled": "Włącz usługi lokalizacji w ustawieniach systemu i spróbuj ponownie.",
+    "locationUnavailable": "Nie udało się ustalić lokalizacji. Wyjdź na zewnątrz lub stań przy oknie i spróbuj ponownie."
   },
   "result": {
     "live": "LIVE",
@@ -90,6 +92,7 @@
     "avgWind": "Średni wiatr",
     "rainyDays": "Dni deszczowe",
     "daysUnit": "dni",
+    "nowSection": "Teraz",
     "last10Years": "Ostatnie 10 lat",
     "missingYearsInfo": "Brak danych AEMET o temperaturach dla lat: {{years}}",
     "summary": "Podsumowanie",
@@ -277,8 +280,8 @@
     "unknown": "Nieznane"
   },
   "onboarding": {
-    "welcome_title": "Statystyka, nie tylko prognoza",
-    "welcome_text": "Canary Weather: Twoja analityczna prognoza dla Wysp Kanaryjskich. Nie szukaj pogody, szukaj słońca. Sprawdzamy 10 lat pogodowych danych statystycznych, aby wskazać Ci miejsca z najwyższą szansą na bezchmurne niebo.",
+    "welcome_title": "Znajdź słońce na Kanarach",
+    "welcome_text": "Analizujemy historyczne dane pogodowe, abyś mógł sprawdzić szanse na błękitne niebo w miejscu, do którego podróżujesz.",
     "start_button": "Rozpocznij"
   },
   "sun_chance": {
@@ -296,5 +299,9 @@
     "noDescriptionAvailable": "Brak szczegółowego opisu.",
     "dataSource": "Źródło: AEMET Meteoalerta",
     "close": "Zamknij"
+  },
+  "footer": {
+    "dataSource": "Dane: AEMET",
+    "disclaimer": "Ta aplikacja nie jest powiązana z AEMET ani żadną instytucją rządową."
   }
 }

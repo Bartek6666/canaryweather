@@ -30,7 +30,9 @@
     "locationPermissionTitle": "Sin acceso",
     "locationPermissionMessage": "Activa la ubicación en ajustes.",
     "nearestStationTitle": "Estación más cercana",
-    "locationError": "No se pudo obtener la ubicación."
+    "locationError": "No se pudo obtener la ubicación.",
+    "locationServicesDisabled": "Activa los servicios de ubicación en los ajustes del sistema e inténtalo de nuevo.",
+    "locationUnavailable": "No se pudo determinar tu ubicación. Sal al exterior o acércate a una ventana e inténtalo de nuevo."
   },
   "result": {
     "live": "EN VIVO",
@@ -78,6 +80,7 @@
     "avgWind": "Prom. Viento",
     "rainyDays": "Días lluviosos",
     "daysUnit": "días",
+    "nowSection": "Ahora",
     "last10Years": "Últimos 10 años",
     "missingYearsInfo": "Faltan datos de temperatura AEMET para los años: {{years}}",
     "summary": "Resumen",
@@ -151,8 +154,8 @@
     "tooFarButton": "Buscar destino"
   },
   "onboarding": {
-    "welcome_title": "Estadísticas, no solo pronóstico",
-    "welcome_text": "Canary Weather: Tu pronóstico analítico para las Islas Canarias. No busques solo el tiempo, busca el sol. Analizamos 10 años de datos meteorológicos históricos para mostrarte los lugares con mayor probabilidad de cielos despejados.",
+    "welcome_title": "Encuentra el sol en Canarias",
+    "welcome_text": "Analizamos datos meteorológicos históricos para que puedas conocer las probabilidades de cielos azules en tu destino.",
     "start_button": "Comenzar"
   },
   "sun_chance": {
@@ -268,5 +271,9 @@
     "noDescriptionAvailable": "No hay descripción detallada disponible.",
     "dataSource": "Fuente: AEMET Meteoalerta",
     "close": "Cerrar"
+  },
+  "footer": {
+    "dataSource": "Datos: AEMET",
+    "disclaimer": "Esta app no está afiliada con AEMET ni con ninguna entidad gubernamental."
   }
 }

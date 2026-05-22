@@ -576,8 +576,8 @@ export default function ResultScreen({ navigation, route }: Props) {
       }
     };
 
-    // Initial load - can use cache
-    loadLiveWeather(false);
+    // Initial load - always fetch fresh data for new location
+    loadLiveWeather(true);
 
     // Auto-refresh every 5 minutes - always fetch fresh data (bypass cache)
     const interval = setInterval(() => loadLiveWeather(true), 5 * 60 * 1000);
@@ -1040,40 +1040,48 @@ export default function ResultScreen({ navigation, route }: Props) {
           ))}
         </View>
 
-        {/* Calima Alert - displayed when Saharan dust storm is detected (PM10 > 50 µg/m³) */}
-        <AlertCard type="calima" visible={calimaStatus?.isDetected ?? false} />
+        {/* ── NOW SECTION: current conditions ─────────────────────────────── */}
+        <View style={styles.nowSection}>
+          <View style={styles.nowSectionHeader}>
+            <Ionicons name="time-outline" size={14} color={colors.textMuted} />
+            <Text style={styles.nowSectionTitle}>{t('result.nowSection')}</Text>
+          </View>
 
-        {/* Coastal Alert - displayed when AEMET issues high wave warnings for coastal locations */}
-        {coastalAlert && (
-          <CoastalAlertCard
-            alert={coastalAlert}
-            onPress={() => handleAlertPress(coastalAlert, 'coastal')}
+          {/* Live Weather Card — real-time data */}
+          <LiveWeatherCard
+            data={displayLiveData}
+            isLoading={isLoadingLive}
+            hasError={liveError}
+            isFromCache={isFromCache}
           />
-        )}
 
-        {/* Wind Alert - displayed when AEMET issues strong wind warnings */}
-        {windAlert && (
-          <WindAlertCard
-            alert={windAlert}
-            onPress={() => handleAlertPress(windAlert, 'wind')}
-          />
-        )}
+          {/* Calima Alert */}
+          <AlertCard type="calima" visible={calimaStatus?.isDetected ?? false} />
 
-        {/* Snow Alert - displayed when AEMET issues snow warnings for high altitude (Teide, etc.) */}
-        {snowAlert && (
-          <SnowAlertCard
-            alert={snowAlert}
-            onPress={() => handleAlertPress(snowAlert, 'snow')}
-          />
-        )}
+          {/* Coastal Alert */}
+          {coastalAlert && (
+            <CoastalAlertCard
+              alert={coastalAlert}
+              onPress={() => handleAlertPress(coastalAlert, 'coastal')}
+            />
+          )}
 
-        {/* Live Weather Card — real-time data from Open-Meteo */}
-        <LiveWeatherCard
-          data={displayLiveData}
-          isLoading={isLoadingLive}
-          hasError={liveError}
-          isFromCache={isFromCache}
-        />
+          {/* Wind Alert */}
+          {windAlert && (
+            <WindAlertCard
+              alert={windAlert}
+              onPress={() => handleAlertPress(windAlert, 'wind')}
+            />
+          )}
+
+          {/* Snow Alert */}
+          {snowAlert && (
+            <SnowAlertCard
+              alert={snowAlert}
+              onPress={() => handleAlertPress(snowAlert, 'snow')}
+            />
+          )}
+        </View>
 
         {/* Weather Discrepancy Warning - shows when nearby station has different conditions */}
         {weatherDiscrepancy && weatherDiscrepancy.hasDiscrepancy && weatherDiscrepancy.alternativeData && (
@@ -1221,6 +1229,19 @@ const styles = StyleSheet.create({
   tempValueLow: { color: colors.tempCold },
   tempValueWind: { color: colors.cloud },
   tempValueRain: { color: colors.rain },
+  nowSection: { marginTop: spacing.lg },
+  nowSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.sm,
+    gap: spacing.xs,
+  },
+  nowSectionTitle: {
+    ...typography.caption,
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+  },
   historySection: { marginTop: spacing.sm },
   historyHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md },
   historyTitle: {

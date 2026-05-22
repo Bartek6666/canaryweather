@@ -30,7 +30,9 @@
     "locationPermissionTitle": "No access",
     "locationPermissionMessage": "Enable location in settings.",
     "nearestStationTitle": "Nearest station",
-    "locationError": "Failed to get location."
+    "locationError": "Failed to get location.",
+    "locationServicesDisabled": "Turn on location services in system settings and try again.",
+    "locationUnavailable": "Could not determine your location. Move outside or near a window and try again."
   },
   "result": {
     "live": "LIVE",
@@ -78,6 +80,7 @@
     "avgWind": "Avg. Wind",
     "rainyDays": "Rainy Days",
     "daysUnit": "days",
+    "nowSection": "Now",
     "last10Years": "Last 10 years",
     "missingYearsInfo": "AEMET temperature data missing for years: {{years}}",
     "summary": "Summary",
@@ -151,8 +154,8 @@
     "tooFarButton": "Search destination"
   },
   "onboarding": {
-    "welcome_title": "Statistics, not just a forecast",
-    "welcome_text": "Canary Weather: Your analytical forecast for the Canary Islands. Don't just look for weather, look for the sun. We analyze 10 years of historical weather data to show you places with the highest chance of clear skies.",
+    "welcome_title": "Find the sun in the Canaries",
+    "welcome_text": "We analyze historical weather data so you can check your chances of blue skies wherever you're traveling.",
     "start_button": "Get Started"
   },
   "sun_chance": {
@@ -268,5 +271,9 @@
     "noDescriptionAvailable": "No detailed description available.",
     "dataSource": "Source: AEMET Meteoalerta",
     "close": "Close"
+  },
+  "footer": {
+    "dataSource": "Data: AEMET",
+    "disclaimer": "This app is not affiliated with AEMET or any government entity."
   }
 }
