@@ -422,7 +422,9 @@ canaryweather/
 │   ├── notion/                    ← Integracja Notion API
 │   │   ├── show-tasks.js
 │   │   ├── add-task.js
-│   │   └── log-session.js
+│   │   ├── add-idea.js            ← Szybkie zapisywanie pomysłów
+│   │   ├── log-session.js
+│   │   └── config.ts              ← Konfiguracja Notion API
 │   │
 │   ├── fetch-station.ts           ← Import danych AEMET
 │   ├── upload-to-supabase.ts
@@ -509,6 +511,12 @@ canaryweather/
 │    │   $ npm run notion:session "Opis sesji"                           │    │
 │    │   ✅ Sesja zapisana!                                              │    │
 │    │                                                                   │    │
+│    │   $ npm run notion:idea "Pomysł na nową funkcję"                  │    │
+│    │   💡 Pomysł zapisany!                                             │    │
+│    │                                                                   │    │
+│    │   $ npm run notion:idea "Dark mode" -- --tags=UI,Enhancement      │    │
+│    │   💡 Pomysł zapisany! Tagi: Idea, UI, Enhancement                 │    │
+│    │                                                                   │    │
 │    └───────────────────────────────────────────────────────────────────┘    │
 │                                         │                                   │
 │                                         │ HTTP Requests                     │
@@ -528,6 +536,7 @@ canaryweather/
 │    │   Tasks    ──▶  32fcf25df26a80b2ad49cda8589feeb3                  │    │
 │    │   Sessions ──▶  32fcf25df26a80d8a107e2e28af0cb99                  │    │
 │    │   Projects ──▶  32fcf25df26a804cbd70eaf4ae572483                  │    │
+│    │   Notes    ──▶  32fcf25df26a804b9b70f6593a542080                  │    │
 │    │                                                                   │    │
 │    └───────────────────────────────────────────────────────────────────┘    │
 │                                                                             │
@@ -599,7 +608,66 @@ canaryweather/
 
 
 ================================================================================
-                              12. KOMENDY NPM
+            12. WHATSAPP VOICE → NOTION (Automatyczna transkrypcja)
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                                                                             │
+│                    WORKFLOW: NOTATKI GŁOSOWE → NOTION                       │
+│                                                                             │
+│   ┌─────────────┐     ┌─────────────┐     ┌─────────────┐                   │
+│   │  WhatsApp   │────▶│   Twilio    │────▶│    N8N      │                   │
+│   │ (voice msg) │     │  (webhook)  │     │ (workflow)  │                   │
+│   └─────────────┘     └─────────────┘     └──────┬──────┘                   │
+│                                                  │                          │
+│                       ┌──────────────────────────┼──────────────────┐       │
+│                       │                          │                  │       │
+│                       ▼                          ▼                  ▼       │
+│               ┌─────────────┐           ┌─────────────┐    ┌─────────────┐  │
+│               │  Download   │           │   OpenAI    │    │   Notion    │  │
+│               │   Audio     │──────────▶│   Whisper   │───▶│   (Notes)   │  │
+│               └─────────────┘           └─────────────┘    └─────────────┘  │
+│                                                                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   KOMPONENTY:                                                               │
+│                                                                             │
+│   • Twilio WhatsApp Sandbox    - odbiera wiadomości głosowe                 │
+│   • N8N (self-hosted)          - automatyzacja workflow                     │
+│   • OpenAI Whisper API         - transkrypcja głosu na tekst                │
+│   • Notion API                 - zapis do bazy Notes                        │
+│                                                                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   WORKFLOW N8N:                                                             │
+│                                                                             │
+│   Webhook → IF (audio?) → Download Audio → Code → Whisper → Notion          │
+│                                                                             │
+│   Zapisuje:                                                                 │
+│   • Name:    Pierwsze 80 znaków transkrypcji                                │
+│   • Type:    Idea                                                           │
+│   • Tags:    Voice, WhatsApp                                                │
+│   • Content: Pełna transkrypcja (w treści strony)                           │
+│                                                                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   UŻYCIE:                                                                   │
+│                                                                             │
+│   1. Otwórz WhatsApp na telefonie                                           │
+│   2. Wyślij notatkę głosową na numer Twilio Sandbox                         │
+│   3. Transkrypcja automatycznie pojawi się w Notion (baza Notes)            │
+│                                                                             │
+│   KOSZT (~50 notatek/mies):                                                 │
+│   • N8N Cloud: $20/mies (lub self-hosted: $0)                               │
+│   • Twilio: ~$0.25                                                          │
+│   • Whisper: ~$0.30                                                         │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+
+================================================================================
+                              13. KOMENDY NPM
 ================================================================================
 
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -609,6 +677,7 @@ canaryweather/
 │   npm start          Uruchom Expo       npm run notion:tasks   Pokaż zadania│
 │   npm run ios        Uruchom na iOS     npm run notion:task    Dodaj zadanie│
 │   npm run android    Uruchom na Android npm run notion:session Zapisz sesję │
+│                                         npm run notion:idea    Dodaj pomysł │
 │                                                                             │
 │   TESTING                               DATA IMPORT                         │
 │   ───────                               ───────────                         │

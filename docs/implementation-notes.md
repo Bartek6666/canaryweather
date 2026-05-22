@@ -4,6 +4,55 @@ Ten plik zawiera notatki z implementacji i decyzji technicznych. Sprawdzaj go na
 
 ---
 
+## 2026-04-15: Google Play - Poprawki zgodności z polityką (Misleading Claims)
+
+### Problem
+Aplikacja została odrzucona przez Google Play (13 kwietnia 2026) z powodu naruszenia polityki Misleading Claims:
+- Brak linku do źródła danych rządowych (AEMET)
+- Brak disclaimera o niezależnym statusie (nie jesteśmy AEMET)
+
+### Rozwiązanie
+
+**1. Zaktualizowano Full description w Google Play Console:**
+- Dodano wyraźny disclaimer na początku (⚠️ emoji)
+- Dodano sekcję "📌 DATA SOURCES:" z linkami:
+  - AEMET: https://www.aemet.es/
+  - WeatherAPI, Open-Meteo (supplementary)
+  - WAQI (air quality)
+
+**2. Dodano disclaimer w aplikacji:**
+- Nowy footer na `SearchScreen` pod popularnymi destynacjami
+- Link klikalny do AEMET (otwiera https://www.aemet.es/)
+- Disclaimer w 4 językach
+
+**Pliki:**
+- `src/i18n/locales/en.json` - sekcja `footer`
+- `src/i18n/locales/pl.json` - sekcja `footer`
+- `src/i18n/locales/es.json` - sekcja `footer`
+- `src/i18n/locales/de.json` - sekcja `footer`
+- `src/screens/SearchScreen.tsx` - komponent footera
+
+**3. Nowa wersja:**
+- Version: 1.4.2 (versionCode: 5)
+- Build ID: 8127dc12-9189-4b36-a227-47433bc738b9
+- AAB: https://expo.dev/artifacts/eas/gX2q79YXZkEDaLbreTuGVF.aab
+
+**4. Release notes (4 języki):**
+```xml
+<en-GB>
+- Added data source attribution and disclaimer
+- Compliance with Google Play government information policy
+- Minor UI improvements
+</en-GB>
+```
+
+### Status
+- 15.04.2026: Wysłano poprawioną wersję do sprawdzenia Google Play
+- Oczekiwany czas review: 1-3 dni robocze
+- Po zatwierdzeniu: Test zamknięty → 14 dni testów → Publikacja produkcyjna
+
+---
+
 ## 2026-03-23: Fix - Zerowe temperatury w karcie "Ostatnie 10 lat"
 
 ### Problem
@@ -432,6 +481,73 @@ const primaryData = validResults[0].result.data;
   - `fetchOpenMeteoCondition()` - dodano humidity
   - `interpolateLiveWeather()` - usunięto priorytetyzację
   - Usunięto `prioritizeWeatherCondition()`
+
+---
+
+## 2026-04-22: Calima - przywrócenie WAQI jako primary source (fix fałszywych alertów)
+
+### Problem (2026-04-22)
+Testerzy zgłaszali że alert Calima wciąż widoczny na Fuerteventurze mimo braku pyłu od doby.
+
+### Przyczyna
+Open-Meteo to model atmosferyczny aktualizowany co 6-12h - ma lag do 24h po ustaniu Calimy. Logika "użyj wyższej wartości PM10" powodowała że model Open-Meteo generował fałszywy alert mimo że WAQI (stacje real-time) pokazywało już czyste powietrze.
+
+### Rozwiązanie (2026-04-22)
+Przywrócono WAQI jako primary source. Open-Meteo używane tylko gdy WAQI niedostępne.
+
+**Tradeoff:** Przy nadchodzącym epizodzie Calimy alert może pojawić się kilka godzin później niż model by przewidział. Ale alert znika natychmiast po ustaniu, bez fałszywego alarmu.
+
+**Plik:** `src/services/weatherService.ts` - `fetchCalimaStatus()`
+
+---
+
+## 2026-03-30: Calima - użycie wyższej wartości PM10 (ODWRÓCONE 2026-04-22)
+
+### Problem
+Alerty Calima nie wyświetlały się mimo obecności pyłu. WAQI = 36 µg/m³, Open-Meteo = 53 µg/m³, próg = 50 µg/m³. WAQI ignorowało Open-Meteo gdy miało własne dane.
+
+### Rozwiązanie (ODWRÓCONE - patrz wpis 2026-04-22)
+Zmieniono logikę na "użyj wyższej wartości" - spowodowało to fałszywe alarmy po ustaniu Calimy z powodu lagu modelu Open-Meteo.
+
+---
+
+## 2026-04-07-12: Google Play Console - publikacja aplikacji (ZAKOŃCZONE)
+
+### Wykonane kroki (kwiecień 2026)
+
+1. **Konto developera Google Play** - utworzone ($25)
+2. **Aplikacja utworzona** w Google Play Console
+3. **Privacy Policy** - opublikowana na Notion
+4. **Grafiki sklepowe** wygenerowane:
+   - `assets/store/developer-icon-512.png` (512x512)
+   - `assets/store/header-4096x2304.jpg` (4096x2304)
+   - `assets/store/feature-graphic-1024x500.png` (1024x500)
+5. **Screenshoty aplikacji** - wykonane (10 screenów)
+6. **App Content** - wypełnione:
+   - Privacy Policy URL
+   - Content rating
+   - Target audience
+   - Data safety questionnaire
+7. **Store Listing** - wypełnione (en-GB, pl-PL, es-ES, de-DE)
+
+### Timeline publikacji
+
+- **12.04.2026:** Pierwsza wersja wysłana (versionCode: 3)
+- **13.04.2026:** Odrzucona przez Google - Misleading Claims policy violation
+- **15.04.2026:** Poprawiona wersja wysłana (versionCode: 5) - dodano disclaimer
+- **Status:** Czeka na review Google (1-3 dni)
+
+### Przyszłe kroki
+
+- Czekamy na akceptację Google
+- Po zatwierdzeniu: 14 dni testów z 12 testerami (test zamknięty)
+- Publikacja produkcyjna: ~26.04.2026
+
+### TODO - App Store
+
+- [ ] Założyć konto Apple Developer ($99/rok)
+- [ ] Build na iOS
+- [ ] Submit do App Store
 
 ---
 

@@ -10,6 +10,7 @@ export const NOTION_CONFIG = {
     tasks: '32fcf25df26a80b2ad49cda8589feeb3',
     sessions: '32fcf25df26a80d8a107e2e28af0cb99',
     projects: '32fcf25df26a804cbd70eaf4ae572483',
+    notes: '32fcf25df26a804b9b70f6593a542080',
   },
 };
 
