@@ -11,6 +11,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { StatusBar } from 'expo-status-bar';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,7 +19,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 
-import { colors, spacing, typography, glass, glassTokens, glassText, borderRadius, gradients, getSunChanceColor, liveCard } from '../constants/theme';
+import { colors, spacing, typography, glass, glassTokens, glassText, borderRadius, gradients, getSunChanceColor, liveCard, light, fonts } from '../constants/theme';
 import { AlertCard, AlertDetailModal, ClickableGlassCard, CoastalAlertCard, GlassCard, SnowAlertCard, SunChanceGauge, SunChanceModal, WeatherIcon, WeatherEffects, WindAlertCard } from '../components';
 import locationsMapping from '../constants/locations_mapping.json';
 import { calculateSunChanceWithFallback, SunChanceWithFallback, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult, calculateInterpolatedMonthlyStats, InterpolatedMonthlyStatsResult, fetchMostSevereCoastalAlert, fetchMostSevereWindAlert, fetchMostSevereSnowAlert, validateWeatherWithNearbyStation, WeatherValidationResult, interpolateLiveWeather, InterpolatedLiveWeatherResult, findNearestStations } from '../services/weatherService';
@@ -92,13 +93,13 @@ const LiveWeatherCard = React.memo(function LiveWeatherCard({ data, isLoading, h
   // Skeleton loading state
   if (isLoading) {
     return (
-      <GlassCard style={styles.liveCard} delay={100}>
+      <GlassCard scheme="light" style={styles.liveCard} delay={100}>
         <View style={styles.liveCardInner}>
           {/* Top row: skeleton temp + badge */}
           <View style={styles.liveTopRow}>
             <Animated.View style={[styles.skeleton, styles.skeletonTempLarge, { opacity: skeletonAnim }]} />
             <View style={styles.liveBadge}>
-              <View style={[styles.liveDot, { opacity: 0.3, backgroundColor: colors.liveGreen }]} />
+              <View style={[styles.liveDot, { opacity: 0.3, backgroundColor: light.colors.liveGreen }]} />
               <Text style={[styles.liveBadgeText, { opacity: 0.5 }]}>{t('result.live')}</Text>
             </View>
           </View>
@@ -115,17 +116,17 @@ const LiveWeatherCard = React.memo(function LiveWeatherCard({ data, isLoading, h
   // Error state - no live data available
   if (hasError || !data) {
     return (
-      <GlassCard style={styles.liveCard} delay={100}>
+      <GlassCard scheme="light" style={styles.liveCard} delay={100}>
         <View style={styles.liveCardInner}>
           <View style={styles.liveTopRow}>
             <View style={styles.liveOfflineContent}>
-              <Ionicons name="cloud-offline" size={48} color={colors.cloudDark} />
+              <Ionicons name="cloud-offline" size={48} color={light.colors.cloudDark} />
               <Text style={styles.liveOfflineText}>{t('result.noLiveData')}</Text>
               <Text style={styles.liveOfflineHint}>{t('result.checkConnection')}</Text>
             </View>
             <View style={[styles.liveBadge, styles.liveBadgeOffline]}>
-              <View style={[styles.liveDot, { backgroundColor: colors.cloudDark }]} />
-              <Text style={[styles.liveBadgeText, { color: colors.cloudDark }]}>{t('result.offline')}</Text>
+              <View style={[styles.liveDot, { backgroundColor: light.colors.cloudDark }]} />
+              <Text style={[styles.liveBadgeText, { color: light.colors.cloudDark }]}>{t('result.offline')}</Text>
             </View>
           </View>
         </View>
@@ -135,7 +136,7 @@ const LiveWeatherCard = React.memo(function LiveWeatherCard({ data, isLoading, h
 
   return (
     <View>
-      <GlassCard style={styles.liveCard} delay={100}>
+      <GlassCard scheme="light" style={styles.liveCard} delay={100}>
         <View style={styles.liveCardInner}>
           {/* Figma: Top row - Temperature (left) + Live Badge (right) */}
           <View style={styles.liveTopRow}>
@@ -145,7 +146,7 @@ const LiveWeatherCard = React.memo(function LiveWeatherCard({ data, isLoading, h
                 <Animated.View style={[styles.liveDot, { opacity: pulseAnim, transform: [{ scale: pulseScale }] }]} />
               )}
               {isFromCache && (
-                <Ionicons name="cloud-offline-outline" size={14} color={colors.textMuted} style={{ marginRight: spacing.xs }} />
+                <Ionicons name="cloud-offline-outline" size={14} color={light.colors.textMuted} style={{ marginRight: spacing.xs }} />
               )}
               <Text style={isFromCache ? [styles.liveBadgeText, styles.liveBadgeTextCache] : styles.liveBadgeText}>
                 {isFromCache ? t('result.cached') : t('result.live')}
@@ -175,7 +176,7 @@ const LiveWeatherCard = React.memo(function LiveWeatherCard({ data, isLoading, h
                     <MaterialCommunityIcons
                       name="weather-windy-variant"
                       size={16}
-                      color={data.windGusts > 35 ? colors.warning : '#FFFFFF'}
+                      color={data.windGusts > 35 ? light.colors.warning : '#FFFFFF'}
                       style={styles.parameterIcon}
                     />
                   </View>
@@ -214,7 +215,7 @@ const LiveWeatherCard = React.memo(function LiveWeatherCard({ data, isLoading, h
       {isFromCache && (
         <View style={styles.cacheIndicator}>
           <View style={styles.cacheIndicatorInner}>
-            <Ionicons name="time-outline" size={12} color={colors.textMuted} />
+            <Ionicons name="time-outline" size={12} color={light.colors.textMuted} />
             <Text style={styles.cacheIndicatorText}>
               {t('result.offlineData', { time: formatCacheTime(data?.timestamp) })}
             </Text>
@@ -227,11 +228,11 @@ const LiveWeatherCard = React.memo(function LiveWeatherCard({ data, isLoading, h
 
 const BestTimeCard = React.memo(function BestTimeCard({ week, rank, delay = 0 }: { week: WeeklyBestPeriod; rank: number; delay?: number }) {
   const { t } = useTranslation();
-  const medalColors = [colors.medalGold, colors.medalSilver, colors.medalBronze];
+  const medalColors = [light.colors.medalGold, light.colors.medalSilver, light.colors.medalBronze];
   const borderColors = [
-    { borderColor: colors.medalGold, shadowColor: colors.medalGold },
-    { borderColor: colors.medalSilver, shadowColor: colors.medalSilver },
-    { borderColor: colors.medalBronze, shadowColor: colors.medalBronze },
+    { borderColor: light.colors.medalGold, shadowColor: light.colors.medalGold },
+    { borderColor: light.colors.medalSilver, shadowColor: light.colors.medalSilver },
+    { borderColor: light.colors.medalBronze, shadowColor: light.colors.medalBronze },
   ];
   // Map sunChance to weather condition for proper icon rendering
   const weatherCondition: WeatherCondition = week.sunChance >= 70 ? 'sunny' : week.sunChance >= 40 ? 'partly-sunny' : 'cloudy';
@@ -270,7 +271,7 @@ const BestTimeCard = React.memo(function BestTimeCard({ week, rank, delay = 0 }:
             <Text style={[styles.bestTimeValue, { color: getSunChanceColor(week.sunChance) }]}>{week.sunChance}%</Text>
           </View>
           <View style={styles.bestTimeStat}>
-            <MaterialCommunityIcons name="thermometer" size={16} color={colors.tempHot} />
+            <MaterialCommunityIcons name="thermometer" size={16} color={light.colors.tempHot} />
             <Text style={styles.bestTimeTemp}>{week.avgTmax}°C</Text>
           </View>
         </View>
@@ -871,7 +872,7 @@ export default function ResultScreen({ navigation, route }: Props) {
 
   if (!station) return (
     <View style={styles.container}>
-      <LinearGradient colors={[...gradients.mixed]} style={StyleSheet.absoluteFillObject} />
+      <LinearGradient colors={[...light.gradient]} style={StyleSheet.absoluteFillObject} />
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>{t('result.stationNotFound')}</Text>
         <TouchableOpacity onPress={() => navigation.goBack()}><Text style={styles.errorButton}>{t('common.back')}</Text></TouchableOpacity>
@@ -881,39 +882,29 @@ export default function ResultScreen({ navigation, route }: Props) {
 
   return (
     <View style={styles.container}>
-      {/* Background: satellite map image + gradient overlay */}
-      <ImageBackground
-        source={MAP_BG_SOURCE}
-        style={StyleSheet.absoluteFillObject}
-        resizeMode="cover"
-        imageStyle={styles.bgImage}
-      >
-        <LinearGradient colors={[...gradients.main]} style={[StyleSheet.absoluteFillObject, styles.bgGradientOverlay]} />
-      </ImageBackground>
-      <View style={styles.overlay} />
-
-      {/* Ambient Weather Background - subtle animated effects based on current weather */}
-      {liveData && <WeatherEffects condition={liveData.condition} />}
+      <StatusBar style="dark" />
+      {/* Background gradient (light) */}
+      <LinearGradient colors={[...light.gradient]} style={StyleSheet.absoluteFillObject} />
 
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         {/* FIGMA: STYLE_TARGET — Header bar (back button, title, island) */}
         <View style={styles.header}>
           {/* FIGMA: STYLE_TARGET — Back button */}
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+            <Ionicons name="arrow-back" size={24} color={light.colors.textPrimary} />
           </TouchableOpacity>
           <View style={styles.headerTitle}>
             <Text style={styles.headerName}>
               {locationName || station.name}
             </Text>
             <View style={styles.headerLocation}>
-              <Ionicons name="location" size={14} color={colors.primary} />
+              <Ionicons name="location" size={14} color={light.colors.primary} />
               <Text style={styles.headerIsland}>
                 {station.island}
               </Text>
             </View>
             <View style={styles.headerStation}>
-              <Ionicons name="radio-outline" size={12} color={colors.textMuted} />
+              <Ionicons name="radio-outline" size={12} color={light.colors.textMuted} />
               <Text style={styles.headerStationText}>
                 {t('result.nearestAemetStation')}: {station.name}
               </Text>
@@ -925,7 +916,7 @@ export default function ResultScreen({ navigation, route }: Props) {
         {/* High altitude fallback info banner */}
         {isHighAltitudeFallback && (
           <View style={styles.fallbackBanner}>
-            <Ionicons name="information-circle" size={16} color={colors.textMuted} />
+            <Ionicons name="information-circle" size={16} color={light.colors.textMuted} />
             <Text style={styles.fallbackBannerText}>
               {t('result.highAltitudeFallback', { station: station?.name })}
             </Text>
@@ -940,8 +931,8 @@ export default function ResultScreen({ navigation, route }: Props) {
             <RefreshControl
               refreshing={isRefreshing}
               onRefresh={handleRefresh}
-              tintColor={colors.textPrimary}
-              colors={[colors.textPrimary]}
+              tintColor={light.colors.textPrimary}
+              colors={[light.colors.textPrimary]}
               progressBackgroundColor="transparent"
             />
           }
@@ -971,16 +962,16 @@ export default function ResultScreen({ navigation, route }: Props) {
         {/* FIGMA: STYLE_TARGET — Temperature cards row (only when we have data) */}
         {currentStats && currentStats.total_days > 0 && !isLoading && (
           <View style={styles.tempCards}>
-            <GlassCard style={styles.tempCard} delay={200}>
+            <GlassCard scheme="light" style={styles.tempCard} delay={200}>
               <View style={styles.tempCardInner}>
-                <MaterialCommunityIcons name="thermometer-high" size={28} color={colors.tempHot} />
+                <MaterialCommunityIcons name="thermometer-high" size={28} color={light.colors.tempHot} />
                 <Text style={styles.tempLabel}>{t('result.avgMax')}</Text>
                 <Text style={[styles.tempValue, styles.tempValueHigh]}>{currentStats.avg_tmax.toFixed(1)}°C</Text>
               </View>
             </GlassCard>
-            <GlassCard style={styles.tempCard} delay={300}>
+            <GlassCard scheme="light" style={styles.tempCard} delay={300}>
               <View style={styles.tempCardInner}>
-                <MaterialCommunityIcons name="thermometer-low" size={28} color={colors.tempCold} />
+                <MaterialCommunityIcons name="thermometer-low" size={28} color={light.colors.tempCold} />
                 <Text style={styles.tempLabel}>{t('result.avgMin')}</Text>
                 <Text style={[styles.tempValue, styles.tempValueLow]}>{currentStats.avg_tmin.toFixed(1)}°C</Text>
               </View>
@@ -1004,10 +995,10 @@ export default function ResultScreen({ navigation, route }: Props) {
               })}
             >
               <View style={styles.tempCardInner}>
-                <MaterialCommunityIcons name="weather-windy" size={28} color={colors.cloud} />
+                <MaterialCommunityIcons name="weather-windy" size={28} color={light.colors.cloud} />
                 <Text style={styles.tempLabel}>{t('result.avgWind')}</Text>
                 <Text style={[styles.tempValue, styles.tempValueWind]}>{interpolatedStats.stats.avg_wind} km/h</Text>
-                <Ionicons name="chevron-forward" size={14} color={colors.textMuted} style={styles.cardChevron} />
+                <Ionicons name="chevron-forward" size={14} color={light.colors.textMuted} style={styles.cardChevron} />
               </View>
             </ClickableGlassCard>
             <ClickableGlassCard
@@ -1022,10 +1013,10 @@ export default function ResultScreen({ navigation, route }: Props) {
               })}
             >
               <View style={styles.tempCardInner}>
-                <Ionicons name="umbrella-outline" size={28} color={colors.rain} />
+                <Ionicons name="umbrella-outline" size={28} color={light.colors.rain} />
                 <Text style={styles.tempLabel}>{t('result.rainyDays')}</Text>
                 <Text style={[styles.tempValue, styles.tempValueRain]}>{t('result.rainDaysText', { count: Math.round(interpolatedStats.stats.rain_days) })}</Text>
-                <Ionicons name="chevron-forward" size={14} color={colors.textMuted} style={styles.cardChevron} />
+                <Ionicons name="chevron-forward" size={14} color={light.colors.textMuted} style={styles.cardChevron} />
               </View>
             </ClickableGlassCard>
           </View>
@@ -1043,7 +1034,7 @@ export default function ResultScreen({ navigation, route }: Props) {
         {/* ── NOW SECTION: current conditions ─────────────────────────────── */}
         <View style={styles.nowSection}>
           <View style={styles.nowSectionHeader}>
-            <Ionicons name="time-outline" size={14} color={colors.textMuted} />
+            <Ionicons name="time-outline" size={14} color={light.colors.textMuted} />
             <Text style={styles.nowSectionTitle}>{t('result.nowSection')}</Text>
           </View>
 
@@ -1087,7 +1078,7 @@ export default function ResultScreen({ navigation, route }: Props) {
         {weatherDiscrepancy && weatherDiscrepancy.hasDiscrepancy && weatherDiscrepancy.alternativeData && (
           <View style={styles.discrepancyWarning}>
             <View style={styles.discrepancyContent}>
-              <Ionicons name="information-circle" size={20} color={colors.primary} />
+              <Ionicons name="information-circle" size={20} color={light.colors.primary} />
               <View style={styles.discrepancyTextContainer}>
                 <Text style={styles.discrepancyTitle}>
                   {weatherDiscrepancy.discrepancyWarning === 'weather_discrepancy_rain'
@@ -1115,13 +1106,13 @@ export default function ResultScreen({ navigation, route }: Props) {
         {yearlyData.length > 0 && !isLoading && (
           <View style={styles.historySection}>
             <View style={styles.historyHeader}>
-              <Ionicons name="calendar" size={20} color={colors.primary} />
+              <Ionicons name="calendar" size={20} color={light.colors.primary} />
               <Text style={styles.historyTitle}>{t('result.last10Years')}</Text>
             </View>
             {yearlyData.map((d, index) => <YearHistoryItem key={d.year} data={d} month={selectedMonth} delay={400 + index * 50} />)}
             {skippedYears.length > 0 && (
               <View style={styles.missingDataInfo}>
-                <Ionicons name="information-circle-outline" size={18} color={colors.textMuted} />
+                <Ionicons name="information-circle-outline" size={18} color={light.colors.textMuted} />
                 <Text style={styles.missingDataText}>
                   {t('result.missingYearsInfo', { years: skippedYears.join(', ') })}
                 </Text>
@@ -1132,10 +1123,10 @@ export default function ResultScreen({ navigation, route }: Props) {
 
         {/* FIGMA: STYLE_TARGET — Summary card (only show when we have actual data) */}
         {sunChanceResult && sunChanceResult.total_days > 0 && !isLoading && (
-          <GlassCard style={styles.summaryContainer} delay={900}>
+          <GlassCard scheme="light" style={styles.summaryContainer} delay={900}>
             <View style={styles.summaryInner}>
               <View style={styles.summaryHeader}>
-                <Ionicons name="information-circle" size={20} color={colors.rain} />
+                <Ionicons name="information-circle" size={20} color={light.colors.rain} />
                 <Text style={styles.summaryTitle}>{t('result.summary')}</Text>
               </View>
               <Text style={styles.summaryText}>{summary}</Text>
@@ -1147,7 +1138,7 @@ export default function ResultScreen({ navigation, route }: Props) {
         {bestWeeks.length > 0 && !isLoading && (
           <View style={styles.bestTimeSection}>
             <View style={styles.bestTimeHeader}>
-              <MaterialCommunityIcons name="trophy" size={22} color={colors.accent} />
+              <MaterialCommunityIcons name="trophy" size={22} color={light.colors.accent} />
               <Text style={styles.bestTimeTitle}>{t('result.bestTimeToVisit')}</Text>
             </View>
             <Text style={styles.bestTimeSubtitle}>{t('result.top3Weeks')}</Text>
@@ -1179,20 +1170,20 @@ export default function ResultScreen({ navigation, route }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1, backgroundColor: light.colors.background },
   bgImage: { opacity: 0.3 },
   bgGradientOverlay: { opacity: 0.85 },
-  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: colors.overlay },
+  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: light.colors.overlay },
   safeArea: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
   // FIGMA: STYLE_TARGET — Back button (bg, radius, size)
-  backButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.glassBg, justifyContent: 'center', alignItems: 'center' },
+  backButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: light.colors.glassBg, justifyContent: 'center', alignItems: 'center' },
   headerTitle: { flex: 1, marginLeft: spacing.md },
-  headerName: { ...typography.h2 },
+  headerName: { ...typography.h2, fontFamily: fonts.bold, color: light.colors.textPrimary },
   headerLocation: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
-  headerIsland: { ...typography.bodySmall, marginLeft: spacing.xs },
+  headerIsland: { ...typography.bodySmall, fontFamily: fonts.medium, color: light.colors.textSecondary, marginLeft: spacing.xs },
   headerStation: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
-  headerStationText: { fontSize: 12, color: colors.textMuted, marginLeft: spacing.xs },
+  headerStationText: { fontSize: 12, color: light.colors.textMuted, marginLeft: spacing.xs },
   headerSpacer: { width: 44 },
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: spacing.lg },
@@ -1210,25 +1201,28 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     alignItems: 'center',
     justifyContent: 'center',
-    ...glass.chip,
+    backgroundColor: light.colors.surface,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: light.colors.border,
   },
   // FIGMA: STYLE_TARGET — Active month chip (bg color)
-  monthBtnActive: { backgroundColor: colors.primary },
-  monthBtnText: { fontSize: 13, fontWeight: '600', color: colors.textSecondary },
-  monthBtnTextActive: { color: colors.textPrimary, fontWeight: '700' },
+  monthBtnActive: { backgroundColor: light.colors.primary, borderColor: light.colors.primary },
+  monthBtnText: { fontSize: 13, fontFamily: fonts.semibold, color: light.colors.textSecondary },
+  monthBtnTextActive: { color: '#FFFFFF', fontFamily: fonts.bold },
   statsInfo: { alignItems: 'center', marginBottom: spacing.sm },
-  statsText: { fontSize: 14, color: colors.textSecondary, textAlign: 'center', lineHeight: 20 },
+  statsText: { fontSize: 14, color: light.colors.textSecondary, textAlign: 'center', lineHeight: 20 },
   tempCards: { flexDirection: 'row', marginBottom: spacing.lg, gap: spacing.sm },
   // FIGMA: STYLE_TARGET — Temperature card (glassmorphism)
   tempCard: { flex: 1 },
   tempCardInner: { padding: spacing.md, alignItems: 'center' },
   cardChevron: { position: 'absolute', top: spacing.sm, right: spacing.sm },
-  tempLabel: { ...typography.label, color: glassText.secondary, marginTop: spacing.sm, textAlign: 'center', flexShrink: 1 },
-  tempValue: { ...typography.value, marginTop: spacing.xs },
-  tempValueHigh: { color: colors.tempHot },
-  tempValueLow: { color: colors.tempCold },
-  tempValueWind: { color: colors.cloud },
-  tempValueRain: { color: colors.rain },
+  tempLabel: { ...typography.label, color: light.colors.textSecondary, marginTop: spacing.sm, textAlign: 'center', flexShrink: 1 },
+  tempValue: { ...typography.value, fontFamily: fonts.extrabold, marginTop: spacing.xs },
+  tempValueHigh: { color: light.colors.tempHot },
+  tempValueLow: { color: light.colors.tempCold },
+  tempValueWind: { color: light.colors.cloud },
+  tempValueRain: { color: light.colors.rain },
   nowSection: { marginTop: spacing.lg },
   nowSectionHeader: {
     flexDirection: 'row',
@@ -1238,7 +1232,7 @@ const styles = StyleSheet.create({
   },
   nowSectionTitle: {
     ...typography.caption,
-    color: colors.textMuted,
+    color: light.colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 1.2,
   },
@@ -1246,10 +1240,9 @@ const styles = StyleSheet.create({
   historyHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md },
   historyTitle: {
     ...typography.h3,
+    fontFamily: fonts.bold,
+    color: light.colors.textPrimary,
     marginLeft: spacing.sm,
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   missingDataInfo: {
     flexDirection: 'row',
@@ -1257,29 +1250,29 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: light.colors.surface,
     borderRadius: borderRadius.md,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: light.colors.border,
   },
   missingDataText: {
     ...typography.bodySmall,
-    color: colors.textMuted,
+    color: light.colors.textMuted,
     marginLeft: spacing.sm,
     flex: 1,
   },
   // FIGMA: STYLE_TARGET — Year history item (glassmorphism timeline)
   yearItem: {
     marginBottom: spacing.sm,
-    backgroundColor: glassTokens.bgFaint,
+    backgroundColor: light.colors.surface,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: glassTokens.borderColorSubtle,
+    borderColor: light.colors.border,
     overflow: 'hidden',
   },
   yearItemPressed: {
-    backgroundColor: glassTokens.bgDefault,
-    borderColor: 'rgba(255, 215, 0, 0.3)',
+    backgroundColor: light.colors.surfaceStrong,
+    borderColor: light.colors.primary,
   },
   yearItemInner: {
     flexDirection: 'row',
@@ -1297,7 +1290,7 @@ const styles = StyleSheet.create({
   yearItemYear: {
     fontSize: 14,
     fontWeight: '700',
-    color: glassText.primary,
+    color: light.colors.textPrimary,
     letterSpacing: -0.3,
   },
   // Column 2: Progress Bar + Percentage
@@ -1313,7 +1306,7 @@ const styles = StyleSheet.create({
   },
   sunBarBackground: {
     height: 5,
-    backgroundColor: glassTokens.bgFaint,
+    backgroundColor: 'rgba(0, 0, 0, 0.06)',
     borderRadius: 3,
     overflow: 'hidden',
     position: 'relative',
@@ -1337,12 +1330,9 @@ const styles = StyleSheet.create({
   },
   sunBarPercent: {
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     minWidth: 42,
     textAlign: 'right',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   // Column 3: Temperatures
   yearCol3: {
@@ -1356,17 +1346,17 @@ const styles = StyleSheet.create({
   tempHigh: {
     fontSize: 15,
     fontWeight: '600',
-    color: colors.tempHot,
+    color: light.colors.tempHot,
   },
   tempSeparator: {
     fontSize: 13,
-    color: glassText.muted,
+    color: light.colors.textMuted,
     marginHorizontal: 2,
   },
   tempLow: {
     fontSize: 13,
     fontWeight: '500',
-    color: colors.tempCold,
+    color: light.colors.tempCold,
   },
   // FIGMA: STYLE_TARGET — Summary card (glassmorphism)
   summaryContainer: { marginTop: spacing.lg },
@@ -1374,36 +1364,32 @@ const styles = StyleSheet.create({
   summaryHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm },
   summaryTitle: {
     fontSize: 15,
-    fontWeight: '600',
-    color: glassText.primary,
+    fontFamily: fonts.bold,
+    color: light.colors.textPrimary,
     marginLeft: spacing.sm,
-    textShadowColor: 'rgba(0, 0, 0, 0.15)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 1,
   },
-  summaryText: { fontSize: 15, color: glassText.secondary, lineHeight: 22 },
+  summaryText: { fontSize: 15, color: light.colors.textSecondary, lineHeight: 22 },
   bottomSpacer: { height: 40 },
   bestTimeSection: { marginTop: spacing.lg },
   bestTimeHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.xs },
   bestTimeTitle: {
     ...typography.h3,
+    fontFamily: fonts.bold,
+    color: light.colors.textPrimary,
     marginLeft: spacing.sm,
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
-  bestTimeSubtitle: { ...typography.label, marginBottom: spacing.md, marginLeft: 30 },
+  bestTimeSubtitle: { ...typography.label, fontFamily: fonts.regular, color: light.colors.textSecondary, marginBottom: spacing.md, marginLeft: 30 },
   // FIGMA: STYLE_TARGET — Best time card (glassmorphism)
   bestTimeCard: { marginBottom: spacing.sm },
   bestTimeCardInner: { flexDirection: 'row', alignItems: 'center', padding: spacing.md },
   bestTimeRank: { width: 36, alignItems: 'center' },
   bestTimeContent: { flex: 1, marginLeft: spacing.sm },
-  bestTimeDate: { fontSize: 15, fontWeight: '600', color: glassText.primary },
-  bestTimeMonth: { ...typography.caption, marginTop: 2, color: glassText.secondary },
+  bestTimeDate: { fontSize: 15, fontWeight: '600', color: light.colors.textPrimary },
+  bestTimeMonth: { ...typography.caption, marginTop: 2, color: light.colors.textSecondary },
   bestTimeStats: { alignItems: 'flex-end' },
   bestTimeStat: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.xs },
   bestTimeValue: { fontSize: 14, fontWeight: '700', marginLeft: spacing.xs },
-  bestTimeTemp: { fontSize: 15, fontWeight: '600', color: colors.tempHot, marginLeft: spacing.xs },
+  bestTimeTemp: { fontSize: 15, fontWeight: '600', color: light.colors.tempHot, marginLeft: spacing.xs },
   // ─── LIVE WEATHER CARD (Figma Glassmorphism) ─────────────────────────────────
   // FIGMA: STYLE_TARGET — LiveWeatherCard
   liveCard: {
@@ -1425,9 +1411,9 @@ const styles = StyleSheet.create({
   liveBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.liveBadgeBg,
+    backgroundColor: light.colors.liveBadgeBg,
     borderWidth: 1,
-    borderColor: colors.liveBadgeBorder,
+    borderColor: light.colors.liveBadgeBorder,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: borderRadius.full,
@@ -1436,25 +1422,21 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: colors.liveGreen,
+    backgroundColor: light.colors.liveGreen,
     marginRight: spacing.xs,
   },
   liveBadgeText: {
     fontSize: 10,
-    color: colors.textPrimary,
+    color: light.colors.textPrimary,
     fontWeight: '600',
     letterSpacing: 0.5,
   },
   // Figma: Temperature - 60px bold
   liveTempValue: {
     fontSize: typography.liveTemperature.fontSize,
-    fontWeight: '700',
-    color: colors.textPrimary,
+    fontFamily: fonts.extrabold,
+    color: light.colors.textPrimary,
     letterSpacing: -2,
-    // Text shadow for readability on gradient
-    textShadowColor: 'rgba(0, 0, 0, 0.25)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
   },
   // Figma: Bottom row layout
   liveBottomRow: {
@@ -1480,15 +1462,11 @@ const styles = StyleSheet.create({
   },
   liveWindText: {
     fontSize: typography.liveInfo.fontSize,
-    fontWeight: '500',
-    color: colors.textPrimary,
-    // Text shadow for readability
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    fontFamily: fonts.medium,
+    color: light.colors.textPrimary,
   },
   liveGustsWarning: {
-    color: colors.warning,
+    color: light.colors.warning,
     fontWeight: '600',
   },
   // Parameter icons (wind, humidity) - small with subtle glow
@@ -1511,15 +1489,12 @@ const styles = StyleSheet.create({
   // Condition label - same typography as Wind/Humidity for consistency
   liveConditionLabel: {
     fontSize: typography.liveInfo.fontSize,
-    fontWeight: '500',
-    color: colors.textPrimary,
+    fontFamily: fonts.medium,
+    color: light.colors.textPrimary,
     marginTop: 4,
     textAlign: 'center',
     maxWidth: 110,
     lineHeight: typography.liveInfo.lineHeight,
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   // Offline state
   liveBadgeOffline: {
@@ -1532,7 +1507,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 193, 7, 0.3)',
   },
   liveBadgeTextCache: {
-    color: colors.textMuted,
+    color: light.colors.textMuted,
   },
   cacheIndicator: {
     alignItems: 'center',
@@ -1542,16 +1517,16 @@ const styles = StyleSheet.create({
   cacheIndicatorInner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: glassTokens.bgFaint,
+    backgroundColor: light.colors.surface,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.full,
     borderWidth: 1,
-    borderColor: glassTokens.borderColorFaint,
+    borderColor: light.colors.border,
   },
   cacheIndicatorText: {
     fontSize: 13,
-    color: colors.textSecondary,
+    color: light.colors.textSecondary,
     marginLeft: spacing.xs,
     fontWeight: '500',
   },
@@ -1575,19 +1550,19 @@ const styles = StyleSheet.create({
   discrepancyTitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: colors.primary,
+    color: light.colors.primary,
     marginBottom: 4,
   },
   discrepancyText: {
     fontSize: 13,
     fontWeight: '400',
-    color: colors.textSecondary,
+    color: light.colors.textSecondary,
     lineHeight: 18,
   },
   discrepancyDetail: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.textPrimary,
+    color: light.colors.textPrimary,
     marginTop: spacing.xs,
   },
   liveOfflineContent: {
@@ -1595,17 +1570,17 @@ const styles = StyleSheet.create({
   },
   liveOfflineText: {
     ...typography.body,
-    color: glassText.secondary,
+    color: light.colors.textSecondary,
     marginTop: spacing.sm,
   },
   liveOfflineHint: {
     fontSize: 12,
-    color: glassText.muted,
+    color: light.colors.textMuted,
     marginTop: spacing.xs,
   },
   // Skeleton loading
   skeleton: {
-    backgroundColor: colors.surface,
+    backgroundColor: light.colors.surface,
     borderRadius: borderRadius.sm,
   },
   skeletonTempLarge: {
@@ -1624,8 +1599,8 @@ const styles = StyleSheet.create({
 
   // ─── ERROR ──────────────────────────────────────────────────────────────────
   errorContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  errorText: { color: colors.error, fontSize: 18, marginBottom: spacing.md },
-  errorButton: { color: colors.primary, fontSize: 16, fontWeight: '600' },
+  errorText: { color: light.colors.error, fontSize: 18, marginBottom: spacing.md },
+  errorButton: { color: light.colors.primary, fontSize: 16, fontWeight: '600' },
 
   // ─── HIGH ALTITUDE FALLBACK BANNER ─────────────────────────────────────────
   fallbackBanner: {
@@ -1644,7 +1619,7 @@ const styles = StyleSheet.create({
   fallbackBannerText: {
     flex: 1,
     fontSize: 13,
-    color: colors.textMuted,
+    color: light.colors.textMuted,
     lineHeight: 18,
   },
 });

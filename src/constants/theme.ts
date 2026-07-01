@@ -448,6 +448,65 @@ export function getSunChanceColor(percentage: number): string {
   return colors.sunChanceLow;
 }
 
+// ─── FONTS (Manrope) ──────────────────────────────────────────────────────────
+// Manrope font family — loaded in App.tsx via @expo-google-fonts/manrope.
+
+export const fonts = {
+  regular: 'Manrope_400Regular',
+  medium: 'Manrope_500Medium',
+  semibold: 'Manrope_600SemiBold',
+  bold: 'Manrope_700Bold',
+  extrabold: 'Manrope_800ExtraBold',
+} as const;
+
+// ─── LIGHT THEME (redesign "Sunly") ───────────────────────────────────────────
+// New light design tokens. Added alongside the legacy dark tokens so screens can
+// be migrated one at a time. Based on the Google Stitch redesign.
+
+export const light = {
+  colors: {
+    primary: '#0052D4',
+    primaryDark: '#003EA6',
+    primarySoft: 'rgba(0, 82, 212, 0.08)',
+    accent: '#FFD93D',        // sun yellow
+    accentDeep: '#F59E0B',    // amber (sun icon)
+    background: '#E4EEFB',    // top of gradient (soft, gentle blue)
+    backgroundEnd: '#CFDFF4', // bottom of gradient
+    surface: 'rgba(255, 255, 255, 0.55)',
+    surfaceStrong: 'rgba(255, 255, 255, 0.72)',
+    border: 'rgba(255, 255, 255, 0.6)',
+    textPrimary: '#191C1E',
+    textSecondary: '#43474E',
+    textMuted: '#73777F',
+    rain: '#1385FF',
+    tempHot: '#E5484D',
+    tempCold: '#0091FF',
+    live: '#22C55E',
+    liveGreen: '#22C55E',
+    cloud: '#8A94A6',
+    cloudDark: '#6B7280',
+    error: '#E5484D',
+    warning: '#F59E0B',
+    sun: '#FFD93D',
+    medalGold: '#F5B800',
+    medalSilver: '#9CA3AF',
+    medalBronze: '#CD7F32',
+    glassBg: 'rgba(255, 255, 255, 0.55)',
+    liveBadgeBg: 'rgba(0, 82, 212, 0.08)',
+    liveBadgeBorder: 'rgba(0, 82, 212, 0.2)',
+    overlay: 'rgba(255, 255, 255, 0.0)',
+  },
+  gradient: ['#E4EEFB', '#CFDFF4'] as const,
+  // Soft blue ambient shadow used by glass cards on light backgrounds
+  cardShadow: {
+    shadowColor: '#0064C8',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 3,
+  },
+} as const;
+
 // ─── COMBINED THEME OBJECT (backwards compat) ─────────────────────────────────
 
 export const theme = {

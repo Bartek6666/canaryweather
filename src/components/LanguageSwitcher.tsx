@@ -4,7 +4,7 @@ import { BlurView } from 'expo-blur';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTranslation } from 'react-i18next';
 
-import { colors, spacing, shadows, glassTokens } from '../constants/theme';
+import { spacing, light, fonts } from '../constants/theme';
 import { changeLanguage, LanguageCode } from '../i18n';
 
 // Language options with display codes
@@ -76,7 +76,7 @@ export function LanguageSwitcher({ delay = 0 }: LanguageSwitcherProps) {
         <View style={styles.buttonContent}>
           <Text style={styles.buttonText}>{currentLabel}</Text>
           <Animated.View style={{ transform: [{ rotate: chevronRotation }] }}>
-            <Ionicons name="chevron-down" size={15} color={colors.textPrimary} />
+            <Ionicons name="chevron-down" size={15} color={light.colors.textSecondary} />
           </Animated.View>
         </View>
       </TouchableOpacity>
@@ -125,16 +125,16 @@ const styles = StyleSheet.create({
     minWidth: BUTTON_MIN_WIDTH,
     borderRadius: BORDER_RADIUS,
     borderWidth: 1,
-    borderColor: glassTokens.borderColor,
+    borderColor: light.colors.border,
     overflow: 'hidden',
-    ...shadows.glass,
+    ...light.cardShadow,
   },
   blur: {
     borderRadius: BORDER_RADIUS,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: glassTokens.bgDefault,
+    backgroundColor: light.colors.surfaceStrong,
     borderRadius: BORDER_RADIUS,
   },
   buttonContent: {
@@ -147,8 +147,8 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: colors.textPrimary,
+    fontFamily: fonts.semibold,
+    color: light.colors.textPrimary,
   },
   dropdown: {
     position: 'absolute',
@@ -158,10 +158,10 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     borderRadius: BORDER_RADIUS,
     borderWidth: 1,
-    borderColor: glassTokens.borderColor,
+    borderColor: light.colors.border,
     overflow: 'hidden',
     zIndex: 101,
-    ...shadows.glass,
+    ...light.cardShadow,
   },
   dropdownItem: {
     paddingHorizontal: 11,
@@ -169,12 +169,12 @@ const styles = StyleSheet.create({
   },
   dropdownItemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    borderBottomColor: 'rgba(0, 0, 0, 0.08)',
   },
   dropdownItemText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: colors.textPrimary,
+    fontFamily: fonts.semibold,
+    color: light.colors.textPrimary,
   },
   backdrop: {
     position: 'absolute',

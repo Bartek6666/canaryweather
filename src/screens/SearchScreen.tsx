@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+import { StatusBar } from 'expo-status-bar';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -25,15 +26,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 
-import { colors, spacing, typography, glass, glassTokens, glassText, borderRadius, gradients, shadows } from '../constants/theme';
+import { spacing, glassTokens, borderRadius, light, fonts } from '../constants/theme';
 import locationsMapping from '../constants/locations_mapping.json';
 import { findNearestStations, findNearestStation, NearbyStation } from '../services/weatherService';
-import { GlassCard, HeroLogo, LanguageSwitcher, LocationPrompt } from '../components';
+import { GlassCard, LanguageSwitcher, LocationPrompt } from '../components';
 import { City } from '../types/weather';
 import { useSearchAnalytics } from '../hooks/useSearchAnalytics';
 
 const LOCATION_PROMPT_KEY = 'location_prompt_dismissed';
 const MAX_CANARY_DISTANCE_KM = 150;
+// Redesign toggle: popular destinations as flat list (true) vs island grid (false)
+const USE_PLACE_LIST = false;
 
 // Background gradient (image removed)
 
@@ -587,6 +590,26 @@ export default function SearchScreen({ navigation }: Props) {
     },
   ], []);
 
+  // Popular destinations as a flat list (redesign — Sunly)
+  const popularPlaces = useMemo(() => {
+    const picks = [
+      { name: 'Costa Adeje', islandKey: 'tenerife', coords: { lat: 28.0783, lon: -16.7260 } },
+      { name: 'Playa del Inglés', islandKey: 'granCanaria', coords: { lat: 27.7569, lon: -15.5689 } },
+      { name: 'Corralejo', islandKey: 'fuerteventura', coords: { lat: 28.7300, lon: -13.8678 } },
+      { name: 'Puerto del Carmen', islandKey: 'lanzarote', coords: { lat: 28.9217, lon: -13.6656 } },
+      { name: 'Los Cristianos', islandKey: 'tenerife', coords: { lat: 28.0519, lon: -16.7150 } },
+      { name: 'Puerto de la Cruz', islandKey: 'tenerife', coords: { lat: 28.4167, lon: -16.5489 } },
+    ];
+    return picks.map((p) => {
+      const nearest = findNearestStation(p.coords.lat, p.coords.lon);
+      return {
+        ...p,
+        stationId: nearest?.stationId ?? '',
+        distance: nearest?.distance,
+      };
+    });
+  }, []);
+
   const [selectedIsland, setSelectedIsland] = useState<string | null>(null);
 
   const handleSelectIsland = useCallback((islandKey: string) => {
@@ -628,12 +651,12 @@ export default function SearchScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      {/* Background gradient */}
+      <StatusBar style="dark" />
+      {/* Background gradient (light) */}
       <LinearGradient
-        colors={[...gradients.main]}
+        colors={[...light.gradient]}
         style={StyleSheet.absoluteFillObject}
       />
-      <View style={styles.overlay} />
 
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <KeyboardAvoidingView
@@ -649,16 +672,13 @@ export default function SearchScreen({ navigation }: Props) {
               showsVerticalScrollIndicator={false}
             >
               <View ref={scrollContentRef} collapsable={false}>
-              {/* FIGMA: STYLE_TARGET — Header (logo, title, subtitle) */}
-              <View style={styles.header}>
-                {/* Language Switcher - top right */}
-                <View style={styles.languageSwitcherRow}>
-                  <LanguageSwitcher delay={50} />
+              {/* Top app bar: brand + language switcher */}
+              <View style={styles.appBar}>
+                <View style={styles.appBarBrand}>
+                  <Ionicons name="location" size={22} color={light.colors.primary} />
+                  <Text style={styles.brandName}>Sunly</Text>
                 </View>
-                <View style={styles.logoContainer}>
-                  <HeroLogo size={90} />
-                </View>
-                <Text style={styles.title}>{t('search.title')}</Text>
+                <LanguageSwitcher delay={50} />
               </View>
 
               {/* FIGMA: STYLE_TARGET — Search section (input, GPS button) */}
@@ -673,20 +693,20 @@ export default function SearchScreen({ navigation }: Props) {
                   <View style={styles.searchOverlay} />
                   <View style={styles.searchInputRow}>
                     {isGeocodingLoading ? (
-                      <ActivityIndicator size="small" color={colors.textSecondary} />
+                      <ActivityIndicator size="small" color={light.colors.textMuted} />
                     ) : (
-                      <Ionicons name="search" size={20} color={colors.textSecondary} />
+                      <Ionicons name="search" size={20} color={light.colors.textMuted} />
                     )}
                     <TextInput
                       style={styles.searchInput}
                       placeholder={t('search.placeholder')}
-                      placeholderTextColor={colors.textMuted}
+                      placeholderTextColor={light.colors.textMuted}
                       value={searchQuery}
                       onChangeText={setSearchQuery}
                     />
                     {searchQuery.length > 0 && (
                       <TouchableOpacity onPress={() => { setSearchQuery(''); setCityResults([]); setGeocodeResults([]); setSearchMode('idle'); }}>
-                        <Ionicons name="close-circle" size={20} color={colors.textMuted} />
+                        <Ionicons name="close-circle" size={20} color={light.colors.textMuted} />
                       </TouchableOpacity>
                     )}
                   </View>
@@ -702,12 +722,12 @@ export default function SearchScreen({ navigation }: Props) {
                         onPress={() => handleSelectCity(city, index)}
                       >
                         <View style={styles.resultItemContent}>
-                          <Ionicons name="location" size={20} color={colors.primary} />
+                          <Ionicons name="location" size={20} color={light.colors.primary} />
                           <View style={styles.resultItemCenter}>
                             <Text style={styles.resultItemName}>{city.name}</Text>
                             <Text style={styles.resultItemDetail}>{city.island}</Text>
                           </View>
-                          <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                          <Ionicons name="chevron-forward" size={20} color={light.colors.textMuted} />
                         </View>
                       </TouchableOpacity>
                     ))}
@@ -718,7 +738,7 @@ export default function SearchScreen({ navigation }: Props) {
                 {searchMode === 'geocode' && geocodeResults.length > 0 && (
                   <View style={styles.resultsContainer}>
                     <View style={styles.geocodeHeader}>
-                      <Ionicons name="compass" size={16} color={colors.primary} />
+                      <Ionicons name="compass" size={16} color={light.colors.primary} />
                       <Text style={styles.geocodeHeaderText}>
                         {t('search.weatherNearby')} „{geocodeQuery}"
                       </Text>
@@ -730,14 +750,14 @@ export default function SearchScreen({ navigation }: Props) {
                         onPress={() => handleSelectGeocodeResult(item)}
                       >
                         <View style={styles.resultItemContent}>
-                          <Ionicons name="navigate-circle" size={22} color={colors.primary} />
+                          <Ionicons name="navigate-circle" size={22} color={light.colors.primary} />
                           <View style={styles.resultItemCenter}>
                             <Text style={styles.resultItemName}>{geocodeQuery}</Text>
                             <Text style={styles.resultItemDetail}>
                               {item.island} • {t('search.weatherFromArea')}
                             </Text>
                           </View>
-                          <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+                          <Ionicons name="chevron-forward" size={20} color={light.colors.textMuted} />
                         </View>
                       </TouchableOpacity>
                     ))}
@@ -747,7 +767,7 @@ export default function SearchScreen({ navigation }: Props) {
                 {/* No results message */}
                 {searchMode === 'no_results' && !isGeocodingLoading && (
                   <View style={styles.noResultsContainer}>
-                    <Ionicons name="search-outline" size={32} color={colors.textDisabled} />
+                    <Ionicons name="search-outline" size={32} color={light.colors.textMuted} />
                     <Text style={styles.noResultsText}>
                       {t('search.noResults')}
                     </Text>
@@ -766,7 +786,7 @@ export default function SearchScreen({ navigation }: Props) {
                   />
                   <View style={styles.gpsOverlay} />
                   <View style={styles.gpsButtonContent}>
-                    <Ionicons name="navigate" size={20} color={colors.textPrimary} />
+                    <Ionicons name="navigate" size={20} color="#FFFFFF" />
                     <Text style={[styles.gpsButtonText, isLoadingLocation && styles.gpsButtonTextDisabled]}>
                       {isLoadingLocation ? t('search.searching') : t('search.myLocation')}
                     </Text>
@@ -778,6 +798,36 @@ export default function SearchScreen({ navigation }: Props) {
               {!hasAnyResults && searchMode !== 'no_results' && searchQuery.length === 0 && (
                 <View style={styles.popularSection}>
                   <Text style={styles.popularTitle}>{t('search.popularDestinations')}</Text>
+                  {USE_PLACE_LIST ? (
+                    <View style={styles.placesList}>
+                      {popularPlaces.map((place, index) => (
+                        <TouchableOpacity
+                          key={place.name}
+                          activeOpacity={0.85}
+                          onPress={() => handleSelectPlace(place.stationId, place.name, t(`islands.${place.islandKey}`), place.coords)}
+                        >
+                          <GlassCard scheme="light" style={styles.placeCard} delay={100 + index * 50}>
+                            <View style={styles.placeCardInner}>
+                              <View style={styles.placeIconCircle}>
+                                <Ionicons name="location" size={20} color={light.colors.primary} />
+                              </View>
+                              <View style={styles.placeCardCenter}>
+                                <Text style={styles.placeCardName}>{place.name}</Text>
+                                <Text style={styles.placeCardIsland}>{t(`islands.${place.islandKey}`)}</Text>
+                              </View>
+                              {place.distance != null && (
+                                <View style={styles.placeCardRight}>
+                                  <Text style={styles.placeCardDistance}>{place.distance} {t('common.km')}</Text>
+                                  <Text style={styles.placeCardDistanceLabel} numberOfLines={1}>{t('search.fromNearestStation')}</Text>
+                                </View>
+                              )}
+                            </View>
+                          </GlassCard>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  ) : (
+                  <>
                   <View style={styles.islandsGrid}>
                     {islandsData.map((island, index) => (
                       <TouchableOpacity
@@ -786,6 +836,7 @@ export default function SearchScreen({ navigation }: Props) {
                         onPress={() => handleSelectIsland(island.key)}
                       >
                         <GlassCard
+                          scheme="light"
                           style={[
                             styles.islandItem,
                             selectedIsland === island.key && styles.islandItemActive,
@@ -793,8 +844,11 @@ export default function SearchScreen({ navigation }: Props) {
                           delay={100 + index * 50}
                         >
                           <View style={styles.islandItemInner}>
-                            <MaterialCommunityIcons name={island.icon} size={28} color={selectedIsland === island.key ? '#FFD700' : glassText.secondary} />
-                            <Text style={[styles.islandItemName, selectedIsland === island.key && styles.islandItemNameActive]} numberOfLines={2}>{t(`islands.${island.key}`)}</Text>
+                            <View style={[styles.islandIconCircle, selectedIsland === island.key && styles.islandIconCircleActive]}>
+                              <MaterialCommunityIcons name={island.icon} size={26} color={selectedIsland === island.key ? '#FFFFFF' : light.colors.primary} />
+                            </View>
+                            <Text style={[styles.islandItemName, selectedIsland === island.key && styles.islandItemNameActive]} numberOfLines={1}>{t(`islands.${island.key}`)}</Text>
+                            <Text style={styles.islandItemSub} numberOfLines={1}>{island.places.length} {t('search.popularPlaces')}</Text>
                           </View>
                         </GlassCard>
                       </TouchableOpacity>
@@ -806,7 +860,7 @@ export default function SearchScreen({ navigation }: Props) {
                       ref={placesRef}
                       onLayout={handlePlacesLayout}
                     >
-                    <GlassCard style={styles.placesContainer} delay={100}>
+                    <GlassCard scheme="light" style={styles.placesContainer} delay={100}>
                       <View style={styles.placesContainerInner}>
                         <View style={styles.placesHeader}>
                           <Text style={styles.placesTitle}>{t(`islands.${selectedIsland}`)} - {t('search.popularPlaces')}</Text>
@@ -814,7 +868,7 @@ export default function SearchScreen({ navigation }: Props) {
                             style={styles.placesCloseBtn}
                             onPress={() => setSelectedIsland(null)}
                           >
-                            <Ionicons name="close" size={20} color={glassText.secondary} />
+                            <Ionicons name="close" size={20} color={light.colors.textSecondary} />
                           </TouchableOpacity>
                         </View>
                         <View style={styles.placesGrid}>
@@ -824,9 +878,11 @@ export default function SearchScreen({ navigation }: Props) {
                               activeOpacity={0.8}
                               onPress={() => handleSelectPlace(place.stationId, place.name, t(`islands.${selectedIsland}`), place.coords)}
                             >
-                              <GlassCard style={styles.placeItem} variant="subtle" delay={200 + index * 100}>
+                              <GlassCard scheme="light" style={styles.placeItem} variant="subtle" delay={200 + index * 100}>
                                 <View style={styles.placeItemInner}>
-                                  <Ionicons name="location" size={20} color={colors.primary} />
+                                  <View style={styles.placeItemIconCircle}>
+                                    <Ionicons name="location" size={18} color={light.colors.primary} />
+                                  </View>
                                   <Text style={styles.placeItemName} numberOfLines={2}>{place.name}</Text>
                                 </View>
                               </GlassCard>
@@ -837,11 +893,14 @@ export default function SearchScreen({ navigation }: Props) {
                     </GlassCard>
                     </View>
                   )}
+                  </>
+                  )}
                 </View>
               )}
 
               {/* Footer with data source and disclaimer */}
               <View style={styles.footerSection}>
+                <Text style={styles.footerStats}>{t('search.footer')}</Text>
                 <View style={styles.footerDivider} />
                 <TouchableOpacity
                   onPress={() => Linking.openURL('https://www.aemet.es/')}
@@ -874,108 +933,174 @@ export default function SearchScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  bgImage: { opacity: 0.25 },
-  bgGradientOverlay: { opacity: 0.85 },
-  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: colors.overlayDark },
+  container: { flex: 1, backgroundColor: light.colors.background },
   safeArea: { flex: 1 },
   keyboardAvoid: { flex: 1 },
   content: { flex: 1 },
   scrollView: { flex: 1 },
-  scrollContent: { paddingHorizontal: spacing.lg, paddingTop: spacing.xl - spacing.sm, paddingBottom: spacing.xxl },
-  header: { alignItems: 'center', marginBottom: spacing.xl },
-  languageSwitcherRow: { alignSelf: 'flex-end', marginBottom: spacing.md },
-  logoContainer: {
-    justifyContent: 'center',
+  scrollContent: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.xxl },
+  // Top app bar: brand left, language right
+  appBar: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.sm,
+    justifyContent: 'space-between',
+    marginBottom: spacing.xl,
   },
-  title: {
-    ...typography.h1,
-    marginBottom: spacing.sm,
-    textShadowColor: 'rgba(0, 0, 0, 0.25)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
+  appBarBrand: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
   },
-  // FIGMA: STYLE_TARGET — Search section
+  brandName: {
+    fontFamily: fonts.extrabold,
+    fontSize: 22,
+    letterSpacing: -0.3,
+    color: light.colors.textPrimary,
+  },
+  // Search section
   searchSection: { marginBottom: spacing.lg },
-  // FIGMA: STYLE_TARGET — Search input with glassmorphism (capsule shape)
+  // Search input — frosted capsule on light background
   searchContainer: {
-    borderRadius: glassTokens.borderRadius,
+    borderRadius: 30,
     borderWidth: 1,
-    borderColor: glassTokens.borderColor,
+    borderColor: light.colors.border,
     overflow: 'hidden',
-    ...shadows.glass,
+    ...light.cardShadow,
   },
   searchBlur: {
-    borderRadius: glassTokens.borderRadius,
+    borderRadius: 30,
   },
   searchOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: glassTokens.bgSubtle,
-    borderRadius: glassTokens.borderRadius,
+    backgroundColor: light.colors.surfaceStrong,
+    borderRadius: 30,
   },
   searchInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.md + 2,
   },
   searchInput: {
     flex: 1,
-    fontSize: typography.body.fontSize,
-    color: colors.textPrimary,
+    fontFamily: fonts.regular,
+    fontSize: 17,
+    color: light.colors.textPrimary,
     marginLeft: spacing.sm + 2,
   },
-  // FIGMA: STYLE_TARGET — GPS button with glassmorphism
+  // GPS button — solid primary
   gpsButton: {
-    borderRadius: glassTokens.borderRadius,
-    borderWidth: 1,
-    borderColor: glassTokens.borderColor,
+    borderRadius: borderRadius.lg,
     overflow: 'hidden',
     marginTop: spacing.md,
-    ...shadows.glass,
+    ...light.cardShadow,
+    shadowOpacity: 0.25,
   },
   gpsBlur: {
-    borderRadius: glassTokens.borderRadius,
+    borderRadius: borderRadius.lg,
   },
   gpsOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: glassTokens.bgSubtle,
-    borderRadius: glassTokens.borderRadius,
+    backgroundColor: light.colors.primary,
+    borderRadius: borderRadius.lg,
   },
   gpsButtonContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.md + 2,
   },
   gpsButtonText: {
-    color: colors.textPrimary,
-    fontSize: typography.body.fontSize,
-    fontWeight: typography.h3.fontWeight,
+    color: '#FFFFFF',
+    fontFamily: fonts.semibold,
+    fontSize: 16,
     marginLeft: spacing.sm,
   },
-  gpsButtonTextDisabled: { color: colors.textMuted },
+  gpsButtonTextDisabled: { color: 'rgba(255,255,255,0.7)' },
   resultsContainer: { marginTop: spacing.sm + spacing.xs, marginBottom: spacing.xs },
   geocodeHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm + 2, paddingHorizontal: spacing.xs },
-  geocodeHeaderText: { ...typography.bodySmall, color: colors.textSecondary, marginLeft: 6, fontWeight: '500' },
-  // FIGMA: STYLE_TARGET — Result item card (bg, border, radius)
-  resultItem: { ...glass.card, marginBottom: spacing.sm, padding: spacing.md },
+  geocodeHeaderText: { fontFamily: fonts.medium, fontSize: 14, color: light.colors.textSecondary, marginLeft: 6 },
+  // Result item card — light frosted
+  resultItem: {
+    backgroundColor: light.colors.surfaceStrong,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    borderColor: light.colors.border,
+    marginBottom: spacing.sm,
+    padding: spacing.md,
+    ...light.cardShadow,
+  },
   resultItemContent: { flexDirection: 'row', alignItems: 'center' },
   resultItemCenter: { flex: 1, marginLeft: spacing.sm + spacing.xs },
-  resultItemName: { ...typography.h3, marginBottom: 2 },
-  resultItemDetail: { ...typography.bodySmall },
-  noResultsContainer: { alignItems: 'center', marginTop: spacing.md, marginBottom: spacing.sm, paddingVertical: spacing.xl - spacing.xs, ...glass.cardSubtle },
-  noResultsText: { fontSize: 15, color: colors.textSecondary, marginTop: spacing.sm + 2, fontWeight: '500' },
-  noResultsHint: { ...typography.label, color: colors.textMuted, marginTop: spacing.xs, textAlign: 'center', paddingHorizontal: spacing.xl - spacing.xs },
+  resultItemName: { fontFamily: fonts.semibold, fontSize: 16, color: light.colors.textPrimary, marginBottom: 2 },
+  resultItemDetail: { fontFamily: fonts.regular, fontSize: 14, color: light.colors.textSecondary },
+  noResultsContainer: {
+    alignItems: 'center',
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
+    paddingVertical: spacing.xl - spacing.xs,
+    backgroundColor: light.colors.surface,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    borderColor: light.colors.border,
+  },
+  noResultsText: { fontFamily: fonts.medium, fontSize: 15, color: light.colors.textSecondary, marginTop: spacing.sm + 2 },
+  noResultsHint: { fontFamily: fonts.regular, fontSize: 13, color: light.colors.textMuted, marginTop: spacing.xs, textAlign: 'center', paddingHorizontal: spacing.xl - spacing.xs },
   popularSection: { marginTop: spacing.xs },
   popularTitle: {
-    ...typography.h2,
+    fontFamily: fonts.bold,
+    fontSize: 22,
+    color: light.colors.textPrimary,
     marginBottom: spacing.md,
-    textShadowColor: 'rgba(0, 0, 0, 0.2)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+  },
+  // Popular places — flat list of destination cards
+  placesList: {},
+  placeCard: {
+    marginBottom: spacing.sm + spacing.xs,
+  },
+  placeCardInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+  },
+  placeIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: light.colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  placeCardCenter: {
+    flex: 1,
+    marginLeft: spacing.md,
+  },
+  placeCardName: {
+    fontFamily: fonts.bold,
+    fontSize: 16,
+    color: light.colors.textPrimary,
+    marginBottom: 2,
+  },
+  placeCardIsland: {
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    color: light.colors.textSecondary,
+  },
+  placeCardRight: {
+    alignItems: 'flex-end',
+    marginLeft: spacing.sm,
+    maxWidth: 92,
+  },
+  placeCardDistance: {
+    fontFamily: fonts.bold,
+    fontSize: 14,
+    color: light.colors.primary,
+  },
+  placeCardDistanceLabel: {
+    fontFamily: fonts.regular,
+    fontSize: 11,
+    color: light.colors.textMuted,
   },
   // Islands grid - squares with GlassCard
   islandsGrid: {
@@ -984,8 +1109,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   islandItem: {
-    width: ((Dimensions.get('window').width - spacing.lg * 2 - spacing.sm) / 2) * 0.9,
-    aspectRatio: 1.2,
+    width: (Dimensions.get('window').width - spacing.lg * 2 - spacing.sm) / 2,
+    aspectRatio: 1.15,
     marginBottom: spacing.sm,
   },
   islandItemInner: {
@@ -994,26 +1119,42 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: spacing.sm,
   },
+  islandIconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: light.colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.sm,
+  },
+  islandIconCircleActive: {
+    backgroundColor: light.colors.primary,
+  },
   islandItemActive: {
-    borderColor: '#FFD700',
+    borderColor: light.colors.primary,
     borderWidth: 2,
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 8,
+    shadowColor: light.colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
     elevation: 8,
   },
   islandItemName: {
-    ...typography.bodySmall,
-    color: glassText.primary,
-    fontWeight: '500',
+    fontFamily: fonts.bold,
+    fontSize: 15,
+    color: light.colors.textPrimary,
     textAlign: 'center',
-    marginTop: spacing.xs,
-    flexShrink: 1,
   },
   islandItemNameActive: {
-    fontWeight: '600',
-    color: '#FFD700',
+    color: light.colors.primary,
+  },
+  islandItemSub: {
+    fontFamily: fonts.regular,
+    fontSize: 11,
+    color: light.colors.textMuted,
+    textAlign: 'center',
+    marginTop: 2,
   },
   // Places within island - grid of squares with GlassCard
   placesContainer: {
@@ -1033,9 +1174,9 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   placesTitle: {
-    ...typography.bodySmall,
-    color: glassText.secondary,
-    fontWeight: '500',
+    fontFamily: fonts.semibold,
+    fontSize: 14,
+    color: light.colors.textSecondary,
     textAlign: 'center',
   },
   placesCloseBtn: {
@@ -1059,12 +1200,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: spacing.sm,
   },
+  placeItemIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: light.colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.sm,
+  },
   placeItemName: {
-    ...typography.bodySmall,
-    color: glassText.primary,
-    fontWeight: '500',
+    fontFamily: fonts.semibold,
+    fontSize: 14,
+    color: light.colors.textPrimary,
     textAlign: 'center',
-    marginTop: spacing.xs,
   },
   // Footer section with disclaimer
   footerSection: {
@@ -1072,22 +1221,31 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     alignItems: 'center',
   },
+  footerStats: {
+    fontFamily: fonts.medium,
+    fontSize: 12,
+    color: light.colors.textSecondary,
+    marginBottom: spacing.md,
+    textAlign: 'center',
+  },
   footerDivider: {
     width: 60,
     height: 1,
-    backgroundColor: colors.textMuted,
+    backgroundColor: light.colors.textMuted,
     opacity: 0.3,
     marginBottom: spacing.md,
   },
   footerSource: {
+    fontFamily: fonts.medium,
     fontSize: 12,
-    color: colors.textSecondary,
+    color: light.colors.textSecondary,
     textDecorationLine: 'underline',
     marginBottom: spacing.xs,
   },
   footerDisclaimer: {
+    fontFamily: fonts.regular,
     fontSize: 11,
-    color: colors.textMuted,
+    color: light.colors.textMuted,
     textAlign: 'center',
     paddingHorizontal: spacing.xl,
     lineHeight: 16,

@@ -4,7 +4,7 @@ import Svg, { Circle, G } from 'react-native-svg';
 import { useTranslation } from 'react-i18next';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
-import { colors, typography, spacing, glassText } from '../constants/theme';
+import { typography, spacing, light, fonts } from '../constants/theme';
 import { GlassCard } from './GlassCard';
 
 interface SunChanceGaugeProps {
@@ -27,13 +27,11 @@ const NUM_SEGMENTS = 50;
 
 // Interpolate color based on position (0-1)
 const interpolateColor = (t: number): string => {
-  // Color stops (position 0-1)
+  // Color stops (position 0-1) — muted amber palette (minimalist)
   const stops = [
-    { pos: 0, r: 255, g: 253, b: 231 },     // #FFFDE7 - almost white
-    { pos: 0.25, r: 255, g: 245, b: 157 },  // #FFF59D - light yellow
-    { pos: 0.5, r: 255, g: 204, b: 0 },     // #FFCC00 - warm yellow
-    { pos: 0.75, r: 255, g: 152, b: 0 },    // #FF9800 - orange
-    { pos: 1, r: 255, g: 109, b: 0 },       // #FF6D00 - deep orange
+    { pos: 0, r: 253, g: 230, b: 138 },   // #FDE68A - soft amber
+    { pos: 0.5, r: 251, g: 191, b: 36 },  // #FBBF24 - amber
+    { pos: 1, r: 245, g: 158, b: 11 },    // #F59E0B - deep amber
   ];
 
   const v = Math.max(0, Math.min(1, t));
@@ -109,11 +107,7 @@ export function SunChanceGauge({ percentage, confidence, isLoading = false, onIn
     }
   }, [percentage, isLoading]);
 
-  const getPercentageColor = (value: number): string => {
-    if (value >= 65) return colors.sunChanceHigh;
-    if (value >= 40) return colors.sunChanceMedium;
-    return colors.sunChanceLow;
-  };
+  const getPercentageColor = (_value: number): string => light.colors.textPrimary;
 
   // Generate gradient segments
   const renderGradientArc = () => {
@@ -201,14 +195,14 @@ export function SunChanceGauge({ percentage, confidence, isLoading = false, onIn
         strokeDasharray={`${dashLength} ${CIRCUMFERENCE}`}
         rotation={-90}
         origin={`${SIZE / 2}, ${SIZE / 2}`}
-        opacity={0.3}
+        opacity={0.12}
       />
     );
   };
 
   if (isLoading) {
     return (
-      <GlassCard style={styles.container}>
+      <GlassCard scheme="light" style={styles.container}>
         <View style={styles.gaugeWrapper}>
           <View style={styles.loadingContainer}>
             <Svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
@@ -217,7 +211,7 @@ export function SunChanceGauge({ percentage, confidence, isLoading = false, onIn
                 cy={SIZE / 2}
                 r={RADIUS}
                 fill="none"
-                stroke="rgba(255, 255, 255, 0.15)"
+                stroke="rgba(0, 0, 0, 0.06)"
                 strokeWidth={STROKE_WIDTH}
                 strokeLinecap="round"
               />
@@ -232,7 +226,7 @@ export function SunChanceGauge({ percentage, confidence, isLoading = false, onIn
   }
 
   return (
-    <GlassCard style={styles.container}>
+    <GlassCard scheme="light" style={styles.container}>
       {/* Info button - top right corner */}
       {onInfoPress && (
         <TouchableOpacity
@@ -244,7 +238,7 @@ export function SunChanceGauge({ percentage, confidence, isLoading = false, onIn
           <Ionicons
             name="information-circle"
             size={28}
-            color={glassText.secondary}
+            color={light.colors.textSecondary}
           />
         </TouchableOpacity>
       )}
@@ -263,7 +257,7 @@ export function SunChanceGauge({ percentage, confidence, isLoading = false, onIn
               cy={SIZE / 2}
               r={RADIUS}
               fill="none"
-              stroke="rgba(255, 255, 255, 0.15)"
+              stroke="rgba(0, 0, 0, 0.06)"
               strokeWidth={STROKE_WIDTH}
               strokeLinecap="round"
             />
@@ -302,7 +296,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
     padding: spacing.xs,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(0, 0, 0, 0.04)',
   },
   gaugeWrapper: {
     flex: 1,
@@ -326,16 +320,13 @@ const styles = StyleSheet.create({
   },
   percentageText: {
     fontSize: 56,
-    fontWeight: '700',
+    fontFamily: fonts.extrabold,
     letterSpacing: -2,
-    textShadowColor: 'rgba(0, 0, 0, 0.25)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
   },
   label: {
     fontSize: 14,
-    fontWeight: '600',
-    color: glassText.secondary,
+    fontFamily: fonts.semibold,
+    color: light.colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     textAlign: 'center',
@@ -344,8 +335,8 @@ const styles = StyleSheet.create({
   },
   confidence: {
     fontSize: 14,
-    fontWeight: '500',
-    color: glassText.muted,
+    fontFamily: fonts.medium,
+    color: light.colors.textMuted,
     marginTop: spacing.xs,
   },
   loadingContainer: {
@@ -356,6 +347,6 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     ...typography.body,
-    color: glassText.secondary,
+    color: light.colors.textSecondary,
   },
 });
