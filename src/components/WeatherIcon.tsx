@@ -8,59 +8,78 @@ import { WeatherCondition } from '../types';
 
 interface WeatherIconConfig {
   icon: keyof typeof Ionicons.glyphMap;
+  color: string; // Icon fill colour (visible on the light theme background)
   glowColor: string;
   isComposite?: boolean; // For multi-layer icons like partly-sunny
 }
 
-// Sun color constant - warm yellow
+// Sun color constant - warm yellow (glow)
 const SUN_COLOR = '#FFCC00';
-// Moon color constant - soft silver/blue
+// Moon color constant - soft silver/blue (glow)
 const MOON_COLOR = '#E8E8F0';
+
+// ─── LIGHT-THEME FILL COLOURS ────────────────────────────────────────────────
+// Icons sit on a soft light-blue background, so fills must be saturated/dark
+// enough to stay visible (white/silver from the old dark theme disappeared).
+const SUN_FILL = '#F59E0B';   // amber (matches the Stitch design sun)
+const MOON_FILL = '#E0A82E';  // warm gold crescent, readable on light blue
+const CLOUD_FILL = '#6B7280'; // slate grey for clouds/fog
 
 const WEATHER_ICON_MAP: Record<WeatherCondition, WeatherIconConfig> = {
   sunny: {
     icon: 'sunny',
+    color: SUN_FILL,
     glowColor: SUN_COLOR, // Warm yellow glow for sunny
   },
   'partly-sunny': {
     icon: 'partly-sunny', // Not used directly - we render composite
+    color: SUN_FILL,
     glowColor: SUN_COLOR,
     isComposite: true,
   },
   cloudy: {
     icon: 'cloud',
+    color: CLOUD_FILL,
     glowColor: '#A0AEC0', // Gray-blue glow for cloudy
   },
   rainy: {
     icon: 'rainy-outline',
+    color: '#1385FF',
     glowColor: '#4DABF7', // Blue glow for rainy
   },
   stormy: {
     icon: 'thunderstorm',
+    color: '#7C3AED',
     glowColor: '#7C3AED', // Purple glow for stormy
   },
   snowy: {
     icon: 'snow',
+    color: '#38BDF8',
     glowColor: '#E0F2FE', // Light blue-white glow for snow
   },
   foggy: {
     icon: 'cloud',
+    color: '#94A3B8',
     glowColor: '#94A3B8', // Muted gray glow for fog
   },
   windy: {
     icon: 'leaf', // Wind blowing leaves
+    color: '#3B82F6',
     glowColor: '#60A5FA', // Light blue glow for windy
   },
   'muddy-rain': {
     icon: 'rainy', // Rain icon but with different glow
+    color: '#D97706',
     glowColor: '#D97706', // Orange-brown glow for muddy rain (Calima)
   },
   'clear-night': {
     icon: 'moon',
+    color: MOON_FILL,
     glowColor: MOON_COLOR, // Soft silver glow for clear night
   },
   'partly-cloudy-night': {
     icon: 'cloudy-night',
+    color: MOON_FILL,
     glowColor: MOON_COLOR,
   },
 };
@@ -132,7 +151,7 @@ function PartlySunnyIcon({ size, isSmall, showGlow }: PartlySunnyIconProps) {
         <Ionicons
           name="sunny"
           size={sunSize}
-          color={SUN_COLOR}
+          color={SUN_FILL}
           style={{
             textShadowColor: SUN_COLOR,
             textShadowOffset: { width: 0, height: 0 },
@@ -158,7 +177,7 @@ function PartlySunnyIcon({ size, isSmall, showGlow }: PartlySunnyIconProps) {
         <Ionicons
           name="cloud"
           size={cloudSize}
-          color="#FFFFFF"
+          color={CLOUD_FILL}
           style={{
             textShadowColor: '#FFFFFF',
             textShadowOffset: { width: 0, height: 0 },
@@ -205,11 +224,8 @@ export const WeatherIcon = React.memo(function WeatherIcon({
   // Icon opacity - lower for small parameter icons
   const iconOpacity = isSmall ? 0.6 : 1;
 
-  // Use warm yellow for sunny icon, silver for night, orange-brown for muddy rain, white for others
-  const iconColor = condition === 'sunny' ? SUN_COLOR
-    : (condition === 'clear-night' || condition === 'partly-cloudy-night') ? MOON_COLOR
-    : condition === 'muddy-rain' ? '#D97706' // Orange-brown for Calima + rain
-    : '#FFFFFF';
+  // Light-theme fill colour per condition (visible on the soft blue background)
+  const iconColor = config.color;
 
   return (
     <View style={[styles.container, glowStyle, style]}>

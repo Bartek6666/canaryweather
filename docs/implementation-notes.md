@@ -4,6 +4,95 @@ Ten plik zawiera notatki z implementacji i decyzji technicznych. Sprawdzaj go na
 
 ---
 
+## 2026-07-07: Redesign „Sunly" — ekran Onboarding (2 ekrany) + nowe logo/ikona aplikacji
+
+Branch `redesign`, zmiany niezacommitowane. Kontynuacja redesignu na jasny motyw.
+
+### 1. Onboarding przerobiony na jasny motyw + podział na 2 ekrany (`OnboardingScreen.tsx`)
+Logika pierwszego uruchomienia bez zmian (`hasSeenOnboarding` w AsyncStorage → `navigation.replace('Search')`).
+- **Ekran 1 (intro):** ikona marki (`SunlyIcon`) z cieniem + napis „Sunly"; wejście fade+scale.
+  Po **3 s** (`INTRO_DURATION_MS`) automatyczne przejście do ekranu 2 (`useState step 1|2`).
+- **Ekran 2:** BEZ ikony — sama nazwa „Sunly", pod nią `onboarding.tagline`
+  („Sprawdź historyczną pogodę…"), niżej skrócony `onboarding.welcome_text`, dwa kafelki
+  bento (`GlassCard scheme="light"`: „Analiza / 10 lat", „Precyzja / AEMET"), przycisk
+  `onboarding.start_button` (niebieska pigułka) → Search.
+- Tło: `LinearGradient ['#DCEEFF','#E4EEFB','#F8F9FF']`, `StatusBar dark`, `SafeAreaView`.
+- Nowe klucze i18n (4 języki): `tagline`, `tile_analysis_label`, `tile_years_value`,
+  `tile_precision_label`. Skrócono `welcome_text` (usunięto „…w miejscu do którego podróżujesz”).
+  Usunięto podpis „Dane: AEMET" (klucz `data_source` skasowany po dodaniu — nieużywany).
+
+### 2. Nowe logo/ikona marki „Sunly" (`src/components/SunlyIcon.tsx`)
+- Stylizowane słońce nad falami na błękitnym kaflu (radialne niebo `#B0E0FF`→`#5AABDC`,
+  słońce `#FFD700`→`#FF8C00` z refleksem, dwie fale + obrys grzbietu). Projekt dostarczony
+  przez użytkownika (Stitch/ręczny SVG). `react-native-svg`. viewBox 100×100.
+- **Powód zmiany:** aplikacja wychodzi poza Kanary → porzucono `HeroLogo` (słońce + wulkan
+  Teide). `HeroLogo.tsx` zostaje w repo (nietknięty), ale nieużywany.
+- Utworzony w trakcie sesji i usunięty pośredni komponent `SunLogo` (minimalistyczne
+  słońce) — zastąpiony przez `SunlyIcon`.
+
+### 3. Ikony aplikacji wygenerowane z SVG (`scripts/generate-icons.js` + `sharp`)
+- Źródła: `assets/sunly-icon.svg` (pełnokadrowy kwadrat — OS sam zaokrągla) oraz
+  `assets/sunly-splash.svg` (kafel z rogami rx22, przezroczyste narożniki).
+- Wygenerowane: `icon.png` 1024, `adaptive-icon.png` 1024, `favicon.png` 48, `splash.png` 1024.
+- `app.json`: splash `backgroundColor` `#0077CC` → **`#DCEEFF`** (oba miejsca: `splash` i
+  plugin `expo-splash-screen`) — spójne z ekranem powitalnym.
+- Doinstalowano `sharp` jako devDependency (tylko do generowania ikon).
+- **Uwaga:** nowa ikona/splash widoczne dopiero po natywnym buildzie EAS, NIE w Expo Go.
+- Regeneracja po zmianie designu: `node scripts/generate-icons.js`.
+
+### DEV-only (do usunięcia przed wydaniem)
+W `App.tsx` w `prepare()` dodano tymczasowy `if (__DEV__) AsyncStorage.removeItem(ONBOARDING_KEY)`
+— wymusza pokazanie onboardingu przy każdym starcie w dev. **Usunąć przed buildem produkcyjnym.**
+
+---
+
+## 2026-07-06: Redesign „Sunly" — ekrany Wyników, Szczegóły wiatru, Szczegóły opadów (jasny motyw)
+
+Sesja w ramach redesignu Canary Weather → „Sunly" (jasny motyw Stitch, font Manrope). Branch `redesign`, zmiany niezacommitowane.
+
+### Środowisko
+- Expo dev server na porcie **8082** (8081 zajęty przez inny projekt). Test na prawdziwym iPhone (przeładowanie po zmianach).
+- Kontrola typów: `npx tsc --noEmit` (output zapisywać do pliku, np. `> /private/tmp/tsc_out.txt 2>&1` — katalog zadań potrafi się zapełniać logami Expo).
+- Projekty Stitch (HTML): `redesign-input/design_1.txt`.
+
+### 1. Ekran Wyników (`ResultScreen.tsx`) — etap 2
+Nowa kolejność sekcji: **Teraz(live)+alerty → wskaźnik słońca → miesiące → statystyki (śr. max / śr. min / dni deszczowe) → przyciski „Szczegóły wiatru/opadów" → Podsumowanie → Najsłoneczniejsze tygodnie → Historia 10 lat.**
+- „Pętla informacyjna": klik miesiąca przewija do wskaźnika słońca (mierzone `onLayout`, `gaugeOffsetY`) z widocznymi kafelkami miesięcy pod spodem.
+- Przyciski szczegółów bez liczb (sama etykieta + strzałka), wstawione między statystyki a podsumowanie; zmniejszony odstęp (usunięty `marginTop` w `ctaSection`).
+- Nowe klucze i18n: `result.windDetails`, `result.rainDetails` (4 języki).
+- Czcionka wartości w kafelkach statystyk 22→18 px + `numberOfLines={1}` + `adjustsFontSizeToFit` (3 kafelki w rzędzie nie mieściły „°C").
+
+### 2. Karty alertów (`common/GenericAlertCard.tsx`) → jasny motyw
+Był biały tekst z ciemnego motywu (nieczytelny na jasnym tle). Teraz: pełny kolorowy krążek z białą ikoną, ciemny czytelny tytuł (odcień zależny od severity: yellow/orange/red), szary opis, strzałka `textMuted`. Podkład 12% zamiast 20%.
+
+### 3. Ikony pogody (`WeatherIcon.tsx`) → jasny motyw
+Ikony były białe / jasne srebro (znikały na jasnym tle). Dodano pole `color` w `WEATHER_ICON_MAP`: słońce `#F59E0B` (bursztyn), księżyc/noc `#E0A82E` (złoty), chmury/mgła `#6B7280` (szary), deszcz niebieski, burza fioletowa, śnieg błękitny. Ikona złożona „słońce za chmurą" — chmura z białej na szarą. Na karcie LIVE małe ikony wiatru/wilgotności (w `ResultScreen`) z białych na `primary`, krycie 0.6→0.9.
+
+### 4. Ekran Szczegóły wiatru (`WindDetailsScreen.tsx`) → jasny motyw, układ klasyczny
+- Konwersja na jasny motyw (tło `light.gradient`, StatusBar dark, usunięta ciemna nakładka, `colors.` → `light.colors.`, obrys wskaźnika i paski rankingu z białych na ciemne, bieżąca wyspa → `primary`).
+- `ScreenHeader` dostał prop **`scheme: 'dark' | 'light'`** (domyślnie `dark`, żeby nie psuć innych ekranów). Ekran wiatru i opadów używają `scheme="light"`.
+- `TradeWindStabilityCard` → jasny motyw. Dolny wiersz liczb zamieniony na **3 kafelki z ikonami** (Średnia prędkość / Zakres prędkości / „Wiatr >20 km/h" z wartością „X dni"). Wartości: `numberOfLines={1}` + `adjustsFontSizeToFit`.
+- Nowy klucz i18n `wind.daysText_*` (pluralizacja „dzień/dni", NIE reużywać `rainDaysText` — po niemiecku znaczy „dzień deszczowy").
+- Skrócono polski `wind.windyDays` na „Wiatr >20 km/h".
+- **Odrzucono** pełny układ Stitch (hero + „Gwarancja Pasatów" + bento) — po porównaniu z przełącznikiem user wybrał klasyczny wskaźnik. Przełącznik i wariant Stitch usunięte. Nieużywany klucz `wind.basedOnMeasurements` (pozostałość po eksperymencie Stitch) usunięty z 4 locale.
+
+### 5. Ekran Szczegóły opadów (`RainDetailsScreen.tsx`) → jasny motyw
+- Analogiczna konwersja na jasny motyw jak wiatr (`scheme="light"`, obrys wskaźnika, paski rankingu, badge miesiąca).
+- Karta „Charakterystyka opadów": 2 liczby → **2 kafelki z ikonami** (Średnie opady mm / Dni z deszczem „X z 31") + podpis „Na podstawie 10 lat pomiarów" (`rain.basedOnMeasurements`, 4 języki).
+- Tytuł `rain.intensity_info` → małe „o": „Charakterystyka opadów" (pl/en/es; de bez zmian — jedno rzeczowe słowo).
+- Podpis rankingu `rain.island_ranking_month` → „opady zebrane ze wszystkich stacji AEMET" (4 języki).
+
+### 6. Spójność danych opadów (`weatherService.ts`)
+Zgłoszone niespójności między wskaźnikiem „% dni bez deszczu" a liczbami — przyczyną zaokrąglanie w dół:
+- `calculateRainStats`: `rainyDaysPerYear` → **1 miejsce po przecinku** (`Math.round(x*10)/10`). Wcześniej 0,3 dnia/rok → „0", co wyglądało na sprzeczność z 99% suchych dni.
+- `getRainRankingByIsland`: `value` → **1 miejsce po przecinku ORAZ dzielenie przez `stationCount`** (`totalPrecip / yearsCount / stationCount`). Wcześniej sumowało opady ze wszystkich stacji wyspy i dzieliło tylko przez lata → wyspy z wieloma stacjami wychodziły „deszczowsze". Cache podbity **`rain_ranking_v2` → `v4`** (dwie zmiany wartości w sesji).
+- Ranking wiatru (`getWindRankingByIsland`) sprawdzony — OK, liczy `totalWind / count` (średnia z pomiarów, niezależna od liczby stacji), bez zmian.
+
+### Następny krok
+**Ekran Onboarding** — projekt w `redesign-input/design_1.txt`, blok „Onboarding (Jasny)" (ok. linie 1–198). Jasny motyw, radialny gradient, logo z ikoną słońca, dwa kafelki bento (10 lat / AEMET), duży przycisk „Zaczynamy". Zacząć od planu przed kodowaniem.
+
+---
+
 ## 2026-04-15: Google Play - Poprawki zgodności z polityką (Misleading Claims)
 
 ### Problem

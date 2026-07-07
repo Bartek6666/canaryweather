@@ -8,6 +8,7 @@ export { GlassCard } from './GlassCard';
 export { SnowAlertCard } from './SnowAlertCard';
 export { WindAlertCard } from './WindAlertCard';
 export { HeroLogo } from './HeroLogo';
+export { SunlyIcon } from './SunlyIcon';
 export { LanguageSwitcher } from './LanguageSwitcher';
 export { LocationPrompt } from './LocationPrompt';
 export { SunChanceGauge } from './SunChanceGauge';

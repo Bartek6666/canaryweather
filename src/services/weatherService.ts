@@ -699,7 +699,9 @@ export async function calculateRainStats(
   // Calculate number of unique years in the data
   const uniqueYears = new Set(monthData.map((row) => new Date(row.date).getFullYear()));
   const yearsCount = uniqueYears.size || 1;
-  const rainyDaysPerYear = Math.round(totalRainyDays / yearsCount);
+  // Keep one decimal so rare-rain months stay consistent with the dry-day gauge
+  // (e.g. 0.3 rainy days/year matches 99% dry — rounding to 0 looked like a contradiction)
+  const rainyDaysPerYear = Math.round((totalRainyDays / yearsCount) * 10) / 10;
 
   // Calculate percentage of days WITHOUT rain (positive messaging)
   const daysWithoutRain = Math.round(((totalDays - totalRainyDays) / totalDays) * 100);
@@ -899,7 +901,7 @@ export async function getWindRankingByIsland(month: number): Promise<IslandRanki
  */
 export async function getRainRankingByIsland(month: number): Promise<IslandRanking[]> {
   // Check cache first
-  const cacheKey = `rain_ranking_v2_${month}`;
+  const cacheKey = `rain_ranking_v4_${month}`;
   try {
     const cached = await AsyncStorage.getItem(cacheKey);
     if (cached) {
@@ -974,10 +976,13 @@ export async function getRainRankingByIsland(month: number): Promise<IslandRanki
     for (const [island, stats] of islandStats) {
       const yearsCount = stats.years.size || 1;
       if (stats.totalDays > 0) {
-        // Average monthly precipitation per year
+        // Average monthly precipitation per year, per station — divide by stationCount
+        // so islands with more stations aren't ranked rainier just for having more sensors.
+        // Keep one decimal so very dry islands stay consistent with the intensity card
+        // (rounding to 0 mm looked like "no rain" despite the gauge/card showing some).
         ranking.push({
           island,
-          value: Math.round(stats.totalPrecip / yearsCount),
+          value: Math.round((stats.totalPrecip / yearsCount / stats.stationCount) * 10) / 10,
           stationCount: stats.stationCount,
         });
       }

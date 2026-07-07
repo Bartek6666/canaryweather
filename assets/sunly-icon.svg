@@ -1,0 +1,27 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="1024" height="1024">
+  <defs>
+    <linearGradient id="sunGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFD700" stop-opacity="1" />
+      <stop offset="100%" stop-color="#FF8C00" stop-opacity="1" />
+    </linearGradient>
+    <radialGradient id="skyGrad" cx="50%" cy="42%" r="60%">
+      <stop offset="0%" stop-color="#B0E0FF" stop-opacity="1" />
+      <stop offset="100%" stop-color="#5AABDC" stop-opacity="1" />
+    </radialGradient>
+    <clipPath id="tile">
+      <rect width="100" height="100" />
+    </clipPath>
+  </defs>
+  <rect width="100" height="100" fill="url(#skyGrad)" />
+  <circle cx="50" cy="43" r="21" fill="url(#sunGrad)" />
+  <ellipse cx="44" cy="37" rx="5" ry="3.5" fill="#FFF9C4" opacity="0.45" transform="rotate(-20 44 37)" />
+  <path clip-path="url(#tile)"
+    d="M0 80 C 15 78, 20 72, 25 72 L 28 78 C 40 76, 45 70, 50 70 L 53 78 C 65 76, 70 70, 75 70 L 78 78 C 90 76, 95 72, 100 72 L 100 100 L 0 100 Z"
+    fill="#FFFFFF" opacity="0.28" />
+  <path clip-path="url(#tile)"
+    d="M0 90 C 15 88, 20 82, 25 82 L 28 88 C 40 86, 45 80, 50 80 L 53 88 C 65 86, 70 80, 75 80 L 78 88 C 90 86, 95 82, 100 82 L 100 100 L 0 100 Z"
+    fill="#FFFFFF" />
+  <path clip-path="url(#tile)"
+    d="M0 90 C 15 88, 20 82, 25 82 L 28 88 C 40 86, 45 80, 50 80 L 53 88 C 65 86, 70 80, 75 80 L 78 88 C 90 86, 95 82, 100 82"
+    fill="none" stroke="#A8D8F0" stroke-width="1" opacity="0.6" />
+</svg>

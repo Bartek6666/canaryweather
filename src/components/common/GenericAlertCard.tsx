@@ -4,33 +4,38 @@ import { BlurView } from 'expo-blur';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
-import { spacing, glassTokens, shadows } from '../../constants/theme';
+import { spacing, glassTokens, shadows, light } from '../../constants/theme';
 import { AlertSeverity } from '../../types';
 
-// Colors for different alert severity levels
+// Colors for different alert severity levels (light theme)
+// bg: soft tint behind the card, icon: solid badge colour, text: readable dark title
 const ALERT_COLORS: Record<AlertSeverity, {
   bg: string;
   border: string;
   icon: string;
+  text: string;
   glow: string;
 }> = {
   yellow: {
-    bg: 'rgba(255, 204, 0, 0.2)',
+    bg: 'rgba(255, 204, 0, 0.12)',
     border: 'rgba(255, 204, 0, 0.4)',
-    icon: '#FFCC00',
-    glow: 'rgba(255, 204, 0, 0.6)',
+    icon: '#F5B800',
+    text: '#B45309',
+    glow: 'rgba(255, 204, 0, 0.5)',
   },
   orange: {
-    bg: 'rgba(255, 140, 0, 0.2)',
+    bg: 'rgba(255, 140, 0, 0.12)',
     border: 'rgba(255, 140, 0, 0.4)',
     icon: '#FF8C00',
-    glow: 'rgba(255, 140, 0, 0.6)',
+    text: '#C2410C',
+    glow: 'rgba(255, 140, 0, 0.5)',
   },
   red: {
-    bg: 'rgba(255, 59, 48, 0.2)',
+    bg: 'rgba(255, 59, 48, 0.12)',
     border: 'rgba(255, 59, 48, 0.4)',
     icon: '#FF3B30',
-    glow: 'rgba(255, 59, 48, 0.6)',
+    text: '#B91C1C',
+    glow: 'rgba(255, 59, 48, 0.5)',
   },
 };
 
@@ -110,9 +115,8 @@ export function GenericAlertCard({
 
   const renderIcon = () => {
     const iconProps = {
-      size: 28,
-      color: colors.icon,
-      style: [styles.icon, { textShadowColor: colors.glow }],
+      size: 26,
+      color: '#FFFFFF',
     };
 
     if (icon.library === 'ionicons') {
@@ -133,14 +137,14 @@ export function GenericAlertCard({
           <View style={[styles.overlay, { backgroundColor: colors.bg }]} />
 
           <View style={styles.content}>
-            {/* Icon with glow */}
-            <View style={[styles.iconContainer, { backgroundColor: `${colors.icon}15`, shadowColor: colors.glow }]}>
+            {/* Solid colour icon badge */}
+            <View style={[styles.iconContainer, { backgroundColor: colors.icon, shadowColor: colors.glow }]}>
               {renderIcon()}
             </View>
 
             {/* Text content */}
             <View style={styles.textContainer}>
-              <Text style={styles.title}>{title}</Text>
+              <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
               <Text style={styles.description} numberOfLines={3}>
                 {description}
               </Text>
@@ -158,7 +162,7 @@ export function GenericAlertCard({
                 </View>
               )}
               {showChevron && (
-                <Ionicons name="chevron-forward" size={20} color="rgba(255, 255, 255, 0.6)" />
+                <Ionicons name="chevron-forward" size={20} color={light.colors.textMuted} />
               )}
             </View>
           </View>
@@ -202,10 +206,6 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 6,
   },
-  icon: {
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 8,
-  },
   textContainer: {
     flex: 1,
     paddingRight: spacing.sm,
@@ -213,16 +213,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
     marginBottom: 4,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   description: {
     fontSize: 13,
     fontWeight: '400',
-    color: 'rgba(255, 255, 255, 0.85)',
+    color: light.colors.textSecondary,
     lineHeight: 18,
   },
   rightSection: {

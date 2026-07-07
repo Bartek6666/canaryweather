@@ -6,12 +6,13 @@ import {
   Animated,
 } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
 
 import { MONTH_KEYS } from '../i18n';
 
-import { colors, spacing, typography } from '../constants/theme';
+import { light, spacing, typography, borderRadius } from '../constants/theme';
 import { GlassCard } from './GlassCard';
 import { WindStabilityResult } from '../services/weatherService';
 
@@ -84,7 +85,7 @@ export function TradeWindStabilityCard({
   }
 
   return (
-    <GlassCard style={styles.card} delay={delay}>
+    <GlassCard scheme="light" style={styles.card} delay={delay}>
       <View style={styles.inner}>
         {/* Header */}
         <View style={styles.header}>
@@ -126,25 +127,34 @@ export function TradeWindStabilityCard({
           {t(`wind.stabilityDesc_${stabilityLevel}`, { month: monthForDescription })}
         </Text>
 
-        {/* Stats row */}
-        <View style={styles.statsRow}>
-          <View style={styles.statItem}>
-            <Text style={styles.statLabel}>{t('wind.avgSpeed')}</Text>
-            <Text style={styles.statValue}>
-              {stability.averageSpeed} <Text style={styles.statUnit}>km/h</Text>
+        {/* Stats tiles */}
+        <View style={styles.tileRow}>
+          <View style={styles.tile}>
+            <View style={styles.tileIconCircle}>
+              <Ionicons name="speedometer-outline" size={18} color={light.colors.primary} />
+            </View>
+            <Text style={styles.tileValue} numberOfLines={1} adjustsFontSizeToFit>
+              {stability.averageSpeed}<Text style={styles.tileUnit}> km/h</Text>
             </Text>
+            <Text style={styles.tileLabel}>{t('wind.avgSpeed')}</Text>
           </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statLabel}>{t('wind.windRange')}</Text>
-            <Text style={styles.statValue}>
-              {stability.windRange.min}–{stability.windRange.max} <Text style={styles.statUnit}>km/h</Text>
+          <View style={styles.tile}>
+            <View style={styles.tileIconCircle}>
+              <Ionicons name="trending-up" size={18} color={light.colors.primary} />
+            </View>
+            <Text style={styles.tileValue} numberOfLines={1} adjustsFontSizeToFit>
+              {stability.windRange.min}–{stability.windRange.max}<Text style={styles.tileUnit}> km/h</Text>
             </Text>
+            <Text style={styles.tileLabel}>{t('wind.windRange')}</Text>
           </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statLabel}>{t('wind.windyDays')}</Text>
-            <Text style={styles.statValue}>{stability.windyDays}</Text>
+          <View style={styles.tile}>
+            <View style={styles.tileIconCircle}>
+              <Ionicons name="calendar-outline" size={18} color={light.colors.primary} />
+            </View>
+            <Text style={styles.tileValue} numberOfLines={1} adjustsFontSizeToFit>
+              {t('wind.daysText', { count: stability.windyDays })}
+            </Text>
+            <Text style={styles.tileLabel}>{t('wind.windyDays')}</Text>
           </View>
         </View>
       </View>
@@ -168,7 +178,7 @@ const styles = StyleSheet.create({
   },
   title: {
     ...typography.h3,
-    color: colors.textPrimary,
+    color: light.colors.textPrimary,
   },
   valueContainer: {
     alignItems: 'center',
@@ -181,7 +191,7 @@ const styles = StyleSheet.create({
   },
   valueLabel: {
     ...typography.label,
-    color: colors.textSecondary,
+    color: light.colors.textSecondary,
     marginTop: -4,
   },
   progressContainer: {
@@ -189,7 +199,7 @@ const styles = StyleSheet.create({
   },
   progressTrack: {
     height: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(0, 0, 0, 0.06)',
     borderRadius: 4,
     overflow: 'hidden',
   },
@@ -199,44 +209,52 @@ const styles = StyleSheet.create({
   },
   description: {
     ...typography.body,
-    color: colors.textSecondary,
+    color: light.colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: spacing.lg,
   },
-  statsRow: {
+  tileRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-evenly',
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
   },
-  statItem: {
-    alignItems: 'center',
+  tile: {
     flex: 1,
-    paddingVertical: spacing.sm,
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: light.colors.border,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xs,
   },
-  statLabel: {
+  tileIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: light.colors.primarySoft,
+    marginBottom: spacing.sm,
+  },
+  tileValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: light.colors.textPrimary,
+    textAlign: 'center',
+  },
+  tileUnit: {
     fontSize: 11,
     fontWeight: '500',
-    color: colors.textMuted,
-    marginBottom: 4,
+    color: light.colors.textSecondary,
   },
-  statValue: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.textPrimary,
-  },
-  statUnit: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    fontWeight: '500',
-  },
-  statDivider: {
-    width: 1,
-    height: 36,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+  tileLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: light.colors.textMuted,
+    textTransform: 'uppercase',
+    textAlign: 'center',
+    marginTop: spacing.xs,
   },
 });

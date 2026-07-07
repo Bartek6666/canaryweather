@@ -79,6 +79,8 @@
     "avgMin": "Avg. Min",
     "avgWind": "Avg. Wind",
     "rainyDays": "Rainy Days",
+    "windDetails": "Wind details",
+    "rainDetails": "Rainfall details",
     "daysUnit": "days",
     "nowSection": "Now",
     "last10Years": "Last 10 years",
@@ -155,8 +157,12 @@
   },
   "onboarding": {
     "welcome_title": "Find the sun in the Canaries",
-    "welcome_text": "We analyze historical weather data so you can check your chances of blue skies wherever you're traveling.",
-    "start_button": "Get Started"
+    "welcome_text": "We analyze historical weather data so you can check your chances of blue skies.",
+    "tagline": "Check the historical weather at your destination.",
+    "start_button": "Get Started",
+    "tile_analysis_label": "Analysis",
+    "tile_years_value": "10 years",
+    "tile_precision_label": "Precision"
   },
   "sun_chance": {
     "title": "What is Sun Chance?",
@@ -179,7 +185,9 @@
     "stabilityDesc_low": "In {{month}}, wind conditions are more variable. Consider flexible plans for wind-dependent activities.",
     "avgSpeed": "Avg. speed",
     "windRange": "Speed range",
-    "windyDays": "Days >20 km/h",
+    "windyDays": "Wind >20 km/h",
+    "daysText_one": "{{count}} day",
+    "daysText_other": "{{count}} days",
     "beaufort": {
       "calm": "Calm",
       "lightAir": "Light Air",
@@ -200,7 +208,8 @@
   },
   "rain": {
     "days_without_rain": "Days without rain",
-    "intensity_info": "Rainfall Characteristics",
+    "intensity_info": "Rainfall characteristics",
+    "basedOnMeasurements": "Based on 10 years of measurements",
     "avg_precip": "Avg. precipitation",
     "rainy_days_avg": "Rainy days in month",
     "of_days": "of {{total}}",
@@ -217,7 +226,7 @@
     "historical_context": "Historical Context",
     "historical_description": "Rain statistics for {{month}} calculated from measurements at {{station}} station over the years {{years}}.",
     "island_ranking_title": "Rain in the Canary Islands in {{month}}",
-    "island_ranking_month": "average precipitation from all AEMET stations"
+    "island_ranking_month": "rainfall collected from all AEMET stations"
   },
   "weather": {
     "sunny": "Sunny",

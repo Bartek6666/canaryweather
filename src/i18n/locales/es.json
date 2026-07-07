@@ -79,6 +79,8 @@
     "avgMin": "Prom. Mín",
     "avgWind": "Prom. Viento",
     "rainyDays": "Días lluviosos",
+    "windDetails": "Detalles del viento",
+    "rainDetails": "Detalles de lluvia",
     "daysUnit": "días",
     "nowSection": "Ahora",
     "last10Years": "Últimos 10 años",
@@ -155,8 +157,12 @@
   },
   "onboarding": {
     "welcome_title": "Encuentra el sol en Canarias",
-    "welcome_text": "Analizamos datos meteorológicos históricos para que puedas conocer las probabilidades de cielos azules en tu destino.",
-    "start_button": "Comenzar"
+    "welcome_text": "Analizamos datos meteorológicos históricos para que puedas conocer las probabilidades de cielos azules.",
+    "tagline": "Consulta el clima histórico de tu destino.",
+    "start_button": "Comenzar",
+    "tile_analysis_label": "Análisis",
+    "tile_years_value": "10 años",
+    "tile_precision_label": "Precisión"
   },
   "sun_chance": {
     "title": "¿Qué es Sun Chance?",
@@ -179,7 +185,9 @@
     "stabilityDesc_low": "En {{month}}, las condiciones del viento son más variables. Considera planes flexibles para actividades que dependan del viento.",
     "avgSpeed": "Vel. media",
     "windRange": "Rango de vel.",
-    "windyDays": "Días >20 km/h",
+    "windyDays": "Viento >20 km/h",
+    "daysText_one": "{{count}} día",
+    "daysText_other": "{{count}} días",
     "beaufort": {
       "calm": "Calma",
       "lightAir": "Ventolina",
@@ -200,7 +208,8 @@
   },
   "rain": {
     "days_without_rain": "Días sin lluvia",
-    "intensity_info": "Características de la Lluvia",
+    "intensity_info": "Características de la lluvia",
+    "basedOnMeasurements": "Basado en 10 años de mediciones",
     "avg_precip": "Precip. media",
     "rainy_days_avg": "Días de lluvia al mes",
     "of_days": "de {{total}}",
@@ -217,7 +226,7 @@
     "historical_context": "Contexto Histórico",
     "historical_description": "Estadísticas de lluvia para {{month}} calculadas a partir de mediciones en la estación {{station}} durante los años {{years}}.",
     "island_ranking_title": "Lluvia en las Islas Canarias en {{month}}",
-    "island_ranking_month": "precipitación media de todas las estaciones AEMET"
+    "island_ranking_month": "lluvia recogida de todas las estaciones AEMET"
   },
   "weather": {
     "sunny": "Soleado",

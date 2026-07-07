@@ -91,6 +91,8 @@
     "avgMin": "Średnia min",
     "avgWind": "Średni wiatr",
     "rainyDays": "Dni deszczowe",
+    "windDetails": "Szczegóły wiatru",
+    "rainDetails": "Szczegóły opadów",
     "daysUnit": "dni",
     "nowSection": "Teraz",
     "last10Years": "Ostatnie 10 lat",
@@ -197,7 +199,11 @@
     "stabilityDesc_low": "W {{month}} warunki wiatrowe są bardziej zmienne. Rozważ elastyczne plany dla aktywności zależnych od wiatru.",
     "avgSpeed": "Średnia prędkość",
     "windRange": "Zakres prędkości",
-    "windyDays": "Dni z wiatrem >20 km/h",
+    "windyDays": "Wiatr >20 km/h",
+    "daysText_one": "{{count}} dzień",
+    "daysText_few": "{{count}} dni",
+    "daysText_many": "{{count}} dni",
+    "daysText_other": "{{count}} dni",
     "beaufort": {
       "calm": "Cisza",
       "lightAir": "Powiew",
@@ -218,7 +224,8 @@
   },
   "rain": {
     "days_without_rain": "Dni bez deszczu",
-    "intensity_info": "Charakterystyka Opadów",
+    "intensity_info": "Charakterystyka opadów",
+    "basedOnMeasurements": "Na podstawie 10 lat pomiarów",
     "avg_precip": "Średnie opady",
     "rainy_days_avg": "Dni z deszczem w miesiącu",
     "of_days": "z {{total}}",
@@ -235,7 +242,7 @@
     "historical_context": "Kontekst Historyczny",
     "historical_description": "Statystyki opadów w {{month}} obliczone z pomiarów na stacji {{station}} w latach {{years}}.",
     "island_ranking_title": "Deszcz na Wyspach Kanaryjskich w {{month}}",
-    "island_ranking_month": "średnia opadów ze wszystkich stacji AEMET"
+    "island_ranking_month": "opady zebrane ze wszystkich stacji AEMET"
   },
   "weather": {
     "sunny": "Słonecznie",
@@ -281,8 +288,12 @@
   },
   "onboarding": {
     "welcome_title": "Znajdź słońce na Kanarach",
-    "welcome_text": "Analizujemy historyczne dane pogodowe, abyś mógł sprawdzić szanse na błękitne niebo w miejscu, do którego podróżujesz.",
-    "start_button": "Rozpocznij"
+    "welcome_text": "Analizujemy historyczne dane pogodowe, abyś mógł sprawdzić szanse na błękitne niebo.",
+    "tagline": "Sprawdź historyczną pogodę w miejscu, do którego podróżujesz.",
+    "start_button": "Rozpocznij",
+    "tile_analysis_label": "Analiza",
+    "tile_years_value": "10 lat",
+    "tile_precision_label": "Precyzja"
   },
   "sun_chance": {
     "title": "Czym jest Sun Chance?",

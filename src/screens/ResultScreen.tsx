@@ -163,7 +163,7 @@ const LiveWeatherCard = React.memo(function LiveWeatherCard({ data, isLoading, h
                   <MaterialCommunityIcons
                     name="weather-windy"
                     size={16}
-                    color="#FFFFFF"
+                    color={light.colors.primary}
                     style={styles.parameterIcon}
                   />
                 </View>
@@ -176,7 +176,7 @@ const LiveWeatherCard = React.memo(function LiveWeatherCard({ data, isLoading, h
                     <MaterialCommunityIcons
                       name="weather-windy-variant"
                       size={16}
-                      color={data.windGusts > 35 ? light.colors.warning : '#FFFFFF'}
+                      color={data.windGusts > 35 ? light.colors.warning : light.colors.primary}
                       style={styles.parameterIcon}
                     />
                   </View>
@@ -191,7 +191,7 @@ const LiveWeatherCard = React.memo(function LiveWeatherCard({ data, isLoading, h
                   <Ionicons
                     name="water-outline"
                     size={16}
-                    color="#FFFFFF"
+                    color={light.colors.primary}
                     style={styles.parameterIcon}
                   />
                 </View>
@@ -374,6 +374,8 @@ export default function ResultScreen({ navigation, route }: Props) {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef<any>(null);
+  // Y offset of the sun-chance gauge within the scroll content (for the month-select scroll loop)
+  const gaugeOffsetY = useRef(0);
 
   // Live weather state
   const [liveData, setLiveData] = useState<LiveWeatherData | null>(null);
@@ -405,14 +407,15 @@ export default function ResultScreen({ navigation, route }: Props) {
   // Weather discrepancy state (when nearby station shows different conditions)
   const [weatherDiscrepancy, setWeatherDiscrepancy] = useState<WeatherValidationResult | null>(null);
 
-  // Handle month selection with scroll to Sun Chance gauge
+  // Handle month selection — always scroll to the Sun Chance gauge so the month
+  // chips stay visible right below it (the "information loop")
   const handleMonthSelect = useCallback((month: number) => {
     setSelectedMonth(month);
-    // Scroll to top to show Sun Chance gauge (it's the first element)
     setTimeout(() => {
       if (scrollViewRef.current) {
         const scrollView = scrollViewRef.current.getScrollResponder?.() || scrollViewRef.current;
-        scrollView.scrollTo?.({ y: 0, animated: true });
+        // Small top margin so the gauge isn't glued to the header
+        scrollView.scrollTo?.({ y: Math.max(gaugeOffsetY.current - 24, 0), animated: true });
       }
     }, 150);
   }, []);
@@ -938,100 +941,7 @@ export default function ResultScreen({ navigation, route }: Props) {
           }
         >
 
-        {/* Sun Chance Gauge - show loading state or actual data, hide when offline with no data */}
-        {(isLoading || (sunChanceResult && sunChanceResult.total_days > 0)) && (
-          <SunChanceGauge
-            percentage={sunChanceResult?.sun_chance ?? 0}
-            confidence={sunChanceResult?.confidence ?? 'low'}
-            isLoading={isLoading}
-            onInfoPress={() => setShowSunChanceModal(true)}
-            selectedMonth={selectedMonth}
-          />
-        )}
-
-        {sunChanceResult && sunChanceResult.total_days > 0 && !isLoading && (
-          <View style={styles.statsInfo}>
-            <Text style={styles.statsText}>
-              {t('result.basedOnDays', {
-                station: sunChanceFallback?.name || station?.name
-              })}
-            </Text>
-          </View>
-        )}
-
-        {/* FIGMA: STYLE_TARGET — Temperature cards row (only when we have data) */}
-        {currentStats && currentStats.total_days > 0 && !isLoading && (
-          <View style={styles.tempCards}>
-            <GlassCard scheme="light" style={styles.tempCard} delay={200}>
-              <View style={styles.tempCardInner}>
-                <MaterialCommunityIcons name="thermometer-high" size={28} color={light.colors.tempHot} />
-                <Text style={styles.tempLabel}>{t('result.avgMax')}</Text>
-                <Text style={[styles.tempValue, styles.tempValueHigh]}>{currentStats.avg_tmax.toFixed(1)}°C</Text>
-              </View>
-            </GlassCard>
-            <GlassCard scheme="light" style={styles.tempCard} delay={300}>
-              <View style={styles.tempCardInner}>
-                <MaterialCommunityIcons name="thermometer-low" size={28} color={light.colors.tempCold} />
-                <Text style={styles.tempLabel}>{t('result.avgMin')}</Text>
-                <Text style={[styles.tempValue, styles.tempValueLow]}>{currentStats.avg_tmin.toFixed(1)}°C</Text>
-              </View>
-            </GlassCard>
-          </View>
-        )}
-
-        {/* Wind and Rain cards row (historical data - interpolated from nearest stations) */}
-        {interpolatedStats && interpolatedStats.stats.total_days > 0 && !isLoading && (
-          <View style={styles.tempCards}>
-            <ClickableGlassCard
-              style={styles.tempCard}
-              delay={350}
-              onPress={() => navigation.navigate('WindDetails', {
-                stationId,
-                month: selectedMonth,
-                stationName: station?.name || '',
-                averageSpeed: interpolatedStats.stats.avg_wind,
-                locationName: locationName,
-                island: station?.island || '',
-              })}
-            >
-              <View style={styles.tempCardInner}>
-                <MaterialCommunityIcons name="weather-windy" size={28} color={light.colors.cloud} />
-                <Text style={styles.tempLabel}>{t('result.avgWind')}</Text>
-                <Text style={[styles.tempValue, styles.tempValueWind]}>{interpolatedStats.stats.avg_wind} km/h</Text>
-                <Ionicons name="chevron-forward" size={14} color={light.colors.textMuted} style={styles.cardChevron} />
-              </View>
-            </ClickableGlassCard>
-            <ClickableGlassCard
-              style={styles.tempCard}
-              delay={400}
-              onPress={() => navigation.navigate('RainDetails', {
-                stationId,
-                month: selectedMonth,
-                stationName: station?.name || '',
-                locationName: locationName,
-                island: station?.island || '',
-              })}
-            >
-              <View style={styles.tempCardInner}>
-                <Ionicons name="umbrella-outline" size={28} color={light.colors.rain} />
-                <Text style={styles.tempLabel}>{t('result.rainyDays')}</Text>
-                <Text style={[styles.tempValue, styles.tempValueRain]}>{t('result.rainDaysText', { count: Math.round(interpolatedStats.stats.rain_days) })}</Text>
-                <Ionicons name="chevron-forward" size={14} color={light.colors.textMuted} style={styles.cardChevron} />
-              </View>
-            </ClickableGlassCard>
-          </View>
-        )}
-
-        {/* FIGMA: STYLE_TARGET — Month selector chips */}
-        <View style={styles.monthSelector}>
-          {MONTH_KEYS.map((monthKey, i) => (
-            <TouchableOpacity key={i} style={[styles.monthBtn, selectedMonth === i + 1 && styles.monthBtnActive]} onPress={() => handleMonthSelect(i + 1)}>
-              <Text style={[styles.monthBtnText, selectedMonth === i + 1 && styles.monthBtnTextActive]}>{t(`monthsShort.${monthKey}`)}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* ── NOW SECTION: current conditions ─────────────────────────────── */}
+        {/* ── 1. TERAZ: bieżąca pogoda + alerty ───────────────────────────── */}
         <View style={styles.nowSection}>
           <View style={styles.nowSectionHeader}>
             <Ionicons name="time-outline" size={14} color={light.colors.textMuted} />
@@ -1102,7 +1012,144 @@ export default function ResultScreen({ navigation, route }: Props) {
           </View>
         )}
 
-        {/* FIGMA: STYLE_TARGET — History section (year cards) */}
+        {/* ── 2. Wskaźnik słońca ───────────────────────────────────────────── */}
+        {(isLoading || (sunChanceResult && sunChanceResult.total_days > 0)) && (
+          <View onLayout={(e) => { gaugeOffsetY.current = e.nativeEvent.layout.y; }}>
+            <SunChanceGauge
+              percentage={sunChanceResult?.sun_chance ?? 0}
+              confidence={sunChanceResult?.confidence ?? 'low'}
+              isLoading={isLoading}
+              onInfoPress={() => setShowSunChanceModal(true)}
+              selectedMonth={selectedMonth}
+            />
+          </View>
+        )}
+
+        {/* ── 3. Selektor miesięcy (tuż pod wskaźnikiem — pętla informacyjna) ─ */}
+        <View style={styles.monthSelector}>
+          {MONTH_KEYS.map((monthKey, i) => (
+            <TouchableOpacity key={i} style={[styles.monthBtn, selectedMonth === i + 1 && styles.monthBtnActive]} onPress={() => handleMonthSelect(i + 1)}>
+              <Text style={[styles.monthBtnText, selectedMonth === i + 1 && styles.monthBtnTextActive]}>{t(`monthsShort.${monthKey}`)}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {sunChanceResult && sunChanceResult.total_days > 0 && !isLoading && (
+          <View style={styles.statsInfo}>
+            <Text style={styles.statsText}>
+              {t('result.basedOnDays', {
+                station: sunChanceFallback?.name || station?.name
+              })}
+            </Text>
+          </View>
+        )}
+
+        {/* ── 4. Statystyki: śr. max / śr. min / dni deszczowe ─────────────── */}
+        {currentStats && currentStats.total_days > 0 && !isLoading && (
+          <View style={styles.tempCards}>
+            <GlassCard scheme="light" style={styles.tempCard} delay={200}>
+              <View style={styles.tempCardInner}>
+                <MaterialCommunityIcons name="thermometer-high" size={28} color={light.colors.tempHot} />
+                <Text style={styles.tempLabel}>{t('result.avgMax')}</Text>
+                <Text style={[styles.tempValue, styles.tempValueHigh]} numberOfLines={1} adjustsFontSizeToFit>{currentStats.avg_tmax.toFixed(1)}°C</Text>
+              </View>
+            </GlassCard>
+            <GlassCard scheme="light" style={styles.tempCard} delay={300}>
+              <View style={styles.tempCardInner}>
+                <MaterialCommunityIcons name="thermometer-low" size={28} color={light.colors.tempCold} />
+                <Text style={styles.tempLabel}>{t('result.avgMin')}</Text>
+                <Text style={[styles.tempValue, styles.tempValueLow]} numberOfLines={1} adjustsFontSizeToFit>{currentStats.avg_tmin.toFixed(1)}°C</Text>
+              </View>
+            </GlassCard>
+            {interpolatedStats && interpolatedStats.stats.total_days > 0 && (
+              <GlassCard scheme="light" style={styles.tempCard} delay={400}>
+                <View style={styles.tempCardInner}>
+                  <MaterialCommunityIcons name="weather-rainy" size={28} color={light.colors.rain} />
+                  <Text style={styles.tempLabel}>{t('result.rainyDays')}</Text>
+                  <Text style={[styles.tempValue, styles.tempValueRain]} numberOfLines={1} adjustsFontSizeToFit>{t('result.rainDaysText', { count: Math.round(interpolatedStats.stats.rain_days) })}</Text>
+                </View>
+              </GlassCard>
+            )}
+          </View>
+        )}
+
+        {/* ── 5. Przyciski: szczegóły wiatru / opadów ──────────────────────── */}
+        {interpolatedStats && interpolatedStats.stats.total_days > 0 && !isLoading && (
+          <View style={styles.ctaSection}>
+            <ClickableGlassCard
+              style={styles.ctaButton}
+              delay={200}
+              onPress={() => navigation.navigate('WindDetails', {
+                stationId,
+                month: selectedMonth,
+                stationName: station?.name || '',
+                averageSpeed: interpolatedStats.stats.avg_wind,
+                locationName: locationName,
+                island: station?.island || '',
+              })}
+            >
+              <View style={styles.ctaButtonInner}>
+                <View style={styles.ctaLeft}>
+                  <View style={styles.ctaIconCircle}>
+                    <MaterialCommunityIcons name="weather-windy" size={22} color={light.colors.primary} />
+                  </View>
+                  <Text style={styles.ctaLabel}>{t('result.windDetails')}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={22} color={light.colors.textMuted} />
+              </View>
+            </ClickableGlassCard>
+            <ClickableGlassCard
+              style={styles.ctaButton}
+              delay={300}
+              onPress={() => navigation.navigate('RainDetails', {
+                stationId,
+                month: selectedMonth,
+                stationName: station?.name || '',
+                locationName: locationName,
+                island: station?.island || '',
+              })}
+            >
+              <View style={styles.ctaButtonInner}>
+                <View style={styles.ctaLeft}>
+                  <View style={[styles.ctaIconCircle, styles.ctaIconCircleRain]}>
+                    <Ionicons name="rainy" size={22} color={light.colors.rain} />
+                  </View>
+                  <Text style={styles.ctaLabel}>{t('result.rainDetails')}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={22} color={light.colors.textMuted} />
+              </View>
+            </ClickableGlassCard>
+          </View>
+        )}
+
+        {/* Podsumowanie miesiąca */}
+        {sunChanceResult && sunChanceResult.total_days > 0 && !isLoading && (
+          <GlassCard scheme="light" style={styles.summaryContainer} delay={200}>
+            <View style={styles.summaryInner}>
+              <View style={styles.summaryHeader}>
+                <Ionicons name="information-circle" size={20} color={light.colors.rain} />
+                <Text style={styles.summaryTitle}>{t('result.summary')}</Text>
+              </View>
+              <Text style={styles.summaryText}>{summary}</Text>
+            </View>
+          </GlassCard>
+        )}
+
+        {/* ── 5. Najsłoneczniejsze tygodnie ────────────────────────────────── */}
+        {bestWeeks.length > 0 && !isLoading && (
+          <View style={styles.bestTimeSection}>
+            <View style={styles.bestTimeHeader}>
+              <MaterialCommunityIcons name="trophy" size={22} color={light.colors.accent} />
+              <Text style={styles.bestTimeTitle}>{t('result.bestTimeToVisit')}</Text>
+            </View>
+            <Text style={styles.bestTimeSubtitle}>{t('result.top3Weeks')}</Text>
+            {bestWeeks.map((week, index) => (
+              <BestTimeCard key={week.weekStart} week={week} rank={index} delay={1000 + index * 100} />
+            ))}
+          </View>
+        )}
+
+        {/* ── 6. Historia: ostatnie 10 lat ─────────────────────────────────── */}
         {yearlyData.length > 0 && !isLoading && (
           <View style={styles.historySection}>
             <View style={styles.historyHeader}>
@@ -1118,33 +1165,6 @@ export default function ResultScreen({ navigation, route }: Props) {
                 </Text>
               </View>
             )}
-          </View>
-        )}
-
-        {/* FIGMA: STYLE_TARGET — Summary card (only show when we have actual data) */}
-        {sunChanceResult && sunChanceResult.total_days > 0 && !isLoading && (
-          <GlassCard scheme="light" style={styles.summaryContainer} delay={900}>
-            <View style={styles.summaryInner}>
-              <View style={styles.summaryHeader}>
-                <Ionicons name="information-circle" size={20} color={light.colors.rain} />
-                <Text style={styles.summaryTitle}>{t('result.summary')}</Text>
-              </View>
-              <Text style={styles.summaryText}>{summary}</Text>
-            </View>
-          </GlassCard>
-        )}
-
-        {/* FIGMA: STYLE_TARGET — Best time section (top 3 weeks) */}
-        {bestWeeks.length > 0 && !isLoading && (
-          <View style={styles.bestTimeSection}>
-            <View style={styles.bestTimeHeader}>
-              <MaterialCommunityIcons name="trophy" size={22} color={light.colors.accent} />
-              <Text style={styles.bestTimeTitle}>{t('result.bestTimeToVisit')}</Text>
-            </View>
-            <Text style={styles.bestTimeSubtitle}>{t('result.top3Weeks')}</Text>
-            {bestWeeks.map((week, index) => (
-              <BestTimeCard key={week.weekStart} week={week} rank={index} delay={1000 + index * 100} />
-            ))}
           </View>
         )}
 
@@ -1216,13 +1236,32 @@ const styles = StyleSheet.create({
   // FIGMA: STYLE_TARGET — Temperature card (glassmorphism)
   tempCard: { flex: 1 },
   tempCardInner: { padding: spacing.md, alignItems: 'center' },
-  cardChevron: { position: 'absolute', top: spacing.sm, right: spacing.sm },
   tempLabel: { ...typography.label, color: light.colors.textSecondary, marginTop: spacing.sm, textAlign: 'center', flexShrink: 1 },
-  tempValue: { ...typography.value, fontFamily: fonts.extrabold, marginTop: spacing.xs },
+  tempValue: { ...typography.value, fontSize: 18, lineHeight: 24, fontFamily: fonts.extrabold, marginTop: spacing.xs },
   tempValueHigh: { color: light.colors.tempHot },
   tempValueLow: { color: light.colors.tempCold },
-  tempValueWind: { color: light.colors.cloud },
   tempValueRain: { color: light.colors.rain },
+  // ── CTA buttons (Szczegóły wiatru / opadów) ──
+  ctaSection: { gap: spacing.sm },
+  ctaButton: {},
+  ctaButtonInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+  },
+  ctaLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  ctaIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: light.colors.primarySoft,
+  },
+  ctaIconCircleRain: { backgroundColor: 'rgba(19, 133, 255, 0.1)' },
+  ctaLabel: { fontSize: 16, fontFamily: fonts.semibold, color: light.colors.textPrimary },
   nowSection: { marginTop: spacing.lg },
   nowSectionHeader: {
     flexDirection: 'row',
@@ -1478,7 +1517,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   parameterIcon: {
-    opacity: 0.6,
+    opacity: 0.9,
   },
   // Figma: Weather icon section (right side) - label aligned with Humidity
   liveWeatherSection: {
