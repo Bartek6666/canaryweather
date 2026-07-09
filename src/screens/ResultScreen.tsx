@@ -856,9 +856,11 @@ export default function ResultScreen({ navigation, route }: Props) {
       windText = t('result.summaryWindStrong', { speed: avgWind.toFixed(0) });
     }
 
-    // Build the detailed summary with proper pluralization for rain days
-    const rainDaysCount = Math.round(rainDays);
-    const rainDaysText = t('result.rainDaysText', { count: rainDaysCount });
+    // Build the detailed summary with proper pluralization for rain days.
+    // Show "< 1 day" for very dry months instead of a misleading rounded "0".
+    const rainDaysText = rainDays > 0 && rainDays < 1
+      ? t('result.rainDaysLessThanOne')
+      : t('result.rainDaysText', { count: Math.round(rainDays) });
 
     const detailedSummary = t('result.summaryDetailed', {
       month: monthName,
@@ -1066,7 +1068,7 @@ export default function ResultScreen({ navigation, route }: Props) {
                 <View style={styles.tempCardInner}>
                   <MaterialCommunityIcons name="weather-rainy" size={28} color={light.colors.rain} />
                   <Text style={styles.tempLabel}>{t('result.rainyDays')}</Text>
-                  <Text style={[styles.tempValue, styles.tempValueRain]} numberOfLines={1} adjustsFontSizeToFit>{t('result.rainDaysText', { count: Math.round(interpolatedStats.stats.rain_days) })}</Text>
+                  <Text style={[styles.tempValue, styles.tempValueRain]} numberOfLines={1} adjustsFontSizeToFit>{interpolatedStats.stats.rain_days > 0 && interpolatedStats.stats.rain_days < 1 ? t('result.rainDaysLessThanOne') : t('result.rainDaysText', { count: Math.round(interpolatedStats.stats.rain_days) })}</Text>
                 </View>
               </GlassCard>
             )}

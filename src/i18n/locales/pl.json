@@ -115,6 +115,7 @@
     "rainDaysText_few": "{{count}} dni",
     "rainDaysText_many": "{{count}} dni",
     "rainDaysText_other": "{{count}} dni",
+    "rainDaysLessThanOne": "< 1 dnia",
     "summaryWindCalm": "Wiatr jest słaby ({{speed}} km/h)",
     "summaryWindModerate": "Wiatr jest umiarkowany ({{speed}} km/h)",
     "summaryWindStrong": "Wiatr jest silny ({{speed}} km/h)",
@@ -296,8 +297,13 @@
     "tile_precision_label": "Precyzja"
   },
   "sun_chance": {
-    "title": "Czym jest Sun Chance?",
-    "description": "To wskaźnik oparty na twardych danych. Analizujemy pomiary z ostatnich 10 lat dla tej konkretnej lokalizacji i godziny, aby określić realne prawdopodobieństwo bezchmurnego nieba. To statystyka historyczna, która uzupełnia prognozę live.",
+    "title": "Wskaźnik słońca",
+    "what_title": "Czym jest?",
+    "what_text": "Pokazuje, jak często w wybranym miesiącu występują słoneczne dni — na podstawie prawdziwych pomiarów z ostatnich 10 lat.",
+    "how_title": "Jak to liczymy?",
+    "how_text": "Sprawdzamy wszystkie dni danego miesiąca z ostatnich 10 lat. Liczymy dni słoneczne (co najmniej 6 godzin słońca) i dni, kiedy nie padał deszcz.",
+    "note_title": "To nie prognoza",
+    "note_text": "To jest statystyka historyczna, a nie prognoza na konkretny dzień — najlepiej działa z prognozą na żywo. Brakujące dni to nie zawsze deszcz — bywają to dni pochmurne, ale bez opadów.",
     "close": "Rozumiem"
   },
   "alerts": {

@@ -101,6 +101,7 @@
     "summaryDetailed": "En {{month}}, {{name}} disfruta del sol el {{sunChance}}% de los días. La temperatura media máxima es de {{tmax}}°C y la mínima de {{tmin}}°C. {{windText}}, con lluvia una media de {{rainDaysText}} al mes.",
     "rainDaysText_one": "{{count}} día",
     "rainDaysText_other": "{{count}} días",
+    "rainDaysLessThanOne": "< 1 día",
     "summaryWindCalm": "Los vientos son suaves ({{speed}} km/h)",
     "summaryWindModerate": "Los vientos son moderados ({{speed}} km/h)",
     "summaryWindStrong": "Los vientos son fuertes ({{speed}} km/h)",
@@ -165,8 +166,13 @@
     "tile_precision_label": "Precisión"
   },
   "sun_chance": {
-    "title": "¿Qué es Sun Chance?",
-    "description": "Es un indicador basado en datos reales. Analizamos las mediciones de los últimos 10 años para esta ubicación y hora específicas para determinar la probabilidad real de cielos despejados. Son estadísticas históricas que complementan el pronóstico en vivo.",
+    "title": "Probabilidad de sol",
+    "what_title": "¿Qué es?",
+    "what_text": "Muestra con qué frecuencia hay días soleados en el mes elegido — según mediciones reales de los últimos 10 años.",
+    "how_title": "Cómo lo calculamos",
+    "how_text": "Revisamos todos los días de ese mes de los últimos 10 años. Contamos los días soleados (al menos 6 horas de sol) y los días sin lluvia.",
+    "note_title": "No es un pronóstico",
+    "note_text": "Son datos históricos, no un pronóstico para un día concreto — funciona mejor junto al pronóstico en vivo. Los días que no son soleados no siempre son lluviosos — pueden ser nublados pero secos.",
     "close": "Entendido"
   },
   "wind": {

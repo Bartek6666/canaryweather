@@ -13,7 +13,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { spacing } from '../constants/theme';
+import { spacing, fonts, light } from '../constants/theme';
 
 const CALIMA_ICON_COLOR = '#FF8C00';
 
@@ -48,8 +48,8 @@ export function CalimaInfoModal({ visible, onClose }: CalimaInfoModalProps) {
 
         <View style={[styles.modalContent, { marginTop: insets.top + 20, marginBottom: insets.bottom + 20 }]}>
           <BlurView
-            intensity={80}
-            tint="dark"
+            intensity={40}
+            tint="light"
             style={[StyleSheet.absoluteFill, styles.modalBlur]}
           />
           <View style={styles.modalOverlay} />
@@ -64,7 +64,7 @@ export function CalimaInfoModal({ visible, onClose }: CalimaInfoModalProps) {
               style={styles.closeButton}
               onPress={onClose}
             >
-              <Ionicons name="close" size={24} color="rgba(255, 255, 255, 0.8)" />
+              <Ionicons name="close" size={24} color={light.colors.textMuted} />
             </TouchableOpacity>
           </View>
 
@@ -126,7 +126,7 @@ export function CalimaInfoModal({ visible, onClose }: CalimaInfoModalProps) {
 const styles = StyleSheet.create({
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(15, 30, 55, 0.35)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.lg,
@@ -137,14 +137,15 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255, 140, 0, 0.3)',
+    borderColor: light.colors.border,
+    ...light.cardShadow,
   },
   modalBlur: {
     borderRadius: 20,
   },
   modalOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(30, 30, 30, 0.85)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 20,
   },
   modalHeader: {
@@ -153,7 +154,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    borderBottomColor: 'rgba(0, 0, 0, 0.08)',
   },
   modalTitleRow: {
     flexDirection: 'row',
@@ -161,16 +162,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   modalTitle: {
+    fontFamily: fonts.bold,
     fontSize: 20,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    color: light.colors.textPrimary,
     marginLeft: spacing.sm,
   },
   closeButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -178,9 +179,9 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   modalText: {
+    fontFamily: fonts.regular,
     fontSize: 15,
-    fontWeight: '400',
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: light.colors.textSecondary,
     lineHeight: 22,
     marginBottom: spacing.lg,
   },
@@ -193,22 +194,22 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   sectionTitle: {
+    fontFamily: fonts.semibold,
     fontSize: 17,
-    fontWeight: '600',
-    color: '#FFFFFF',
+    color: light.colors.textPrimary,
     marginLeft: spacing.sm,
   },
   subsectionTitle: {
+    fontFamily: fonts.semibold,
     fontSize: 15,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: light.colors.textPrimary,
     marginTop: spacing.md,
     marginBottom: spacing.xs,
   },
   modalList: {
+    fontFamily: fonts.regular,
     fontSize: 14,
-    fontWeight: '400',
-    color: 'rgba(255, 255, 255, 0.85)',
+    color: light.colors.textSecondary,
     lineHeight: 24,
     paddingLeft: spacing.xs,
   },

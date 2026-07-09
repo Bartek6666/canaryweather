@@ -14,32 +14,41 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { spacing, colors } from '../constants/theme';
+import { spacing, fonts, light } from '../constants/theme';
 import { CoastalAlert, AlertSeverity } from '../types';
 import { formatAlertDateTime } from '../utils/dateUtils';
 import { translateAlertDescription } from '../services/translationService';
 
 export type AlertType = 'coastal' | 'wind' | 'snow';
 
-// Severity-specific colors
+// Severity-specific colors (light theme) — mirrors GenericAlertCard.
+// icon: solid badge colour, text: readable dark tone, bg/border: soft tint.
 const SEVERITY_CONFIG: Record<AlertSeverity, {
-  color: string;
-  bgColor: string;
+  icon: string;
+  text: string;
+  bg: string;
+  border: string;
   labelKey: string;
 }> = {
   yellow: {
-    color: '#FFCC00',
-    bgColor: 'rgba(255, 204, 0, 0.15)',
+    icon: '#F5B800',
+    text: '#B45309',
+    bg: 'rgba(255, 204, 0, 0.12)',
+    border: 'rgba(255, 204, 0, 0.4)',
     labelKey: 'alerts.severityYellow',
   },
   orange: {
-    color: '#FF8C00',
-    bgColor: 'rgba(255, 140, 0, 0.15)',
+    icon: '#FF8C00',
+    text: '#C2410C',
+    bg: 'rgba(255, 140, 0, 0.12)',
+    border: 'rgba(255, 140, 0, 0.4)',
     labelKey: 'alerts.severityOrange',
   },
   red: {
-    color: '#FF3B30',
-    bgColor: 'rgba(255, 59, 48, 0.15)',
+    icon: '#FF3B30',
+    text: '#B91C1C',
+    bg: 'rgba(255, 59, 48, 0.12)',
+    border: 'rgba(255, 59, 48, 0.4)',
     labelKey: 'alerts.severityRed',
   },
 };
@@ -135,8 +144,8 @@ export function AlertDetailModal({ visible, alert, alertType = 'coastal', onClos
 
         <View style={[styles.modalContent, { marginTop: insets.top + 40, marginBottom: insets.bottom + 40 }]}>
           <BlurView
-            intensity={80}
-            tint="dark"
+            intensity={40}
+            tint="light"
             style={[StyleSheet.absoluteFill, styles.modalBlur]}
           />
           <View style={styles.modalOverlay} />
@@ -147,23 +156,23 @@ export function AlertDetailModal({ visible, alert, alertType = 'coastal', onClos
               <MaterialCommunityIcons
                 name={typeConfig.icon}
                 size={28}
-                color={severityConfig.color}
+                color={severityConfig.icon}
               />
-              <Text style={[styles.title, { color: severityConfig.color }]}>
+              <Text style={[styles.title, { color: severityConfig.text }]}>
                 {t(typeConfig.titleKey)}
               </Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <Ionicons name="close" size={22} color="rgba(255, 255, 255, 0.7)" />
+              <Ionicons name="close" size={22} color={light.colors.textMuted} />
             </TouchableOpacity>
           </View>
 
           {/* Content */}
           <View style={styles.content}>
             {/* Severity Badge */}
-            <View style={[styles.severityBadge, { backgroundColor: severityConfig.bgColor, borderColor: severityConfig.color }]}>
-              <Ionicons name="warning" size={16} color={severityConfig.color} />
-              <Text style={[styles.severityText, { color: severityConfig.color }]}>
+            <View style={[styles.severityBadge, { backgroundColor: severityConfig.bg, borderColor: severityConfig.border }]}>
+              <Ionicons name="warning" size={16} color={severityConfig.icon} />
+              <Text style={[styles.severityText, { color: severityConfig.text }]}>
                 {t(severityConfig.labelKey)}
               </Text>
             </View>
@@ -172,7 +181,7 @@ export function AlertDetailModal({ visible, alert, alertType = 'coastal', onClos
             <View style={styles.descriptionSection}>
               {isTranslating ? (
                 <View style={styles.loadingContainer}>
-                  <ActivityIndicator size="small" color={colors.primary} />
+                  <ActivityIndicator size="small" color={light.colors.primary} />
                 </View>
               ) : (
                 <Text style={styles.descriptionText}>
@@ -183,13 +192,13 @@ export function AlertDetailModal({ visible, alert, alertType = 'coastal', onClos
 
             {/* Location */}
             <View style={styles.infoRow}>
-              <Ionicons name="location" size={22} color={colors.rain} />
+              <Ionicons name="location" size={22} color={light.colors.rain} />
               <Text style={styles.infoText}>{alert.areaName}</Text>
             </View>
 
             {/* Time */}
             <View style={styles.infoRow}>
-              <Ionicons name="time" size={22} color={colors.primary} />
+              <Ionicons name="time" size={22} color={light.colors.primary} />
               <Text style={styles.infoText}>{timeRange}</Text>
             </View>
 
@@ -202,7 +211,7 @@ export function AlertDetailModal({ visible, alert, alertType = 'coastal', onClos
 
           {/* Close Button */}
           <View style={styles.buttonContainer}>
-            <TouchableOpacity style={[styles.button, { backgroundColor: severityConfig.color }]} onPress={onClose}>
+            <TouchableOpacity style={styles.button} onPress={onClose}>
               <Text style={styles.buttonText}>{t('alerts.close')}</Text>
             </TouchableOpacity>
           </View>
@@ -215,7 +224,7 @@ export function AlertDetailModal({ visible, alert, alertType = 'coastal', onClos
 const styles = StyleSheet.create({
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    backgroundColor: 'rgba(15, 30, 55, 0.35)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.lg,
@@ -225,14 +234,15 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: light.colors.border,
+    ...light.cardShadow,
   },
   modalBlur: {
     borderRadius: 24,
   },
   modalOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(25, 25, 30, 0.9)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 24,
   },
   header: {
@@ -249,14 +259,14 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   title: {
+    fontFamily: fonts.bold,
     fontSize: 22,
-    fontWeight: '700',
   },
   closeButton: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -276,8 +286,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   severityText: {
+    fontFamily: fonts.semibold,
     fontSize: 14,
-    fontWeight: '600',
   },
   descriptionSection: {
     marginBottom: spacing.lg,
@@ -287,10 +297,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   descriptionText: {
-    fontSize: 17,
-    fontWeight: '500',
-    color: '#FFFFFF',
-    lineHeight: 26,
+    fontFamily: fonts.medium,
+    fontSize: 16,
+    color: light.colors.textPrimary,
+    lineHeight: 24,
   },
   infoRow: {
     flexDirection: 'row',
@@ -299,20 +309,20 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   infoText: {
+    fontFamily: fonts.medium,
     fontSize: 15,
-    fontWeight: '500',
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: light.colors.textSecondary,
     flex: 1,
   },
   divider: {
     height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(0, 0, 0, 0.08)',
     marginVertical: spacing.md,
   },
   sourceText: {
+    fontFamily: fonts.regular,
     fontSize: 12,
-    fontWeight: '400',
-    color: 'rgba(255, 255, 255, 0.4)',
+    color: light.colors.textMuted,
     textAlign: 'center',
   },
   buttonContainer: {
@@ -323,10 +333,11 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
+    backgroundColor: light.colors.primary,
   },
   buttonText: {
+    fontFamily: fonts.bold,
     fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
+    color: '#FFFFFF',
   },
 });

@@ -421,7 +421,9 @@ export async function getMonthlyStats(stationId: string): Promise<MonthlyStats[]
     // Calculate number of unique years to get average rain days per year
     const uniqueYears = new Set(monthData.map((d) => new Date(d.date).getFullYear()));
     const yearsCount = uniqueYears.size || 1;
-    const rainDaysAvg = Math.round(rainDaysTotal / yearsCount);
+    // Keep 1 decimal so the UI can show "< 1 day" instead of a misleading "0"
+    // for very dry months (e.g. Maspalomas in July ≈ 0.3 rainy days).
+    const rainDaysAvg = Math.round((rainDaysTotal / yearsCount) * 10) / 10;
 
     const sunnyDays = monthData.filter(
       (d) => d.sol !== null && d.sol > MIN_SUN_HOURS && (d.precip === null || d.precip <= MAX_PRECIP)
@@ -1275,7 +1277,7 @@ export async function calculateInterpolatedMonthlyStats(
     avg_sol: Math.round(interpolatedAvgSol * 10) / 10,
     avg_wind: Math.round(interpolatedAvgWind * 10) / 10,
     sun_chance: Math.round(interpolatedSunChance),
-    rain_days: Math.round(interpolatedRainDays),
+    rain_days: Math.round(interpolatedRainDays * 10) / 10,
     total_days: Math.round(totalDays / validResults.length),
   };
 

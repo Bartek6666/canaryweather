@@ -101,6 +101,7 @@
     "summaryDetailed": "Im {{month}} genießt {{name}} an {{sunChance}}% der Tage Sonnenschein. Die höchste Durchschnittstemperatur beträgt {{tmax}}°C und die niedrigste {{tmin}}°C. {{windText}}, mit durchschnittlich {{rainDaysText}} pro Monat.",
     "rainDaysText_one": "{{count}} Regentag",
     "rainDaysText_other": "{{count}} Regentagen",
+    "rainDaysLessThanOne": "< 1 Tag",
     "summaryWindCalm": "Die Winde sind schwach ({{speed}} km/h)",
     "summaryWindModerate": "Die Winde sind mäßig ({{speed}} km/h)",
     "summaryWindStrong": "Die Winde sind stark ({{speed}} km/h)",
@@ -165,8 +166,13 @@
     "tile_precision_label": "Präzision"
   },
   "sun_chance": {
-    "title": "Was ist Sun Chance?",
-    "description": "Es ist ein Indikator basierend auf harten Daten. Wir analysieren Messungen der letzten 10 Jahre für diesen spezifischen Ort und diese Uhrzeit, um die tatsächliche Wahrscheinlichkeit eines klaren Himmels zu bestimmen. Es sind historische Statistiken, die die Live-Vorhersage ergänzen.",
+    "title": "Sonnen-Chance",
+    "what_title": "Was ist das?",
+    "what_text": "Sie zeigt, wie oft im gewählten Monat sonnige Tage vorkommen — basierend auf echten Messungen der letzten 10 Jahre.",
+    "how_title": "Wie wir das berechnen",
+    "how_text": "Wir prüfen jeden Tag dieses Monats der letzten 10 Jahre. Wir zählen sonnige Tage (mindestens 6 Stunden Sonne) und Tage ohne Regen.",
+    "note_title": "Keine Vorhersage",
+    "note_text": "Das sind historische Daten, keine Vorhersage für einen bestimmten Tag — am besten zusammen mit der Live-Vorhersage. Nicht sonnige Tage sind nicht immer regnerisch — sie können bewölkt, aber trocken sein.",
     "close": "Verstanden"
   },
   "wind": {

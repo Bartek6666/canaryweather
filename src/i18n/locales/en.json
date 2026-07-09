@@ -101,6 +101,7 @@
     "summaryDetailed": "In {{month}}, {{name}} enjoys sunshine {{sunChance}}% of the time. The highest average temperature is {{tmax}}°C and the lowest is {{tmin}}°C. {{windText}}, with rain on average {{rainDaysText}} per month.",
     "rainDaysText_one": "{{count}} day",
     "rainDaysText_other": "{{count}} days",
+    "rainDaysLessThanOne": "< 1 day",
     "summaryWindCalm": "Winds are light ({{speed}} km/h)",
     "summaryWindModerate": "Winds are moderate ({{speed}} km/h)",
     "summaryWindStrong": "Winds are strong ({{speed}} km/h)",
@@ -165,8 +166,13 @@
     "tile_precision_label": "Precision"
   },
   "sun_chance": {
-    "title": "What is Sun Chance?",
-    "description": "It's an indicator based on hard data. We analyze measurements from the last 10 years for this specific location and hour to determine the real probability of clear skies. It's historical statistics complementing the live forecast.",
+    "title": "Sun Chance",
+    "what_title": "What is it?",
+    "what_text": "It shows how often sunny days occur in the selected month — based on real measurements from the last 10 years.",
+    "how_title": "How we calculate it",
+    "how_text": "We look at every day of that month over the last 10 years. We count sunny days (at least 6 hours of sunshine) and days without rain.",
+    "note_title": "It's not a forecast",
+    "note_text": "This is historical data, not a forecast for a specific day — it works best together with the live forecast. Days that aren't sunny aren't always rainy — they can be cloudy but dry.",
     "close": "Got it"
   },
   "wind": {
