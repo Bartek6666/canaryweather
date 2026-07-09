@@ -4,6 +4,65 @@ Ten plik zawiera notatki z implementacji i decyzji technicznych. Sprawdzaj go na
 
 ---
 
+## 2026-07-10: Fix — fałszywy „lekki deszcz" na karcie LIVE (WeatherAPI kod 1063)
+
+Branch `redesign`. Zgłoszenie: Las Palmas (Gran Canaria) — karta live pokazywała „lekki
+deszcz", a w rzeczywistości była noc, lekkie chmury i księżyc (potwierdzone innymi serwisami).
+
+### Diagnoza (dane realne z WeatherAPI)
+Dla Las Palmas WeatherAPI zwracał: `code 1063` („Patchy rain **nearby**"), `precip_mm 0.01`,
+`cloud 25%`, `is_day 0`. Czyli deszcz „w okolicy", ale w punkcie praktycznie 0 opadów i tylko
+25% chmur. `mapWeatherAPICode` wrzucał 1063 do worka „lekki deszcz" (`rainy`/`lightRain`) i
+**ignorował własne pola WeatherAPI `precip_mm` oraz `cloud`**. (Stara walidacja krzyżowa
+łapiąca to zjawisko została usunięta w refaktorze 2026-03-25 — patrz niżej.)
+
+### Poprawka (`weatherService.ts`, wąska, wewnątrz samego WeatherAPI)
+- Dodano pole `precip_mm` do `WeatherAPIResponse.current`.
+- `mapWeatherAPICode(code, isNight, precipMm?, cloud?)` — nowe parametry. Dla „lekkich/
+  przelotnych" kodów `LIGHT_PATCHY_RAIN_CODES = [1063,1150,1153,1168,1171,1180,1183]`:
+  jeśli `precipMm < NEGLIGIBLE_PRECIP_MM (0.1)` → NIE pokazuj deszczu, klasyfikuj wg `cloud`:
+  `cloud ≥ 70` → `cloudy/overcast`, inaczej → `partly-sunny/partlyCloudy` (dzień) lub
+  `partly-cloudy-night/partlyCloudyNight` (noc). Cięższe kody deszczu bez zmian.
+- `fetchWeatherAPICondition` przekazuje `precip_mm` i `cloud`; log rozszerzony o precip/cloud
+  + osobny log `Correcting false rain …` gdy korekta zadziała.
+- **Świadomy kompromis:** prawdziwa śladowa mżawka (<0,1 mm) pokaże się jako „częściowe
+  zachmurzenie", nie mżawka. Dla userów (planują wyjazd) fałszywy „deszcz" jest gorszy.
+- **Dlaczego nie przez AEMET:** użyto własnego pola WeatherAPI — bez lagu i chaosu wielu
+  źródeł, przez które usunięto starą `prioritizeWeatherCondition` (2026-03-25).
+
+### Weryfikacja
+- `npx tsc --noEmit` czysto. Klucze i18n `partlyCloudyNight/partlyCloudy/overcast/clearNight`
+  istnieją w 4 językach.
+- Symulacja na żywych danych Las Palmas → `partly-cloudy-night` (księżyc zza chmur). ✓
+
+### Etykieta „pewności" wskaźnika słońca → tier wg wielkości % (`weatherService.ts` + i18n + `SunChanceGauge`)
+Zgłoszenie: Las Palmas/lipiec pokazuje 54% i etykietę „Niska pewność" — user uważa, że 54%
+to raczej „średnia". **Weryfikacja danych: 54% jest PRAWDZIWE** — stacja C658L, lipiec 10 lat
+= 93 dni, wszystkie z danymi `sol`; dni z `sol>6h` i bez deszczu = 50/93 = 54%. To NIE deszcz
+(88% dni suchych), tylko nasłonecznienie: średnia lipca **6,1 h** (mediana 6,5 h), 46% dni
+≤6 h — kanaryjska „panza de burro" (poranna warstwa chmur nad NE wybrzeżem).
+- Stara „pewność" = odległość od 50% (54% → 4 pkt → „niska"). Statystycznie OK, ale słowo
+  „pewność" myli usera (czyta jak ocenę wielkości). Decyzja usera: **progi wg wielkości %**.
+- Zmiana w `calculateSunChance` (l. ~218): `sunChance >= 70 → high`, `>= 45 → medium`,
+  reszta `low`. 54% → medium. (Deszcz `calculateRainStats` i wiatr — NIETKNIĘTE, liczą inaczej.)
+- **PUŁAPKA:** `RainDetailsScreen` używa TYCH SAMYCH kluczy i18n `result.confidence{High,Medium,
+  Low}` co dawniej słońce. Dlatego NIE zmieniano tych wartości — dodano **nowe** klucze
+  `result.sunChanceLevel{High,Medium,Low}` (4 języki: pl „Duża/Średnia/Mała szansa",
+  en High/Medium/Low chance, es Alta/media/Baja probabilidad, de Hohe/Mittlere/Geringe Chance)
+  i tylko `SunChanceGauge` przełączono na nie.
+- (Weryfikacja: stare `confidence*` istnieją we WSZYSTKICH 4 językach — używa ich
+  `RainDetailsScreen`. Wcześniejsze podejrzenie „luki na en/es/de" było fałszywym
+  negatywem grepa; nic tam nie brakuje.)
+
+### Ikony nocne na jasnoniebieskie (`WeatherIcon.tsx`)
+Na życzenie: ikony nocne (`clear-night` = księżyc, `partly-cloudy-night` = księżyc z chmurą)
+były złoto-żółte (`MOON_FILL '#E0A82E'`, glow srebrny). Zmienione na jasny błękit:
+`MOON_FILL → '#38BDF8'` (sky blue), `MOON_COLOR (glow) → '#7DD3FC'`. Oba stałe używane
+wyłącznie przez ikony nocne. Deszcz w nocy bez zmian — `rainy` już jest niebieski (`#1385FF`),
+osobnej ikony noc+deszcz nie ma.
+
+---
+
 ## 2026-07-09 (b): Redesign „Sunly" — LocationPrompt na jasny motyw + porządki
 
 Branch `redesign`. Kontynuacja po `7a0cac1`.

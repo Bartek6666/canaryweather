@@ -15,14 +15,14 @@ interface WeatherIconConfig {
 
 // Sun color constant - warm yellow (glow)
 const SUN_COLOR = '#FFCC00';
-// Moon color constant - soft silver/blue (glow)
-const MOON_COLOR = '#E8E8F0';
+// Moon color constant - light blue glow for night icons
+const MOON_COLOR = '#7DD3FC';
 
 // ─── LIGHT-THEME FILL COLOURS ────────────────────────────────────────────────
 // Icons sit on a soft light-blue background, so fills must be saturated/dark
 // enough to stay visible (white/silver from the old dark theme disappeared).
 const SUN_FILL = '#F59E0B';   // amber (matches the Stitch design sun)
-const MOON_FILL = '#E0A82E';  // warm gold crescent, readable on light blue
+const MOON_FILL = '#38BDF8';  // light sky blue for night icons (moon / moon+cloud)
 const CLOUD_FILL = '#6B7280'; // slate grey for clouds/fog
 
 const WEATHER_ICON_MAP: Record<WeatherCondition, WeatherIconConfig> = {

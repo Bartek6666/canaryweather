@@ -212,17 +212,16 @@ export async function calculateSunChance(
 
   const sunChance = totalDays > 0 ? Math.round((sunnyDays / totalDays) * 100) : 0;
 
-  // Determine confidence based on percentage value (same as rain)
-  // High confidence when result is far from 50% (clear prediction)
-  // Low confidence when close to 50% (uncertain)
+  // Sun-chance level tier based on the percentage magnitude (how strong the sun outlook is).
+  // A trip planner reads this as "how likely is sun", so higher % = better tier.
+  // (This differs from the rain stat's confidence, which measures distance from a 50% coin-flip.)
   let confidence: 'high' | 'medium' | 'low';
-  const distanceFrom50 = Math.abs(sunChance - 50);
-  if (distanceFrom50 >= 25) {
-    confidence = 'high'; // <= 25% or >= 75%
-  } else if (distanceFrom50 >= 10) {
-    confidence = 'medium'; // 26-40% or 60-74%
+  if (sunChance >= 70) {
+    confidence = 'high';
+  } else if (sunChance >= 45) {
+    confidence = 'medium';
   } else {
-    confidence = 'low'; // 41-59%
+    confidence = 'low';
   }
 
   return {
@@ -2122,6 +2121,7 @@ interface WeatherAPIResponse {
     wind_kph: number;
     gust_kph: number;
     cloud: number;
+    precip_mm: number;
     is_day: number;
     condition: {
       text: string;
@@ -2134,12 +2134,35 @@ interface WeatherAPIResponse {
  * Maps WeatherAPI condition code to our internal WeatherCondition
  * WeatherAPI codes: https://www.weatherapi.com/docs/weather_conditions.json
  */
-function mapWeatherAPICode(code: number, isNight: boolean): { condition: WeatherCondition; labelKey: string } {
+// Below this WeatherAPI precip reading (mm) we treat it as "not actually raining"
+const NEGLIGIBLE_PRECIP_MM = 0.1;
+// Light/patchy rain codes that frequently signal "nearby" rain rather than rain at the point
+const LIGHT_PATCHY_RAIN_CODES = [1063, 1150, 1153, 1168, 1171, 1180, 1183];
+
+function mapWeatherAPICode(
+  code: number,
+  isNight: boolean,
+  precipMm?: number,
+  cloud?: number
+): { condition: WeatherCondition; labelKey: string } {
   // Clear/Sunny
   if (code === 1000) {
     return isNight
       ? { condition: 'clear-night', labelKey: 'clearNight' }
       : { condition: 'sunny', labelKey: 'clearSky' };
+  }
+
+  // Correction: WeatherAPI's light/"patchy rain nearby" codes often report no actual
+  // precipitation at the location. When its own precip reading is negligible, classify by
+  // cloud cover instead of showing false rain (e.g. Las Palmas: code 1063, precip 0.01mm,
+  // cloud 25% at night → moon behind light clouds, not "light rain").
+  if (LIGHT_PATCHY_RAIN_CODES.includes(code) && precipMm !== undefined && precipMm < NEGLIGIBLE_PRECIP_MM) {
+    if (cloud !== undefined && cloud >= 70) {
+      return { condition: 'cloudy', labelKey: 'overcast' };
+    }
+    return isNight
+      ? { condition: 'partly-cloudy-night', labelKey: 'partlyCloudyNight' }
+      : { condition: 'partly-sunny', labelKey: 'partlyCloudy' };
   }
 
   // Partly cloudy
@@ -2249,9 +2272,17 @@ async function fetchWeatherAPICondition(lat: number, lon: number): Promise<OpenM
     }
 
     const isNight = data.current.is_day === 0;
-    const { condition, labelKey } = mapWeatherAPICode(data.current.condition.code, isNight);
+    const { condition, labelKey } = mapWeatherAPICode(
+      data.current.condition.code,
+      isNight,
+      data.current.precip_mm,
+      data.current.cloud
+    );
 
-    console.log(`[WeatherAPI] ${data.current.condition.text} (code ${data.current.condition.code}), ${Math.round(data.current.temp_c)}°C, wind ${Math.round(data.current.wind_kph)} km/h, gusts ${Math.round(data.current.gust_kph)} km/h, humidity ${data.current.humidity}%`);
+    console.log(`[WeatherAPI] ${data.current.condition.text} (code ${data.current.condition.code}), ${Math.round(data.current.temp_c)}°C, wind ${Math.round(data.current.wind_kph)} km/h, gusts ${Math.round(data.current.gust_kph)} km/h, humidity ${data.current.humidity}%, precip ${data.current.precip_mm}mm, cloud ${data.current.cloud}%`);
+    if (LIGHT_PATCHY_RAIN_CODES.includes(data.current.condition.code) && data.current.precip_mm < NEGLIGIBLE_PRECIP_MM) {
+      console.log(`[WeatherAPI] Correcting false rain (code ${data.current.condition.code}, precip ${data.current.precip_mm}mm) → ${condition}`);
+    }
 
     return {
       weatherCode: data.current.condition.code,

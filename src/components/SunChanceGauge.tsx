@@ -68,9 +68,9 @@ export function SunChanceGauge({ percentage, confidence, isLoading = false, onIn
   const [animatedProgress, setAnimatedProgress] = useState(0);
 
   const confidenceLabels = {
-    high: t('result.confidenceHigh'),
-    medium: t('result.confidenceMedium'),
-    low: t('result.confidenceLow'),
+    high: t('result.sunChanceLevelHigh'),
+    medium: t('result.sunChanceLevelMedium'),
+    low: t('result.sunChanceLevelLow'),
   };
 
   // Get month-specific translation key (e.g., "sunChanceInJanuary")
