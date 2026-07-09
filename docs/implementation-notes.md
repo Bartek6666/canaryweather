@@ -4,6 +4,54 @@ Ten plik zawiera notatki z implementacji i decyzji technicznych. Sprawdzaj go na
 
 ---
 
+## 2026-07-09: Redesign „Sunly" — spójność opadów + okno wskaźnika słońca + jasne okna alertów
+
+Branch `redesign`. Commity: `b2f6a49` (ta sesja), wcześniej `9bb10e7` (onboarding+ikona).
+
+### 1. Spójność kafelka „Dni deszczowe" (`weatherService.ts` + `ResultScreen.tsx`)
+Problem: dla Maspalomas/lipiec wskaźnik słońca 99%, a kafelek „Dni deszczowe" = 0 (mylące).
+- `rain_days` NIE jest już zaokrąglane do całkowitej — zostaje **1 miejsce po przecinku**
+  (`getMonthlyStats` linia ~424 oraz interpolacja `calculateInterpolatedMonthlyStats` ~1278).
+  Koniec z podwójnym zaokrągleniem (było też `Math.round` w ekranie).
+- Kafelek i podsumowanie: gdy `0 < rain_days < 1` → pokazują **„< 1 dnia"** (nie „0”).
+  Prawdziwe 0,0 nadal „0”. Nowy klucz i18n `result.rainDaysLessThanOne` (4 języki).
+- Testy `getMonthlyStats` przechodzą (rain_days 3.0 === 3).
+
+### 2. Okno „Wskaźnik słońca" (`SunChanceModal.tsx`) — jasny motyw + treść
+- Było ciemne + nieścisłe („dla lokalizacji i **godziny**", „bezchmurne niebo”). Poprawione.
+- Przebudowane na **jasny motyw** i **3 sekcje z ikonami**: „Czym jest?", „Jak to liczymy?",
+  „To nie prognoza". Metodologia opisana zgodnie z kodem (dzień słoneczny = ≥6 h słońca I brak
+  opadów; wskaźnik = odsetek takich dni z 10 lat). Sekcja klucze i18n `sun_chance.*`
+  (what_title/what_text/how_title/how_text/note_title/note_text/title/close) w 4 językach;
+  usunięty stary `sun_chance.description`.
+- **PUŁAPKA (ważne):** pierwsza wersja użyła `GlassCard` jako kontenera okna — `GlassCard`
+  owija dzieci w warstwę `flex: 1`, która w oknie modalnym bez zdefiniowanej wysokości
+  **zwija się do 0 px** → okno „otwiera się", ale jest niewidoczne. Rozwiązanie: frosted-look
+  zrobiony ręcznie (BlurView tint="light" + biały overlay 0.82 + border + `light.cardShadow`),
+  BEZ `flex: 1`. Nie używać `GlassCard` wewnątrz `<Modal>`.
+
+### 3. Okna alertów na jasny motyw
+- `AlertDetailModal.tsx` (WSPÓLNE dla coastal/wind/snow): jasny frosted, ciemny tekst, Manrope,
+  paleta severity spójna z `GenericAlertCard` (icon pełny kolor, text ciemny odcień:
+  yellow #B45309 / orange #C2410C / red #B91C1C). Przycisk „Zamknij" → **niebieski
+  `light.colors.primary`** z białym tekstem (jak inne okna), NIE kolor severity.
+- `CalimaInfoModal.tsx`: jasny frosted, ciemny tekst, Manrope. Kolorowe ikonki sekcji
+  (pomarańcz/fiolet/czerwień/turkus) zostawione — niosą znaczenie.
+- W aplikacji są tylko **3** komponenty `<Modal>` (SunChance, AlertDetail, Calima) — wszystkie
+  są już jasne. Innych ciemnych okien brak.
+
+### Środowisko / testy
+- Expo dev na porcie **8082** (8081 zajęty przez canaryeclipse). Test na iPhone (Expo Go).
+- QR: `exp://192.168.0.148:8082` — wygenerować obrazek (`node -e "require('qrcode').toFile(...)"`)
+  i `open`, bo ANSI-QR w terminalu bywa nieczytelny.
+- Onboarding w dev: flaga `hasSeenOnboarding` w AsyncStorage — czyścić przeinstalowaniem
+  Expo Go (tymczasowy DEV-reset w App.tsx został USUNIĘTY w commicie onboardingu).
+- tsc: `npx tsc --noEmit > /Users/bartunio/tsc_out.txt 2>&1` (NIE do /private/tmp — mały
+  tmpfs harnessa zapełnia się logami Expo z tła; jak wysiada output komend, czyścić
+  `find /private/tmp/claude-501 -name '*.output' -size +2M -delete`).
+
+---
+
 ## 2026-07-07: Redesign „Sunly" — ekran Onboarding (2 ekrany) + nowe logo/ikona aplikacji
 
 Branch `redesign`, zmiany niezacommitowane. Kontynuacja redesignu na jasny motyw.
