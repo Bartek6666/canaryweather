@@ -11,7 +11,7 @@ import { BlurView } from 'expo-blur';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTranslation } from 'react-i18next';
 
-import { colors, spacing, typography, shadows, borderRadius } from '../constants/theme';
+import { spacing, borderRadius, fonts, light } from '../constants/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -97,7 +97,7 @@ export function LocationPrompt({
       >
         <BlurView
           intensity={40}
-          tint="dark"
+          tint="light"
           style={[StyleSheet.absoluteFill, styles.blur]}
         />
         <View style={styles.glassOverlay} />
@@ -106,7 +106,7 @@ export function LocationPrompt({
           {/* Icon */}
           <View style={styles.iconContainer}>
             <View style={styles.iconGlow} />
-            <Ionicons name="location-outline" size={48} color={colors.primary} />
+            <Ionicons name="location-outline" size={48} color={light.colors.primary} />
           </View>
 
           {/* Title */}
@@ -128,7 +128,7 @@ export function LocationPrompt({
                 {isLoading ? (
                   <Animated.View style={styles.loadingDot} />
                 ) : (
-                  <Ionicons name="navigate" size={20} color={colors.textPrimary} />
+                  <Ionicons name="navigate" size={20} color="#FFFFFF" />
                 )}
                 <Text style={styles.primaryButtonText}>
                   {isLoading ? t('search.searching') : t('locationPrompt.useLocation')}
@@ -154,7 +154,7 @@ export function LocationPrompt({
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(15, 30, 55, 0.35)',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1000,
@@ -162,19 +162,19 @@ const styles = StyleSheet.create({
   container: {
     width: SCREEN_WIDTH - spacing.lg * 2,
     maxWidth: 360,
-    borderRadius: borderRadius.xl,
+    borderRadius: borderRadius.xxl,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: light.colors.border,
     overflow: 'hidden',
-    ...shadows.glass,
+    ...light.cardShadow,
   },
   blur: {
-    borderRadius: borderRadius.xl,
+    borderRadius: borderRadius.xxl,
   },
   glassOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: borderRadius.xl,
+    backgroundColor: 'rgba(255, 255, 255, 0.82)',
+    borderRadius: borderRadius.xxl,
   },
   content: {
     padding: spacing.xl,
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: 'rgba(255, 193, 7, 0.15)',
+    backgroundColor: light.colors.primarySoft,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.lg,
@@ -194,22 +194,24 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: colors.primary,
-    opacity: 0.2,
-    shadowColor: colors.primary,
+    backgroundColor: light.colors.primary,
+    opacity: 0.12,
+    shadowColor: light.colors.primary,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
+    shadowOpacity: 0.4,
     shadowRadius: 20,
   },
   title: {
-    ...typography.h2,
-    color: colors.textPrimary,
+    fontFamily: fonts.bold,
+    fontSize: 20,
+    color: light.colors.textPrimary,
     textAlign: 'center',
     marginBottom: spacing.sm,
   },
   description: {
-    ...typography.body,
-    color: colors.textSecondary,
+    fontFamily: fonts.regular,
+    fontSize: 14,
+    color: light.colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: spacing.xl,
@@ -220,9 +222,9 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     width: '100%',
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.full,
     overflow: 'hidden',
-    backgroundColor: colors.primary,
+    backgroundColor: light.colors.primary,
   },
   primaryButtonInner: {
     flexDirection: 'row',
@@ -232,9 +234,9 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   primaryButtonText: {
-    ...typography.body,
-    color: colors.textPrimary,
-    fontWeight: '600',
+    fontFamily: fonts.bold,
+    fontSize: 15,
+    color: '#FFFFFF',
   },
   secondaryButton: {
     width: '100%',
@@ -242,16 +244,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   secondaryButtonText: {
-    ...typography.body,
-    color: colors.textMuted,
-    fontWeight: '500',
+    fontFamily: fonts.semibold,
+    fontSize: 15,
+    color: light.colors.textMuted,
   },
   loadingDot: {
     width: 20,
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: colors.textPrimary,
+    borderColor: '#FFFFFF',
     borderTopColor: 'transparent',
   },
 });

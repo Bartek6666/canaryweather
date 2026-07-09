@@ -4,6 +4,42 @@ Ten plik zawiera notatki z implementacji i decyzji technicznych. Sprawdzaj go na
 
 ---
 
+## 2026-07-09 (b): Redesign „Sunly" — LocationPrompt na jasny motyw + porządki
+
+Branch `redesign`. Kontynuacja po `7a0cac1`.
+
+### 1. `LocationPrompt.tsx` → jasny motyw (ostatni ciemny element w apce)
+Dialog „Użyj mojej lokalizacji" (wyskakuje na SearchScreen po ~0,8 s, gdy brak wcześniejszej
+odpowiedzi o lokalizacji) był jeszcze w całości ciemny — jedyna user-facing pozostałość
+ciemnego motywu. Przerobiony na jasny frosted wg wzorca `SunChanceModal`/`AlertDetailModal`:
+- `BlurView tint="dark"` → `tint="light"`, biały overlay `rgba(255,255,255,0.82)`,
+  border `light.colors.border`, `...light.cardShadow`, `borderRadius.xxl`.
+- Backdrop `rgba(0,0,0,0.5)` → `rgba(15,30,55,0.35)` (jak inne jasne okna).
+- Ikona lokalizacji: krążek `primarySoft` + ikona `light.colors.primary`; poświata stonowana
+  (opacity 0.2→0.12, shadowOpacity 0.8→0.4).
+- Tekst: Manrope (`fonts.bold` tytuł 20, `fonts.regular` opis, `fonts.semibold` przycisk
+  wtórny), kolory `light.colors.text*`. Przycisk główny: `light.colors.primary` + biały tekst
+  i biała ikona `navigate`; pigułka `borderRadius.full`; spinner biały.
+- Import: `colors/typography/shadows` → `fonts, light` (`borderRadius`, `spacing` zostają).
+- UWAGA: to NIE jest `<Modal>` (absolutnie pozycjonowany `Animated.View`), więc pułapka
+  „GlassCard flex:1 w Modal" tu nie dotyczy — i tak frosted zrobiony ręcznie. Logika animacji
+  (fade+scale+translateY) nietknięta.
+
+### 2. Porządek: martwy import `WeatherEffects`
+Usunięty nieużywany import `WeatherEffects` z `ResultScreen.tsx` (l. 23) — komponent nie jest
+już renderowany (tło satelity + efekty pogodowe wycięte przy jasnym restyle ResultScreen).
+Sam plik `WeatherEffects.tsx` zostaje w repo (nietknięty).
+
+### Weryfikacja / stan
+- `npx tsc --noEmit` czysto (exit 0).
+- To domyka warstwę wizualną redesignu — **wszystkie ekrany i okna są jasne**. Sprawdzone
+  skanem tokenów: `GenericAlertCard` już jasny (lokalna zmienna `colors` = kolory severity,
+  nie ciemny motyw — fałszywy alarm skanu); DEV-reset onboardingu w `App.tsx` już usunięty
+  we wcześniejszym commicie (pamięć nieaktualna w tym punkcie). Kolejny naturalny krok:
+  przygotowanie do buildu EAS.
+
+---
+
 ## 2026-07-09: Redesign „Sunly" — spójność opadów + okno wskaźnika słońca + jasne okna alertów
 
 Branch `redesign`. Commity: `b2f6a49` (ta sesja), wcześniej `9bb10e7` (onboarding+ikona).
