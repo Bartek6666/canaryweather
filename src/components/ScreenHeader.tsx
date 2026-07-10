@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTranslation } from 'react-i18next';
 
-import { colors, light, spacing, typography } from '../constants/theme';
+import { colors, light, spacing, typography, fonts } from '../constants/theme';
 
 interface ScreenHeaderProps {
   locationName?: string;
@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
     marginLeft: spacing.md,
   },
   headerName: {
-    ...typography.h2,
+    ...typography.h2, fontFamily: fonts.bold,
   },
   headerLocation: {
     flexDirection: 'row',
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   headerIsland: {
-    ...typography.bodySmall,
+    ...typography.bodySmall, fontFamily: fonts.regular,
     marginLeft: spacing.xs,
   },
   headerStation: {
@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   headerStationText: {
-    fontSize: 12,
+    fontSize: 12, fontFamily: fonts.regular,
     marginLeft: spacing.xs,
   },
   headerSpacer: {

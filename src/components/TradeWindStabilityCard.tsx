@@ -12,7 +12,7 @@ import i18n from 'i18next';
 
 import { MONTH_KEYS } from '../i18n';
 
-import { light, spacing, typography, borderRadius } from '../constants/theme';
+import { light, spacing, typography, borderRadius, fonts } from '../constants/theme';
 import { GlassCard } from './GlassCard';
 import { WindStabilityResult } from '../services/weatherService';
 
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   title: {
-    ...typography.h3,
+    ...typography.h3, fontFamily: fonts.semibold,
     color: light.colors.textPrimary,
   },
   valueContainer: {
@@ -185,12 +185,12 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   value: {
-    fontSize: 48,
+    fontSize: 48, fontFamily: fonts.bold,
     fontWeight: '700',
     letterSpacing: -2,
   },
   valueLabel: {
-    ...typography.label,
+    ...typography.label, fontFamily: fonts.medium,
     color: light.colors.textSecondary,
     marginTop: -4,
   },
@@ -208,7 +208,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   description: {
-    ...typography.body,
+    ...typography.body, fontFamily: fonts.regular,
     color: light.colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
@@ -239,18 +239,18 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   tileValue: {
-    fontSize: 16,
+    fontSize: 16, fontFamily: fonts.bold,
     fontWeight: '700',
     color: light.colors.textPrimary,
     textAlign: 'center',
   },
   tileUnit: {
-    fontSize: 11,
+    fontSize: 11, fontFamily: fonts.medium,
     fontWeight: '500',
     color: light.colors.textSecondary,
   },
   tileLabel: {
-    fontSize: 10,
+    fontSize: 12, fontFamily: fonts.semibold,
     fontWeight: '600',
     color: light.colors.textMuted,
     textTransform: 'uppercase',

@@ -4,6 +4,43 @@ Ten plik zawiera notatki z implementacji i decyzji technicznych. Sprawdzaj go na
 
 ---
 
+## 2026-07-10 (c): Polish redesignu — dopięcie Manrope wszędzie
+
+Przegląd przed wydaniem. Skany: parytet i18n (komplet — pl-only klucze to celowa gramatyka:
+`monthsLocative.*`, `rainDaysText_few/many`, `wind.daysText_few/many`, miesięczne
+`sunChanceIn*`; en/es/de mają fallback w kodzie), DEV/TODO (czysto — `USE_MOCK_DATA` = `&& false`),
+ciemne tokeny (żaden ekran nie używa już ciemnych `colors.*`).
+
+**Znalezisko:** `typography.*` (token) NIE ustawia `fontFamily` — tylko rozmiar/waga/kolor.
+28 stylów tekstowych spreadowało `...typography.*` bez `fontFamily`, więc renderowały się
+fontem systemowym (San Francisco), nie Manrope. Kolor/rozmiar były OK (nadpisane `light.*`).
+- Dodano `fontFamily: fonts.<waga>` do 28 stylów, waga wg `fontWeight` wariantu typography
+  (700→bold, 600→semibold, 500→medium, 400→regular). Pliki: ResultScreen (5), RainDetails (9),
+  WindDetails (8), ScreenHeader (2), SunChanceGauge (1), TradeWindStabilityCard (3).
+- Import `fonts` dodany w 4 plikach (Rain/Wind/ScreenHeader/TradeWind — ResultScreen i
+  SunChanceGauge już miały). Zmiana inline, surgical (32/32, bez reformatu). tsc czysto.
+- **Wniosek na przyszłość:** przy nowych tekstach NIE polegać na `...typography.X` co do fontu —
+  zawsze dodać `fontFamily: fonts.*`. (Docelowo można by wcielić Manrope do samego `typography`,
+  ale to szersza zmiana dotykająca też ciemnego motywu — odłożone.)
+
+**KOREKTA/UZUPEŁNIENIE (ta sama sesja):** powyższy skan łapał TYLKO style spreadujące
+`...typography.*` — pominął style z jawnym `fontSize`/`fontWeight` bez fontu. Było ich **44**
+(39 z `fontSize` + 5 wariantów „current" z samym `fontWeight`, np. `rankingValueCurrent`/
+`rankingIslandCurrent`/`liveGustsWarning` — te BEZ fontu straciłyby pogrubienie, bo przy
+nazwanej rodzinie Manrope `fontWeight` jest ignorowany). Dodano `fontFamily: fonts.<waga>`
+do wszystkich 44 (waga wg `fontWeight`; import `fonts` doszedł w `GenericAlertCard`).
+Pliki: ResultScreen (20), RainDetails (10), WindDetails (7), TradeWindStabilityCard (4),
+GenericAlertCard (2), ScreenHeader (1).
+- **Bug zawijania (zgłoszony przez usera):** karta „Ranking wysp" na ekranie Wiatr — „27.4 km/h"
+  zawijało „h" do nowej linii (Manrope szerszy niż font systemowy, kolumna `rankingValue`
+  `width: 60`). Fix: `rankingValue` width **60→80** (Wind) i **50→80** (Rain) + `numberOfLines={1}`
+  na wartości ORAZ nazwie wyspy (`translatedIsland`) w obu ekranach.
+- **Lekcja:** „Manrope wszędzie" wymaga skanu po `fontSize|fontWeight` bez `fontFamily`
+  (nie tylko po `typography.`), a dodanie nazwanego fontu do stylów o stałej szerokości
+  może wywołać zawijanie — sprawdzać kolumny liczbowe (`width` + `numberOfLines`).
+
+---
+
 ## 2026-07-10: Fix — fałszywy „lekki deszcz" na karcie LIVE (WeatherAPI kod 1063)
 
 Branch `redesign`. Zgłoszenie: Las Palmas (Gran Canaria) — karta live pokazywała „lekki

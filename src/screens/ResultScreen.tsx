@@ -1205,7 +1205,7 @@ const styles = StyleSheet.create({
   headerLocation: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
   headerIsland: { ...typography.bodySmall, fontFamily: fonts.medium, color: light.colors.textSecondary, marginLeft: spacing.xs },
   headerStation: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
-  headerStationText: { fontSize: 12, color: light.colors.textMuted, marginLeft: spacing.xs },
+  headerStationText: { fontSize: 12, fontFamily: fonts.regular, color: light.colors.textMuted, marginLeft: spacing.xs },
   headerSpacer: { width: 44 },
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: spacing.lg },
@@ -1233,12 +1233,12 @@ const styles = StyleSheet.create({
   monthBtnText: { fontSize: 13, fontFamily: fonts.semibold, color: light.colors.textSecondary },
   monthBtnTextActive: { color: '#FFFFFF', fontFamily: fonts.bold },
   statsInfo: { alignItems: 'center', marginBottom: spacing.sm },
-  statsText: { fontSize: 14, color: light.colors.textSecondary, textAlign: 'center', lineHeight: 20 },
+  statsText: { fontSize: 14, fontFamily: fonts.regular, color: light.colors.textSecondary, textAlign: 'center', lineHeight: 20 },
   tempCards: { flexDirection: 'row', marginBottom: spacing.lg, gap: spacing.sm },
   // FIGMA: STYLE_TARGET — Temperature card (glassmorphism)
   tempCard: { flex: 1 },
   tempCardInner: { padding: spacing.md, alignItems: 'center' },
-  tempLabel: { ...typography.label, color: light.colors.textSecondary, marginTop: spacing.sm, textAlign: 'center', flexShrink: 1 },
+  tempLabel: { ...typography.label, fontFamily: fonts.medium, color: light.colors.textSecondary, marginTop: spacing.sm, textAlign: 'center', flexShrink: 1 },
   tempValue: { ...typography.value, fontSize: 18, lineHeight: 24, fontFamily: fonts.extrabold, marginTop: spacing.xs },
   tempValueHigh: { color: light.colors.tempHot },
   tempValueLow: { color: light.colors.tempCold },
@@ -1272,7 +1272,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   nowSectionTitle: {
-    ...typography.caption,
+    ...typography.caption, fontFamily: fonts.medium,
     color: light.colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 1.2,
@@ -1297,7 +1297,7 @@ const styles = StyleSheet.create({
     borderColor: light.colors.border,
   },
   missingDataText: {
-    ...typography.bodySmall,
+    ...typography.bodySmall, fontFamily: fonts.regular,
     color: light.colors.textMuted,
     marginLeft: spacing.sm,
     flex: 1,
@@ -1329,7 +1329,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   yearItemYear: {
-    fontSize: 14,
+    fontSize: 14, fontFamily: fonts.bold,
     fontWeight: '700',
     color: light.colors.textPrimary,
     letterSpacing: -0.3,
@@ -1385,17 +1385,17 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
   },
   tempHigh: {
-    fontSize: 15,
+    fontSize: 15, fontFamily: fonts.semibold,
     fontWeight: '600',
     color: light.colors.tempHot,
   },
   tempSeparator: {
-    fontSize: 13,
+    fontSize: 13, fontFamily: fonts.regular,
     color: light.colors.textMuted,
     marginHorizontal: 2,
   },
   tempLow: {
-    fontSize: 13,
+    fontSize: 13, fontFamily: fonts.medium,
     fontWeight: '500',
     color: light.colors.tempCold,
   },
@@ -1409,7 +1409,7 @@ const styles = StyleSheet.create({
     color: light.colors.textPrimary,
     marginLeft: spacing.sm,
   },
-  summaryText: { fontSize: 15, color: light.colors.textSecondary, lineHeight: 22 },
+  summaryText: { fontSize: 15, fontFamily: fonts.regular, color: light.colors.textSecondary, lineHeight: 22 },
   bottomSpacer: { height: 40 },
   bestTimeSection: { marginTop: spacing.lg },
   bestTimeHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.xs },
@@ -1425,12 +1425,12 @@ const styles = StyleSheet.create({
   bestTimeCardInner: { flexDirection: 'row', alignItems: 'center', padding: spacing.md },
   bestTimeRank: { width: 36, alignItems: 'center' },
   bestTimeContent: { flex: 1, marginLeft: spacing.sm },
-  bestTimeDate: { fontSize: 15, fontWeight: '600', color: light.colors.textPrimary },
-  bestTimeMonth: { ...typography.caption, marginTop: 2, color: light.colors.textSecondary },
+  bestTimeDate: { fontSize: 15, fontFamily: fonts.semibold, fontWeight: '600', color: light.colors.textPrimary },
+  bestTimeMonth: { ...typography.caption, fontFamily: fonts.medium, marginTop: 2, color: light.colors.textSecondary },
   bestTimeStats: { alignItems: 'flex-end' },
   bestTimeStat: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.xs },
-  bestTimeValue: { fontSize: 14, fontWeight: '700', marginLeft: spacing.xs },
-  bestTimeTemp: { fontSize: 15, fontWeight: '600', color: light.colors.tempHot, marginLeft: spacing.xs },
+  bestTimeValue: { fontSize: 14, fontFamily: fonts.bold, fontWeight: '700', marginLeft: spacing.xs },
+  bestTimeTemp: { fontSize: 15, fontFamily: fonts.semibold, fontWeight: '600', color: light.colors.tempHot, marginLeft: spacing.xs },
   // ─── LIVE WEATHER CARD (Figma Glassmorphism) ─────────────────────────────────
   // FIGMA: STYLE_TARGET — LiveWeatherCard
   liveCard: {
@@ -1467,7 +1467,7 @@ const styles = StyleSheet.create({
     marginRight: spacing.xs,
   },
   liveBadgeText: {
-    fontSize: 10,
+    fontSize: 10, fontFamily: fonts.semibold,
     color: light.colors.textPrimary,
     fontWeight: '600',
     letterSpacing: 0.5,
@@ -1508,7 +1508,7 @@ const styles = StyleSheet.create({
   },
   liveGustsWarning: {
     color: light.colors.warning,
-    fontWeight: '600',
+    fontWeight: '600', fontFamily: fonts.semibold,
   },
   // Parameter icons (wind, humidity) - small with subtle glow
   parameterIconWrapper: {
@@ -1566,7 +1566,7 @@ const styles = StyleSheet.create({
     borderColor: light.colors.border,
   },
   cacheIndicatorText: {
-    fontSize: 13,
+    fontSize: 13, fontFamily: fonts.medium,
     color: light.colors.textSecondary,
     marginLeft: spacing.xs,
     fontWeight: '500',
@@ -1589,19 +1589,19 @@ const styles = StyleSheet.create({
     marginLeft: spacing.sm,
   },
   discrepancyTitle: {
-    fontSize: 15,
+    fontSize: 15, fontFamily: fonts.semibold,
     fontWeight: '600',
     color: light.colors.primary,
     marginBottom: 4,
   },
   discrepancyText: {
-    fontSize: 13,
+    fontSize: 13, fontFamily: fonts.regular,
     fontWeight: '400',
     color: light.colors.textSecondary,
     lineHeight: 18,
   },
   discrepancyDetail: {
-    fontSize: 14,
+    fontSize: 14, fontFamily: fonts.semibold,
     fontWeight: '600',
     color: light.colors.textPrimary,
     marginTop: spacing.xs,
@@ -1610,12 +1610,12 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   liveOfflineText: {
-    ...typography.body,
+    ...typography.body, fontFamily: fonts.regular,
     color: light.colors.textSecondary,
     marginTop: spacing.sm,
   },
   liveOfflineHint: {
-    fontSize: 12,
+    fontSize: 12, fontFamily: fonts.regular,
     color: light.colors.textMuted,
     marginTop: spacing.xs,
   },
@@ -1640,8 +1640,8 @@ const styles = StyleSheet.create({
 
   // ─── ERROR ──────────────────────────────────────────────────────────────────
   errorContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  errorText: { color: light.colors.error, fontSize: 18, marginBottom: spacing.md },
-  errorButton: { color: light.colors.primary, fontSize: 16, fontWeight: '600' },
+  errorText: { color: light.colors.error, fontSize: 18, fontFamily: fonts.regular, marginBottom: spacing.md },
+  errorButton: { color: light.colors.primary, fontSize: 16, fontFamily: fonts.semibold, fontWeight: '600' },
 
   // ─── HIGH ALTITUDE FALLBACK BANNER ─────────────────────────────────────────
   fallbackBanner: {
@@ -1659,7 +1659,7 @@ const styles = StyleSheet.create({
   },
   fallbackBannerText: {
     flex: 1,
-    fontSize: 13,
+    fontSize: 13, fontFamily: fonts.regular,
     color: light.colors.textMuted,
     lineHeight: 18,
   },

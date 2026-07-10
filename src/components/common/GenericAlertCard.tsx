@@ -4,7 +4,7 @@ import { BlurView } from 'expo-blur';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
-import { spacing, glassTokens, shadows, light } from '../../constants/theme';
+import { spacing, glassTokens, shadows, light, fonts } from '../../constants/theme';
 import { AlertSeverity } from '../../types';
 
 // Colors for different alert severity levels (light theme)
@@ -211,12 +211,12 @@ const styles = StyleSheet.create({
     paddingRight: spacing.sm,
   },
   title: {
-    fontSize: 16,
+    fontSize: 16, fontFamily: fonts.bold,
     fontWeight: '700',
     marginBottom: 4,
   },
   description: {
-    fontSize: 13,
+    fontSize: 13, fontFamily: fonts.regular,
     fontWeight: '400',
     color: light.colors.textSecondary,
     lineHeight: 18,

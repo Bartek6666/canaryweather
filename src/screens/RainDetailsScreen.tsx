@@ -16,7 +16,7 @@ import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
 import Svg, { Circle } from 'react-native-svg';
 
-import { light, spacing, typography, borderRadius } from '../constants/theme';
+import { light, spacing, typography, borderRadius, fonts } from '../constants/theme';
 import { GlassCard, ScreenHeader } from '../components';
 import { trackRainDetailsView } from '../services/analyticsService';
 import { calculateRainStats, RainStatsResult, getRainRankingByIsland, IslandRanking } from '../services/weatherService';
@@ -298,7 +298,7 @@ export default function RainDetailsScreen({ navigation, route }: Props) {
                       <Text style={[
                         styles.rankingIsland,
                         isCurrentIsland && styles.rankingIslandCurrent
-                      ]}>
+                      ]} numberOfLines={1}>
                         {translatedIsland}
                       </Text>
                       <View style={styles.rankingBarContainer}>
@@ -311,7 +311,7 @@ export default function RainDetailsScreen({ navigation, route }: Props) {
                       <Text style={[
                         styles.rankingValue,
                         isCurrentIsland && styles.rankingValueCurrent
-                      ]}>
+                      ]} numberOfLines={1}>
                         {item.value} mm
                       </Text>
                     </View>
@@ -359,7 +359,7 @@ const styles = StyleSheet.create({
     borderColor: light.colors.border,
   },
   monthBadgeText: {
-    ...typography.label,
+    ...typography.label, fontFamily: fonts.medium,
     color: light.colors.textPrimary,
   },
   gaugeContainer: {
@@ -379,13 +379,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   gaugeValue: {
-    fontSize: 48,
+    fontSize: 48, fontFamily: fonts.bold,
     fontWeight: '700',
     color: light.colors.textPrimary,
     letterSpacing: -2,
   },
   gaugeLabel: {
-    ...typography.label,
+    ...typography.label, fontFamily: fonts.medium,
     color: light.colors.textSecondary,
     marginTop: -4,
     textAlign: 'center',
@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   confidenceText: {
-    fontSize: 12,
+    fontSize: 12, fontFamily: fonts.semibold,
     fontWeight: '600',
   },
   intensityCard: {
@@ -421,11 +421,11 @@ const styles = StyleSheet.create({
     marginLeft: spacing.sm,
   },
   intensityTitle: {
-    ...typography.h3,
+    ...typography.h3, fontFamily: fonts.semibold,
     color: light.colors.textPrimary,
   },
   intensitySubtitle: {
-    ...typography.bodySmall,
+    ...typography.bodySmall, fontFamily: fonts.regular,
     color: light.colors.textSecondary,
     marginTop: 2,
   },
@@ -436,7 +436,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   intensityCaptionText: {
-    ...typography.label,
+    ...typography.label, fontFamily: fonts.medium,
     color: light.colors.textMuted,
   },
   tileRow: {
@@ -464,18 +464,18 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   tileValue: {
-    fontSize: 16,
+    fontSize: 16, fontFamily: fonts.bold,
     fontWeight: '700',
     color: light.colors.textPrimary,
     textAlign: 'center',
   },
   tileUnit: {
-    fontSize: 11,
+    fontSize: 11, fontFamily: fonts.medium,
     fontWeight: '500',
     color: light.colors.textSecondary,
   },
   tileLabel: {
-    fontSize: 10,
+    fontSize: 10, fontFamily: fonts.semibold,
     fontWeight: '600',
     color: light.colors.textMuted,
     textTransform: 'uppercase',
@@ -495,12 +495,12 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   contextTitle: {
-    ...typography.h3,
+    ...typography.h3, fontFamily: fonts.semibold,
     color: light.colors.textPrimary,
     marginLeft: spacing.sm,
   },
   contextText: {
-    ...typography.body,
+    ...typography.body, fontFamily: fonts.regular,
     color: light.colors.textSecondary,
     lineHeight: 22,
   },
@@ -521,11 +521,11 @@ const styles = StyleSheet.create({
     marginLeft: spacing.sm,
   },
   rankingTitle: {
-    ...typography.h3,
+    ...typography.h3, fontFamily: fonts.semibold,
     color: light.colors.textPrimary,
   },
   rankingSubtitle: {
-    ...typography.bodySmall,
+    ...typography.bodySmall, fontFamily: fonts.regular,
     color: light.colors.textSecondary,
     marginTop: 2,
   },
@@ -536,18 +536,18 @@ const styles = StyleSheet.create({
   },
   rankingPosition: {
     width: 24,
-    fontSize: 13,
+    fontSize: 13, fontFamily: fonts.semibold,
     fontWeight: '600',
     color: light.colors.textMuted,
   },
   rankingIsland: {
     width: 100,
-    fontSize: 13,
+    fontSize: 13, fontFamily: fonts.regular,
     color: light.colors.textSecondary,
   },
   rankingIslandCurrent: {
     color: light.colors.rain,
-    fontWeight: '600',
+    fontWeight: '600', fontFamily: fonts.semibold,
   },
   rankingBarContainer: {
     flex: 1,
@@ -566,14 +566,14 @@ const styles = StyleSheet.create({
     backgroundColor: light.colors.rain,
   },
   rankingValue: {
-    width: 50,
-    fontSize: 13,
+    width: 80,
+    fontSize: 13, fontFamily: fonts.regular,
     color: light.colors.textSecondary,
     textAlign: 'right',
   },
   rankingValueCurrent: {
     color: light.colors.rain,
-    fontWeight: '600',
+    fontWeight: '600', fontFamily: fonts.semibold,
   },
   bottomSpacer: {
     height: 40,

@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    ...typography.body,
+    ...typography.body, fontFamily: fonts.regular,
     color: light.colors.textSecondary,
   },
 });
