@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
   },
   button: {
-    borderRadius: 14,
+    borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
     backgroundColor: light.colors.primary,

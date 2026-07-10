@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     width: '100%',
-    borderRadius: borderRadius.full,
+    borderRadius: borderRadius.md,
     overflow: 'hidden',
     backgroundColor: light.colors.primary,
   },

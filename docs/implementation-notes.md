@@ -4,6 +4,28 @@ Ten plik zawiera notatki z implementacji i decyzji technicznych. Sprawdzaj go na
 
 ---
 
+## 2026-07-10 (d): Feature — drill-down rocznego wykresu temperatur w „Ostatnie 10 lat"
+
+Na ekranie Wyników sekcja „Ostatnie 10 lat": wiersze roku miały dotąd tylko animację
+naciśnięcia (brak `onPress`). Dodano: klik w wiersz roku → okno z wykresem 12 miesięcy
+(I–XII) dla tego roku. Wybór usera: **pasma min–max** (słupek = od śr. minimalnej do śr.
+maksymalnej temperatury miesiąca), ten sam wykres niezależnie od pola; klik całego wiersza.
+
+- **Serwis** `getYearlyMonthlyTemperatures(stationId, year)` (`weatherService.ts`) + typ
+  `MonthlyTemperature` — 1 zapytanie o rok (~365 wierszy, bez paginacji), agregacja tmax/tmin
+  po miesiącu; miesiące bez danych → null.
+- **Komponent** `YearTemperatureChartModal.tsx` — jasne okno frosted (wzorzec SunChanceModal,
+  BEZ GlassCard), wykres z Views + `expo-linear-gradient` (słupek: gradient tempHot→tempCold),
+  oś Y (max/mid/min), etykiety `monthsShort.*` (i18n, 4 języki), legenda (`avgMax`/`avgMin`),
+  stany loading/`yearChartNoData`. Fetch leniwy przy otwarciu (cancel-guard w useEffect).
+- **ResultScreen**: `YearHistoryItem` dostał prop `onPress(year)`, `Pressable` → `onPress`;
+  stan `chartYear`; render `<YearTemperatureChartModal>`. Używa `stationId` z route.params
+  (spójnie z resztą sekcji; dla lokalizacji interpolowanych to najbliższa stacja).
+- **i18n** (4 języki): `result.yearChartSubtitle`, `result.yearChartNoData`, `result.close`.
+- tsc czysto. To 4. okno `<Modal>` w apce (wszystkie jasne frosted).
+
+---
+
 ## 2026-07-10 (c): Polish redesignu — dopięcie Manrope wszędzie
 
 Przegląd przed wydaniem. Skany: parytet i18n (komplet — pl-only klucze to celowa gramatyka:

@@ -20,7 +20,7 @@ import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 
 import { colors, spacing, typography, glass, glassTokens, glassText, borderRadius, gradients, getSunChanceColor, liveCard, light, fonts } from '../constants/theme';
-import { AlertCard, AlertDetailModal, ClickableGlassCard, CoastalAlertCard, GlassCard, SnowAlertCard, SunChanceGauge, SunChanceModal, WeatherIcon, WindAlertCard } from '../components';
+import { AlertCard, AlertDetailModal, ClickableGlassCard, CoastalAlertCard, GlassCard, SnowAlertCard, SunChanceGauge, SunChanceModal, WeatherIcon, WindAlertCard, YearTemperatureChartModal } from '../components';
 import locationsMapping from '../constants/locations_mapping.json';
 import { calculateSunChanceWithFallback, SunChanceWithFallback, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult, calculateInterpolatedMonthlyStats, InterpolatedMonthlyStatsResult, fetchMostSevereCoastalAlert, fetchMostSevereWindAlert, fetchMostSevereSnowAlert, validateWeatherWithNearbyStation, WeatherValidationResult, interpolateLiveWeather, InterpolatedLiveWeatherResult, findNearestStations } from '../services/weatherService';
 import { supabase } from '../services/supabase';
@@ -280,7 +280,7 @@ const BestTimeCard = React.memo(function BestTimeCard({ week, rank, delay = 0 }:
   );
 });
 
-const YearHistoryItem = React.memo(function YearHistoryItem({ data, month, delay = 0 }: { data: YearlyData; month: number; delay?: number }) {
+const YearHistoryItem = React.memo(function YearHistoryItem({ data, month, delay = 0, onPress }: { data: YearlyData; month: number; delay?: number; onPress: (year: number) => void }) {
   const { t } = useTranslation();
   const sunChance = data.totalDays > 0 ? Math.round((data.sunnyDays / data.totalDays) * 100) : 0;
   const weatherCondition: WeatherCondition = sunChance >= 70 ? 'sunny' : sunChance >= 40 ? 'partly-sunny' : 'cloudy';
@@ -315,6 +315,7 @@ const YearHistoryItem = React.memo(function YearHistoryItem({ data, month, delay
   return (
     <Animated.View style={{ opacity: fadeAnim, transform: [{ scale: pressAnim }] }}>
       <Pressable
+        onPress={() => onPress(data.year)}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         style={({ pressed }) => [
@@ -391,6 +392,7 @@ export default function ResultScreen({ navigation, route }: Props) {
 
   // Sun Chance info modal state
   const [showSunChanceModal, setShowSunChanceModal] = useState(false);
+  const [chartYear, setChartYear] = useState<number | null>(null);
 
   // Coastal alert state (AEMET Meteoalerta for high waves)
   const [coastalAlert, setCoastalAlert] = useState<CoastalAlert | null>(null);
@@ -1158,7 +1160,7 @@ export default function ResultScreen({ navigation, route }: Props) {
               <Ionicons name="calendar" size={20} color={light.colors.primary} />
               <Text style={styles.historyTitle}>{t('result.last10Years')}</Text>
             </View>
-            {yearlyData.map((d, index) => <YearHistoryItem key={d.year} data={d} month={selectedMonth} delay={400 + index * 50} />)}
+            {yearlyData.map((d, index) => <YearHistoryItem key={d.year} data={d} month={selectedMonth} delay={400 + index * 50} onPress={setChartYear} />)}
             {skippedYears.length > 0 && (
               <View style={styles.missingDataInfo}>
                 <Ionicons name="information-circle-outline" size={18} color={light.colors.textMuted} />
@@ -1186,6 +1188,14 @@ export default function ResultScreen({ navigation, route }: Props) {
         alert={selectedAlert}
         alertType={selectedAlertType}
         onClose={() => setShowAlertModal(false)}
+      />
+
+      {/* Year drill-down: monthly temperature chart for the tapped year */}
+      <YearTemperatureChartModal
+        visible={chartYear !== null}
+        year={chartYear}
+        stationId={stationId}
+        onClose={() => setChartYear(null)}
       />
     </View>
   );

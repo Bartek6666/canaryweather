@@ -16,3 +16,4 @@ export { SunChanceModal } from './SunChanceModal';
 export { TradeWindStabilityCard } from './TradeWindStabilityCard';
 export { WeatherEffects } from './WeatherEffects';
 export { WeatherIcon } from './WeatherIcon';
+export { YearTemperatureChartModal } from './YearTemperatureChartModal';

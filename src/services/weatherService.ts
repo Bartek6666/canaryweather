@@ -124,6 +124,59 @@ const MIN_SUN_HOURS = locationsMapping.sunChanceConfig.minSunHours;
 const MAX_PRECIP = locationsMapping.sunChanceConfig.maxPrecip;
 const NORTHERN_MULTIPLIER = locationsMapping.sunChanceConfig.northernMultiplier;
 
+/** Average monthly temperatures for a single year (used by the "last 10 years" drill-down chart). */
+export interface MonthlyTemperature {
+  month: number; // 1-12
+  avgTmax: number | null;
+  avgTmin: number | null;
+}
+
+/**
+ * Returns average monthly max/min temperatures for a station across one calendar year.
+ * One year is ~365 daily rows (well under the row limit), so a single query is enough.
+ * Months without data return nulls.
+ */
+export async function getYearlyMonthlyTemperatures(
+  stationId: string,
+  year: number
+): Promise<MonthlyTemperature[]> {
+  const result: MonthlyTemperature[] = Array.from({ length: 12 }, (_, i) => ({
+    month: i + 1,
+    avgTmax: null,
+    avgTmin: null,
+  }));
+
+  let data;
+  try {
+    const res = await supabase
+      .from('weather_data')
+      .select('date, tmax, tmin')
+      .eq('station_id', stationId)
+      .gte('date', `${year}-01-01`)
+      .lte('date', `${year}-12-31`);
+    if (res.error) {
+      console.warn('[YearChart] Cannot fetch monthly temperatures:', res.error.message);
+      return result;
+    }
+    data = res.data;
+  } catch {
+    console.warn('[YearChart] Network error fetching monthly temperatures');
+    return result;
+  }
+
+  const sums = Array.from({ length: 12 }, () => ({ maxSum: 0, maxN: 0, minSum: 0, minN: 0 }));
+  for (const row of data ?? []) {
+    const m = new Date(row.date).getMonth(); // 0-11
+    if (row.tmax !== null) { sums[m].maxSum += row.tmax; sums[m].maxN++; }
+    if (row.tmin !== null) { sums[m].minSum += row.tmin; sums[m].minN++; }
+  }
+  for (let i = 0; i < 12; i++) {
+    result[i].avgTmax = sums[i].maxN > 0 ? Math.round((sums[i].maxSum / sums[i].maxN) * 10) / 10 : null;
+    result[i].avgTmin = sums[i].minN > 0 ? Math.round((sums[i].minSum / sums[i].minN) * 10) / 10 : null;
+  }
+  return result;
+}
+
 /**
  * Calculates sun chance for a given station and date range
  * Sun Chance = (days with sol > 6h AND precip = 0) / total days
