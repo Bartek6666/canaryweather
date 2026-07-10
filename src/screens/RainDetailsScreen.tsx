@@ -475,7 +475,7 @@ const styles = StyleSheet.create({
     color: light.colors.textSecondary,
   },
   tileLabel: {
-    fontSize: 10, fontFamily: fonts.semibold,
+    fontSize: 12, fontFamily: fonts.semibold,
     fontWeight: '600',
     color: light.colors.textMuted,
     textTransform: 'uppercase',
