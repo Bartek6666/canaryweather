@@ -54,9 +54,12 @@ interface UploadResult {
 }
 
 // Configuration
+// weather_data has RLS: anon can only SELECT. INSERT/UPSERT requires the
+// service_role key (bypasses RLS). Prefer it; fall back to anon for read-only checks.
 const CONFIG = {
   SUPABASE_URL: process.env.EXPO_PUBLIC_SUPABASE_URL || '',
-  SUPABASE_KEY: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '',
+  SUPABASE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '',
+  USING_SERVICE_ROLE: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
   BATCH_SIZE: 500,
   TEMP_DIR: path.join(__dirname, '..', 'temp'),
 };
@@ -64,8 +67,13 @@ const CONFIG = {
 // Validate Supabase config
 if (!CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_KEY) {
   console.error('ERROR: Supabase credentials not configured');
-  console.error('Please set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY in .env');
+  console.error('Please set EXPO_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env');
   process.exit(1);
+}
+
+if (!CONFIG.USING_SERVICE_ROLE) {
+  console.warn('WARNING: SUPABASE_SERVICE_ROLE_KEY not set — using anon key.');
+  console.warn('         weather_data RLS blocks anon INSERT; uploads will fail.');
 }
 
 // Initialize Supabase client

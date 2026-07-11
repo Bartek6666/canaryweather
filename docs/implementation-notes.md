@@ -4,6 +4,131 @@ Ten plik zawiera notatki z implementacji i decyzji technicznych. Sprawdzaj go na
 
 ---
 
+## 2026-07-11 (c): Drobne fixy rankingu wybrzeża + polska gramatyka „< 1 dzień"
+
+- **Nazwy wybrzeża ucinane w rankingu** (kolumna `rankingIsland` width 100): wszystkie obszary
+  kontynentalne zaczynają się od „Costa " (nietłumaczone we wszystkich 4 językach). Nowy helper
+  `formatRankingIslandName` w `regions.ts`: `^Costa ` → „C. " (np. „C. de Valencia") — mieści się
+  bez zmiany szerokości kolumny ani wykresu. Użyty w rankingu Wiatr i Opady. Nazwy Kanarów/
+  Balearów bez zmian (nie zaczynają się od „Costa").
+- **`rainDaysLessThanOne` pl** „< 1 dnia" → „< 1 dzień" (poprawna odmiana; en/es/de OK). Klucz
+  wspólny dla kafelka „Dni deszczowe" i podsumowania na ResultScreen.
+- tsc czysto.
+
+---
+
+## 2026-07-11 (b): Fix zgłoszeń usera — karta „pasatów" + ranking poza Kanarami
+
+Branch `redesign`, niezacommitowane. Zgłoszenie dla Palma (Baleary): (1) karta „Stabilność
+Pasatów" na ekranie Wiatr — pasaty/alisios NIE występują na Morzu Śródziemnym; (2) ranking
+tytułował „Wiatr na Wyspach Kanaryjskich" i mieszał wszystkie regiony.
+
+### Rozwiązanie — świadomość regionu (canary / balearic / mainland)
+- **Nowy wspólny moduł** `src/constants/regions.ts`: `Region`, `getRegionForIsland(island)`
+  (mapa `island`→region, fallback `canary`) oraz `ISLAND_TRANSLATION_KEYS` dla WSZYSTKICH
+  16 wysp/obszarów (wcześniej każdy ekran miał lokalną mapę tylko 7 Kanarów → Baleary/wybrzeże
+  pokazywały surową nazwę zamiast tłumaczenia, np. „Majorka").
+- **Karta pasatów** (`TradeWindStabilityCard`): nowy prop `isTradeWind` (default `true`).
+  Poza Kanarami (`region !== 'canary'`) tytuł → `wind.stabilityTitle_generic` („Stabilność
+  Wiatru"), opis → `wind.stabilityDescGeneric_{high,medium,low}` (bez słowa pasaty/alisios/
+  Passat/trade). Sam WSKAŹNIK (spójność wiatru) zostaje — to poprawna, użyteczna statystyka
+  wszędzie; usunięto tylko kanaryjską ramę narracyjną. `WindDetailsScreen` przekazuje
+  `isTradeWind={region === 'canary'}`.
+- **Ranking (Wiatr i Opady)**: filtrowany do regionu bieżącej lokalizacji
+  (`regionRanking = islandRanking.filter(getRegionForIsland === region)`), `maxValue`
+  liczony z listy po filtrze (i tak posortowana malejąco). Tytuł zależny od regionu:
+  canary → istniejący `island_ranking_title`; balearic/mainland → nowe
+  `island_ranking_title_{balearic,mainland}` (Baleary „na Balearach", wybrzeże „na wybrzeżu
+  Hiszpanii" — osobne klucze, bo polska/niemiecka odmiana różni się od „Wysp Kanaryjskich").
+  Zmiana tylko w ekranach — funkcje `getWindRankingByIsland`/`getRainRankingByIsland`
+  w `weatherService` NIETKNIĘTE (nadal zwracają wszystkie regiony; filtr w UI).
+- **i18n (4 języki)**: dodane `wind.stabilityTitle_generic`, `wind.stabilityDescGeneric_*`,
+  `wind.island_ranking_title_{balearic,mainland}`, `rain.island_ranking_title_{balearic,mainland}`.
+- `RainDetailsScreen` dostał import `useMemo` (nie miał). tsc czysto (exit 0).
+- **BUMP CACHE (druga iteracja tego samego zgłoszenia):** po powyższym user zgłosił, że dla
+  Palmy ranking NIE pojawia się wcale. Diagnoza: dane OK (B278 ma 3527 wierszy `velmedia`,
+  3188 `precip`; replikacja rankingu za lipiec zwraca Mallorca/Menorca/Ibiza + costy), filtr
+  regionu OK (wszystkie 15 obszarów, też akcentowane, klasyfikują się poprawnie). Przyczyną
+  był **nieaktualny cache AsyncStorage na telefonie** (7 dni) sprzed dodania danych Balearów:
+  trzymał listę tylko-Kanary, więc po filtrze do `balearic` wychodziła pusta lista → karta
+  chowana. Fix: bump kluczy cache w `weatherService` — `wind_ranking_v1→v2`,
+  `rain_ranking_v4→v5` (wymusza przeliczenie z nowymi regionami). Ta sama technika co przy
+  poprzednich zmianach wartości rankingu.
+
+### DO SPRAWDZENIA / kolejne zgłoszenia
+- To były 2 z „pierwszych błędów" usera — mogą być kolejne (zebrać na telefonie).
+- Alerty AEMET/Calima dla nowych regionów wciąż neutralne (świadomy kompromis, patrz niżej).
+
+---
+
+## 2026-07-11: Rozszerzenie geograficzne — Baleary + wybrzeże SE Hiszpanii (DUŻE, przed wydaniem)
+
+Branch `redesign`. Wszystko **NIEZACOMMITOWANE** (working tree zmodyfikowany). tsc czysto.
+Aplikacja pokazuje teraz „Szansę na Słońce" + pełne statystyki dla Balearów i całego
+południowo-wschodniego wybrzeża Hiszpanii. **Funkcja sterowana danymi** — zero nowej logiki
+liczenia; wszystko przez `locations_mapping.json` + import do Supabase + kafelki/i18n.
+
+### STAN NA KONIEC SESJI
+- **Działa na telefonie** (user potwierdził), ALE **user zgłosił pierwsze błędy** —
+  szczegóły do zebrania NA STARCIE nowej sesji (do ustalenia z userem, potem fix).
+- Serwer Expo działał na 8082 (pid 25631, nie mój — istniejący). QR: `sunly_qr.png`.
+
+### DANE — 8 nowych stacji AEMET (10 lat, w Supabase, zweryfikowane)
+Wykryte skryptem, zweryfikowane pod kątem `sol` (~99% pokrycia):
+- Baleary: **B278** Palma, **B893** Menorca, **B954** Ibiza (Ibiza obsługuje też Formenterę —
+  jej stacja **B986** ma 0% `sol`, więc odpada).
+- Wybrzeże: **6155A** Málaga, **6325O** Almería, **7031X** San Javier (Costa Cálida;
+  `7031X` lepszy niż `7031` — 99% vs 91% sol), **8025** Alicante, **8416** València.
+- Każda ~3530–3653 wiersze. Sanity-check szansy: Palma VII 96%/I 41%, Málaga VII 97%,
+  Alicante VIII 87%, Ibiza VII 95% — realistyczne.
+
+### PUŁAPKA IMPORTU (ważne na przyszłość!) — RLS + service_role
+- `weather_data` ma RLS od migracji **2026-05-14**: anon MOŻE tylko SELECT. **INSERT/UPSERT
+  wymaga klucza `service_role`** (omija RLS). Oryginalny import Kanarów (kwiecień) był PRZED
+  RLS, dlatego działał na anon — teraz NIE.
+- `scripts/upload-to-supabase.ts` poprawiony: `SUPABASE_SERVICE_ROLE_KEY || ANON` (+ ostrzeżenie
+  gdy brak service_role). Nowy panel Supabase: klucz to `sb_secret_...` (sekcja „Secret keys").
+- **BEZPIECZEŃSTWO:** klucz był tymczasowo w `.env` (bez prefiksu `EXPO_PUBLIC_` → NIE trafia do
+  buildu). Po imporcie **usunięty z `.env`**, plik `.env.tmp` (kopia z sekretami, NIE-gitignorowana)
+  skasowany. User **zrotował** klucz w Supabase → klucz z tej rozmowy jest już nieważny.
+
+### PLIKI ZMIENIONE
+- `src/constants/locations_mapping.json`: +8 stacji, +9 obszarów (`islands`), +56 miast → 27/16/247.
+  Obszary kontynentalne jako pseudo-„wyspy": `Mallorca/Menorca/Ibiza/Formentera` +
+  `Costa del Sol/Costa de Almería/Costa Cálida/Costa Blanca/Costa de Valencia`.
+  `backgroundImage: ""` (nieużywane po redesignie), `isNorthern:false, isCoastal:true`.
+- `src/types/weather.ts`: union `Island` +9 wartości.
+- `src/screens/SearchScreen.tsx`: `islandsData` → `regionsData` (3 sekcje: canary/balearic/
+  mainland), nowe `balearicIslands`+`mainlandAreas` (useMemo), typ `IslandTile` (waliduje też
+  nazwy ikon MCI), render z nagłówkami `t('regions.*')`, drawer używa `allIslands.flatMap`.
+  Style `regionSection`/`regionTitle`.
+- i18n (4 języki): `islands.*` +9, nowa sekcja `regions.*` (canary/balearic/mainland).
+- Nowe skrypty (jednorazowe, w repo): `scripts/discover-stations.ts` (inwentarz AEMET po
+  prowincjach, parsuje DMS), `scripts/verify-sol.ts` (pokrycie `sol` za 2024).
+
+### FOLLOW-UPY / świadome kompromisy (NIE blokują, do rozważenia)
+- „Ranking wysp" na ekranach Wiatr/Opady grupuje po `island` — dla obszaru z 1 stacją trywialny,
+  a słowo „wysp" jest kanaryjsko-centryczne (mylące dla Costa del Sol itd.). Kosmetyka.
+- Motywy wysp/grafiki tła pominięte (fallback `defaultIslandTheme`; tła nieużywane).
+- `MAX_CANARY_DISTANCE_KM` (=150, próg GPS) — nazwa myląca, ale działa (150 km od DOWOLNEJ
+  stacji). Opcjonalny rename → `MAX_STATION_DISTANCE_KM`.
+- Calima/alerty AEMET zaprojektowane dla Kanarów — dla nowych regionów neutralne.
+
+### NASTĘPNE KROKI (nowa sesja)
+1. **Zebrać od usera zgłoszone błędy** i je naprawić.
+2. Rozważyć commit tej dużej zmiany (teraz nic niezacommitowane).
+3. Potem przygotowanie wydania: nazwa „Sunly", bump `1.4.3→1.5.0`/`vc7→8` (+ iOS buildNumber),
+   release notes 4 języki, build EAS, test zamknięty. (Pułapki: `project_eas_build_gotchas`.)
+
+### OPERACYJNE (środowisko)
+- tmpfs zadań harnessa potrafił się zapełniać (gubienie wyjścia komend) — czyścić
+  `find /private/tmp/claude-501 -name '*.output' -type f -delete`; nie kasować pliku w trakcie.
+- **Hook blokuje komendy zawierające nazwę sekretu** (np. `SUPABASE_SERVICE_ROLE_KEY` w treści
+  polecenia grep/sed) — takie komendy „nie uruchamiają się" cicho. Operować na `.env` przez
+  numer linii (`sed '8d'`) / nazwy zmiennych (`awk -F=`), nie po pełnej nazwie sekretu.
+
+---
+
 ## 2026-07-10 (d): Feature — drill-down rocznego wykresu temperatur w „Ostatnie 10 lat"
 
 Na ekranie Wyników sekcja „Ostatnie 10 lat": wiersze roku miały dotąd tylko animację

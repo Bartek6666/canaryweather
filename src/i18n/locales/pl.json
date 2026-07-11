@@ -121,7 +121,7 @@
     "rainDaysText_few": "{{count}} dni",
     "rainDaysText_many": "{{count}} dni",
     "rainDaysText_other": "{{count}} dni",
-    "rainDaysLessThanOne": "< 1 dnia",
+    "rainDaysLessThanOne": "< 1 dzień",
     "summaryWindCalm": "Wiatr jest słaby ({{speed}} km/h)",
     "summaryWindModerate": "Wiatr jest umiarkowany ({{speed}} km/h)",
     "summaryWindStrong": "Wiatr jest silny ({{speed}} km/h)",
@@ -179,7 +179,21 @@
     "lanzarote": "Lanzarote",
     "laPalma": "La Palma",
     "laGomera": "La Gomera",
-    "elHierro": "El Hierro"
+    "elHierro": "El Hierro",
+    "mallorca": "Majorka",
+    "menorca": "Minorka",
+    "ibiza": "Ibiza",
+    "formentera": "Formentera",
+    "costaDelSol": "Costa del Sol",
+    "costaAlmeria": "Costa de Almería",
+    "costaCalida": "Costa Cálida",
+    "costaBlanca": "Costa Blanca",
+    "costaValencia": "Costa de Valencia"
+  },
+  "regions": {
+    "canary": "Wyspy Kanaryjskie",
+    "balearic": "Baleary",
+    "mainland": "Wybrzeże Hiszpanii"
   },
   "locationPrompt": {
     "title": "Pogoda blisko Ciebie",
@@ -197,6 +211,10 @@
     "historicalContext": "Kontekst Historyczny",
     "historicalDescription": "Średnia prędkość wiatru w {{month}} obliczona z pomiarów na stacji {{station}} w latach {{years}}.",
     "stabilityTitle": "Stabilność Pasatów",
+    "stabilityTitle_generic": "Stabilność Wiatru",
+    "stabilityDescGeneric_high": "W {{month}} wiatr wieje z wyjątkową regularnością. Idealne warunki do planowania aktywności na świeżym powietrzu.",
+    "stabilityDescGeneric_medium": "W {{month}} wiatry są dość przewidywalne z okazjonalnymi zmianami. Ogólnie dobre warunki.",
+    "stabilityDescGeneric_low": "W {{month}} warunki wiatrowe są bardziej zmienne. Rozważ elastyczne plany dla aktywności zależnych od wiatru.",
     "passatGuarantee": "Gwarancja Pasatów",
     "stability_high": "Bardzo Stabilne",
     "stability_medium": "Umiarkowanie Stabilne",
@@ -227,6 +245,8 @@
       "hurricane": "Huragan"
     },
     "island_ranking_title": "Wiatr na Wyspach Kanaryjskich w {{month}}",
+    "island_ranking_title_balearic": "Wiatr na Balearach w {{month}}",
+    "island_ranking_title_mainland": "Wiatr na wybrzeżu Hiszpanii w {{month}}",
     "island_ranking_month": "średnia prędkość wiatru ze wszystkich stacji AEMET"
   },
   "rain": {
@@ -249,6 +269,8 @@
     "historical_context": "Kontekst Historyczny",
     "historical_description": "Statystyki opadów w {{month}} obliczone z pomiarów na stacji {{station}} w latach {{years}}.",
     "island_ranking_title": "Deszcz na Wyspach Kanaryjskich w {{month}}",
+    "island_ranking_title_balearic": "Deszcz na Balearach w {{month}}",
+    "island_ranking_title_mainland": "Deszcz na wybrzeżu Hiszpanii w {{month}}",
     "island_ranking_month": "opady zebrane ze wszystkich stacji AEMET"
   },
   "weather": {

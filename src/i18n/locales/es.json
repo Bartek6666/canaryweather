@@ -151,7 +151,21 @@
     "lanzarote": "Lanzarote",
     "laPalma": "La Palma",
     "laGomera": "La Gomera",
-    "elHierro": "El Hierro"
+    "elHierro": "El Hierro",
+    "mallorca": "Mallorca",
+    "menorca": "Menorca",
+    "ibiza": "Ibiza",
+    "formentera": "Formentera",
+    "costaDelSol": "Costa del Sol",
+    "costaAlmeria": "Costa de Almería",
+    "costaCalida": "Costa Cálida",
+    "costaBlanca": "Costa Blanca",
+    "costaValencia": "Costa de Valencia"
+  },
+  "regions": {
+    "canary": "Islas Canarias",
+    "balearic": "Islas Baleares",
+    "mainland": "Costa española"
   },
   "locationPrompt": {
     "title": "El tiempo cerca de ti",
@@ -188,6 +202,10 @@
     "historicalContext": "Contexto Histórico",
     "historicalDescription": "Velocidad media del viento en {{month}} calculada a partir de mediciones en la estación {{station}} durante los años {{years}}.",
     "stabilityTitle": "Estabilidad de los Alisios",
+    "stabilityTitle_generic": "Estabilidad del Viento",
+    "stabilityDescGeneric_high": "En {{month}}, el viento sopla con una regularidad excepcional. Condiciones perfectas para planificar actividades al aire libre.",
+    "stabilityDescGeneric_medium": "En {{month}}, los vientos son bastante predecibles con variaciones ocasionales. Buenas condiciones en general.",
+    "stabilityDescGeneric_low": "En {{month}}, las condiciones del viento son más variables. Considera planes flexibles para actividades que dependan del viento.",
     "passatGuarantee": "Garantía Alisios",
     "stability_high": "Muy Estable",
     "stability_medium": "Moderadamente Estable",
@@ -216,6 +234,8 @@
       "hurricane": "Huracán"
     },
     "island_ranking_title": "Viento en las Islas Canarias en {{month}}",
+    "island_ranking_title_balearic": "Viento en las Islas Baleares en {{month}}",
+    "island_ranking_title_mainland": "Viento en la costa española en {{month}}",
     "island_ranking_month": "velocidad media del viento de todas las estaciones AEMET"
   },
   "rain": {
@@ -238,6 +258,8 @@
     "historical_context": "Contexto Histórico",
     "historical_description": "Estadísticas de lluvia para {{month}} calculadas a partir de mediciones en la estación {{station}} durante los años {{years}}.",
     "island_ranking_title": "Lluvia en las Islas Canarias en {{month}}",
+    "island_ranking_title_balearic": "Lluvia en las Islas Baleares en {{month}}",
+    "island_ranking_title_mainland": "Lluvia en la costa española en {{month}}",
     "island_ranking_month": "lluvia recogida de todas las estaciones AEMET"
   },
   "weather": {

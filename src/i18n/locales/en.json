@@ -151,7 +151,21 @@
     "lanzarote": "Lanzarote",
     "laPalma": "La Palma",
     "laGomera": "La Gomera",
-    "elHierro": "El Hierro"
+    "elHierro": "El Hierro",
+    "mallorca": "Mallorca",
+    "menorca": "Menorca",
+    "ibiza": "Ibiza",
+    "formentera": "Formentera",
+    "costaDelSol": "Costa del Sol",
+    "costaAlmeria": "Costa de Almería",
+    "costaCalida": "Costa Cálida",
+    "costaBlanca": "Costa Blanca",
+    "costaValencia": "Costa de Valencia"
+  },
+  "regions": {
+    "canary": "Canary Islands",
+    "balearic": "Balearic Islands",
+    "mainland": "Spanish Coast"
   },
   "locationPrompt": {
     "title": "Weather Near You",
@@ -188,6 +202,10 @@
     "historicalContext": "Historical Context",
     "historicalDescription": "Average wind speed in {{month}} calculated from measurements at {{station}} station over the years {{years}}.",
     "stabilityTitle": "Trade Wind Stability",
+    "stabilityTitle_generic": "Wind Stability",
+    "stabilityDescGeneric_high": "In {{month}}, the wind blows with exceptional regularity. Perfect conditions for planning outdoor activities.",
+    "stabilityDescGeneric_medium": "In {{month}}, winds are fairly predictable with occasional variations. Good conditions overall.",
+    "stabilityDescGeneric_low": "In {{month}}, wind conditions are more variable. Consider flexible plans for wind-dependent activities.",
     "passatGuarantee": "Passat Guarantee",
     "stability_high": "Very Stable",
     "stability_medium": "Moderately Stable",
@@ -216,6 +234,8 @@
       "hurricane": "Hurricane"
     },
     "island_ranking_title": "Wind in the Canary Islands in {{month}}",
+    "island_ranking_title_balearic": "Wind in the Balearic Islands in {{month}}",
+    "island_ranking_title_mainland": "Wind on the Spanish coast in {{month}}",
     "island_ranking_month": "average wind speed from all AEMET stations"
   },
   "rain": {
@@ -238,6 +258,8 @@
     "historical_context": "Historical Context",
     "historical_description": "Rain statistics for {{month}} calculated from measurements at {{station}} station over the years {{years}}.",
     "island_ranking_title": "Rain in the Canary Islands in {{month}}",
+    "island_ranking_title_balearic": "Rain in the Balearic Islands in {{month}}",
+    "island_ranking_title_mainland": "Rain on the Spanish coast in {{month}}",
     "island_ranking_month": "rainfall collected from all AEMET stations"
   },
   "weather": {

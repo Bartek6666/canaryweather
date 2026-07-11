@@ -20,6 +20,9 @@ interface TradeWindStabilityCardProps {
   stability: WindStabilityResult;
   monthName: string;
   month: number;
+  // Trade winds (alisios) only occur in the Canaries. Outside them we show the
+  // same wind-consistency metric but with generic wording (no "trade winds").
+  isTradeWind?: boolean;
   delay?: number;
 }
 
@@ -43,6 +46,7 @@ export function TradeWindStabilityCard({
   stability,
   monthName,
   month,
+  isTradeWind = true,
   delay = 0,
 }: TradeWindStabilityCardProps) {
   const { t } = useTranslation();
@@ -94,7 +98,9 @@ export function TradeWindStabilityCard({
             size={20}
             color={stabilityColor}
           />
-          <Text style={styles.title}>{t('wind.stabilityTitle')}</Text>
+          <Text style={styles.title}>
+            {t(isTradeWind ? 'wind.stabilityTitle' : 'wind.stabilityTitle_generic')}
+          </Text>
         </View>
 
         {/* Stability value */}
@@ -124,7 +130,12 @@ export function TradeWindStabilityCard({
 
         {/* Description */}
         <Text style={styles.description}>
-          {t(`wind.stabilityDesc_${stabilityLevel}`, { month: monthForDescription })}
+          {t(
+            isTradeWind
+              ? `wind.stabilityDesc_${stabilityLevel}`
+              : `wind.stabilityDescGeneric_${stabilityLevel}`,
+            { month: monthForDescription }
+          )}
         </Text>
 
         {/* Stats tiles */}

@@ -69,6 +69,12 @@ interface CityResult {
 
 type SearchMode = 'cities' | 'geocode' | 'no_results' | 'idle';
 
+type IslandTile = {
+  key: string;
+  icon: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+  places: { name: string; stationId: string; coords: { lat: number; lon: number } }[];
+};
+
 const { width, height } = Dimensions.get('window');
 
 // Time gradient is resolved via theme helper
@@ -503,7 +509,7 @@ export default function SearchScreen({ navigation }: Props) {
   // Islands with their top 3 popular destinations
   // Popular destinations with coordinates for accurate weather fetching
   // Coordinates ensure WeatherAPI returns weather for the actual location, not the distant station
-  const islandsData = useMemo(() => [
+  const canaryIslands = useMemo<IslandTile[]>(() => [
     {
       key: 'tenerife',
       icon: 'volcano' as const,
@@ -589,6 +595,132 @@ export default function SearchScreen({ navigation }: Props) {
       ],
     },
   ], []);
+
+  const balearicIslands = useMemo<IslandTile[]>(() => [
+    {
+      key: 'mallorca',
+      icon: 'palm-tree' as const,
+      places: [
+        { name: 'Palma', stationId: 'B278', coords: { lat: 39.5696, lon: 2.6502 } },
+        { name: 'Alcúdia', stationId: 'B278', coords: { lat: 39.8531, lon: 3.1211 } },
+        { name: "Cala d'Or", stationId: 'B278', coords: { lat: 39.3781, lon: 3.2331 } },
+        { name: 'Magaluf', stationId: 'B278', coords: { lat: 39.5089, lon: 2.5306 } },
+        { name: 'Sóller', stationId: 'B278', coords: { lat: 39.7669, lon: 2.7156 } },
+        { name: 'Port de Pollença', stationId: 'B278', coords: { lat: 39.9081, lon: 3.0808 } },
+      ],
+    },
+    {
+      key: 'menorca',
+      icon: 'sail-boat' as const,
+      places: [
+        { name: 'Maó', stationId: 'B893', coords: { lat: 39.8885, lon: 4.2658 } },
+        { name: 'Ciutadella', stationId: 'B893', coords: { lat: 40.0022, lon: 3.8397 } },
+        { name: 'Cala en Porter', stationId: 'B893', coords: { lat: 39.8722, lon: 4.1289 } },
+        { name: 'Fornells', stationId: 'B893', coords: { lat: 40.0539, lon: 4.1319 } },
+        { name: 'Es Mercadal', stationId: 'B893', coords: { lat: 39.9906, lon: 4.0864 } },
+        { name: 'Sant Lluís', stationId: 'B893', coords: { lat: 39.8433, lon: 4.2653 } },
+      ],
+    },
+    {
+      key: 'ibiza',
+      icon: 'beach' as const,
+      places: [
+        { name: 'Eivissa', stationId: 'B954', coords: { lat: 38.9089, lon: 1.4328 } },
+        { name: 'Sant Antoni', stationId: 'B954', coords: { lat: 38.9803, lon: 1.3036 } },
+        { name: 'Santa Eulària', stationId: 'B954', coords: { lat: 38.9847, lon: 1.5347 } },
+        { name: "Playa d'en Bossa", stationId: 'B954', coords: { lat: 38.8814, lon: 1.4083 } },
+        { name: 'Portinatx', stationId: 'B954', coords: { lat: 39.1114, lon: 1.5178 } },
+        { name: 'Cala Llonga', stationId: 'B954', coords: { lat: 38.9553, lon: 1.5292 } },
+      ],
+    },
+    {
+      key: 'formentera',
+      icon: 'waves' as const,
+      places: [
+        { name: 'Es Pujols', stationId: 'B954', coords: { lat: 38.7267, lon: 1.4600 } },
+        { name: 'La Savina', stationId: 'B954', coords: { lat: 38.7328, lon: 1.4172 } },
+        { name: 'Sant Francesc', stationId: 'B954', coords: { lat: 38.7047, lon: 1.4306 } },
+        { name: 'Es Caló', stationId: 'B954', coords: { lat: 38.7139, lon: 1.5006 } },
+        { name: 'Ses Illetes', stationId: 'B954', coords: { lat: 38.7461, lon: 1.4356 } },
+        { name: 'Cala Saona', stationId: 'B954', coords: { lat: 38.6906, lon: 1.4022 } },
+      ],
+    },
+  ], []);
+
+  const mainlandAreas = useMemo<IslandTile[]>(() => [
+    {
+      key: 'costaDelSol',
+      icon: 'weather-sunny' as const,
+      places: [
+        { name: 'Málaga', stationId: '6155A', coords: { lat: 36.7213, lon: -4.4214 } },
+        { name: 'Marbella', stationId: '6155A', coords: { lat: 36.5101, lon: -4.8863 } },
+        { name: 'Torremolinos', stationId: '6155A', coords: { lat: 36.6242, lon: -4.4998 } },
+        { name: 'Fuengirola', stationId: '6155A', coords: { lat: 36.5397, lon: -4.6244 } },
+        { name: 'Nerja', stationId: '6155A', coords: { lat: 36.7461, lon: -3.8742 } },
+        { name: 'Estepona', stationId: '6155A', coords: { lat: 36.4272, lon: -5.1450 } },
+      ],
+    },
+    {
+      key: 'costaAlmeria',
+      icon: 'beach' as const,
+      places: [
+        { name: 'Almería', stationId: '6325O', coords: { lat: 36.8340, lon: -2.4637 } },
+        { name: 'Roquetas de Mar', stationId: '6325O', coords: { lat: 36.7642, lon: -2.6147 } },
+        { name: 'Mojácar', stationId: '6325O', coords: { lat: 37.1394, lon: -1.8514 } },
+        { name: 'Aguadulce', stationId: '6325O', coords: { lat: 36.8083, lon: -2.5533 } },
+        { name: 'Cabo de Gata', stationId: '6325O', coords: { lat: 36.7219, lon: -2.1931 } },
+        { name: 'Adra', stationId: '6325O', coords: { lat: 36.7497, lon: -3.0206 } },
+      ],
+    },
+    {
+      key: 'costaCalida',
+      icon: 'waves' as const,
+      places: [
+        { name: 'Cartagena', stationId: '7031X', coords: { lat: 37.6257, lon: -0.9966 } },
+        { name: 'La Manga', stationId: '7031X', coords: { lat: 37.6394, lon: -0.7256 } },
+        { name: 'Mazarrón', stationId: '7031X', coords: { lat: 37.5992, lon: -1.2589 } },
+        { name: 'Águilas', stationId: '7031X', coords: { lat: 37.4064, lon: -1.5836 } },
+        { name: 'San Pedro del Pinatar', stationId: '7031X', coords: { lat: 37.8153, lon: -0.7897 } },
+        { name: 'Los Alcázares', stationId: '7031X', coords: { lat: 37.7411, lon: -0.8503 } },
+      ],
+    },
+    {
+      key: 'costaBlanca',
+      icon: 'umbrella-beach' as const,
+      places: [
+        { name: 'Alicante', stationId: '8025', coords: { lat: 38.3452, lon: -0.4810 } },
+        { name: 'Benidorm', stationId: '8025', coords: { lat: 38.5411, lon: -0.1225 } },
+        { name: 'Torrevieja', stationId: '8025', coords: { lat: 37.9783, lon: -0.6822 } },
+        { name: 'Calpe', stationId: '8025', coords: { lat: 38.6447, lon: 0.0447 } },
+        { name: 'Dénia', stationId: '8025', coords: { lat: 38.8408, lon: 0.1057 } },
+        { name: 'Jávea', stationId: '8025', coords: { lat: 38.7892, lon: 0.1661 } },
+      ],
+    },
+    {
+      key: 'costaValencia',
+      icon: 'city' as const,
+      places: [
+        { name: 'Valencia', stationId: '8416', coords: { lat: 39.4699, lon: -0.3763 } },
+        { name: 'Gandía', stationId: '8416', coords: { lat: 38.9683, lon: -0.1817 } },
+        { name: 'Cullera', stationId: '8416', coords: { lat: 39.1622, lon: -0.2519 } },
+        { name: 'Sagunto', stationId: '8416', coords: { lat: 39.6803, lon: -0.2742 } },
+        { name: 'Oliva', stationId: '8416', coords: { lat: 38.9214, lon: -0.1156 } },
+        { name: 'El Saler', stationId: '8416', coords: { lat: 39.3856, lon: -0.3247 } },
+      ],
+    },
+  ], []);
+
+  const regionsData = useMemo(() => [
+    { key: 'canary', islands: canaryIslands },
+    { key: 'balearic', islands: balearicIslands },
+    { key: 'mainland', islands: mainlandAreas },
+  ], [canaryIslands, balearicIslands, mainlandAreas]);
+
+  // Flat lookup across all regions (for the "popular places" drawer)
+  const allIslands = useMemo(
+    () => regionsData.flatMap((r) => r.islands),
+    [regionsData]
+  );
 
   // Popular destinations as a flat list (redesign — Sunly)
   const popularPlaces = useMemo(() => {
@@ -828,32 +960,37 @@ export default function SearchScreen({ navigation }: Props) {
                     </View>
                   ) : (
                   <>
-                  <View style={styles.islandsGrid}>
-                    {islandsData.map((island, index) => (
-                      <TouchableOpacity
-                        key={island.key}
-                        activeOpacity={0.8}
-                        onPress={() => handleSelectIsland(island.key)}
-                      >
-                        <GlassCard
-                          scheme="light"
-                          style={[
-                            styles.islandItem,
-                            selectedIsland === island.key && styles.islandItemActive,
-                          ]}
-                          delay={100 + index * 50}
-                        >
-                          <View style={styles.islandItemInner}>
-                            <View style={[styles.islandIconCircle, selectedIsland === island.key && styles.islandIconCircleActive]}>
-                              <MaterialCommunityIcons name={island.icon} size={26} color={selectedIsland === island.key ? '#FFFFFF' : light.colors.primary} />
-                            </View>
-                            <Text style={[styles.islandItemName, selectedIsland === island.key && styles.islandItemNameActive]} numberOfLines={1}>{t(`islands.${island.key}`)}</Text>
-                            <Text style={styles.islandItemSub} numberOfLines={1}>{island.places.length} {t('search.popularPlaces')}</Text>
-                          </View>
-                        </GlassCard>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
+                  {regionsData.map((region) => (
+                    <View key={region.key} style={styles.regionSection}>
+                      <Text style={styles.regionTitle}>{t(`regions.${region.key}`)}</Text>
+                      <View style={styles.islandsGrid}>
+                        {region.islands.map((island, index) => (
+                          <TouchableOpacity
+                            key={island.key}
+                            activeOpacity={0.8}
+                            onPress={() => handleSelectIsland(island.key)}
+                          >
+                            <GlassCard
+                              scheme="light"
+                              style={[
+                                styles.islandItem,
+                                selectedIsland === island.key && styles.islandItemActive,
+                              ]}
+                              delay={100 + index * 50}
+                            >
+                              <View style={styles.islandItemInner}>
+                                <View style={[styles.islandIconCircle, selectedIsland === island.key && styles.islandIconCircleActive]}>
+                                  <MaterialCommunityIcons name={island.icon} size={26} color={selectedIsland === island.key ? '#FFFFFF' : light.colors.primary} />
+                                </View>
+                                <Text style={[styles.islandItemName, selectedIsland === island.key && styles.islandItemNameActive]} numberOfLines={1}>{t(`islands.${island.key}`)}</Text>
+                                <Text style={styles.islandItemSub} numberOfLines={1}>{island.places.length} {t('search.popularPlaces')}</Text>
+                              </View>
+                            </GlassCard>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
+                  ))}
 
                   {selectedIsland && (
                     <View
@@ -872,7 +1009,7 @@ export default function SearchScreen({ navigation }: Props) {
                           </TouchableOpacity>
                         </View>
                         <View style={styles.placesGrid}>
-                          {islandsData.find(i => i.key === selectedIsland)?.places.map((place, index) => (
+                          {allIslands.find(i => i.key === selectedIsland)?.places.map((place, index) => (
                             <TouchableOpacity
                               key={place.name}
                               activeOpacity={0.8}
@@ -1101,6 +1238,16 @@ const styles = StyleSheet.create({
     fontFamily: fonts.regular,
     fontSize: 11,
     color: light.colors.textMuted,
+  },
+  // Region section (Canary / Balearic / Mainland)
+  regionSection: {
+    marginBottom: spacing.md,
+  },
+  regionTitle: {
+    fontFamily: fonts.semibold,
+    fontSize: 15,
+    color: light.colors.textSecondary,
+    marginBottom: spacing.sm,
   },
   // Islands grid - squares with GlassCard
   islandsGrid: {

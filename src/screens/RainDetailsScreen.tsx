@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -22,19 +22,9 @@ import { trackRainDetailsView } from '../services/analyticsService';
 import { calculateRainStats, RainStatsResult, getRainRankingByIsland, IslandRanking } from '../services/weatherService';
 import { RootStackParamList } from '../../App';
 import { MONTH_KEYS } from '../i18n';
+import { getRegionForIsland, ISLAND_TRANSLATION_KEYS, formatRankingIslandName } from '../constants/regions';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'RainDetails'>;
-
-// Map island names from data to translation keys
-const ISLAND_TRANSLATION_KEYS: Record<string, string> = {
-  'Tenerife': 'tenerife',
-  'Gran Canaria': 'granCanaria',
-  'Fuerteventura': 'fuerteventura',
-  'Lanzarote': 'lanzarote',
-  'La Palma': 'laPalma',
-  'La Gomera': 'laGomera',
-  'El Hierro': 'elHierro',
-};
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const GAUGE_SIZE = Math.min(SCREEN_WIDTH * 0.75, 300);
@@ -63,6 +53,7 @@ function getDryDayColor(percentage: number): string {
 export default function RainDetailsScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
   const { stationId, month, stationName, locationName, island } = route.params;
+  const region = getRegionForIsland(island);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const gaugeAnim = useRef(new Animated.Value(0)).current;
@@ -112,6 +103,17 @@ export default function RainDetailsScreen({ navigation, route }: Props) {
   }, [fadeAnim, gaugeAnim]);
 
   const monthName = t(`months.${MONTH_KEYS[month - 1]}`);
+
+  // Ranking is grouped across all regions; show only the current region's
+  // islands/areas so a Balearic/mainland location isn't ranked against Canaries.
+  const regionRanking = useMemo(
+    () => islandRanking.filter((r) => getRegionForIsland(r.island) === region),
+    [islandRanking, region]
+  );
+  const rankingTitleKey =
+    region === 'canary'
+      ? 'rain.island_ranking_title'
+      : `rain.island_ranking_title_${region}`;
 
   // SVG gauge calculations
   const radius = (GAUGE_SIZE - STROKE_WIDTH) / 2;
@@ -267,14 +269,14 @@ export default function RainDetailsScreen({ navigation, route }: Props) {
           </GlassCard>
 
           {/* Island Rain Ranking */}
-          {islandRanking.length > 0 && (
+          {regionRanking.length > 0 && (
             <GlassCard scheme="light" style={styles.rankingCard} delay={750}>
               <View style={styles.rankingInner}>
                 <View style={styles.rankingHeader}>
                   <MaterialCommunityIcons name="podium" size={20} color={light.colors.rain} />
                   <View style={styles.rankingTitleContainer}>
                     <Text style={styles.rankingTitle}>
-                      {t('rain.island_ranking_title', {
+                      {t(rankingTitleKey, {
                         month: i18n.language === 'pl'
                           ? t(`monthsLocative.${MONTH_KEYS[month - 1]}`)
                           : monthName
@@ -285,12 +287,14 @@ export default function RainDetailsScreen({ navigation, route }: Props) {
                     </Text>
                   </View>
                 </View>
-                {islandRanking.map((item, index) => {
+                {regionRanking.map((item, index) => {
                   const isCurrentIsland = item.island === island;
-                  const maxValue = islandRanking[0]?.value || 1;
+                  const maxValue = regionRanking[0]?.value || 1;
                   const barWidth = maxValue > 0 ? (item.value / maxValue) * 100 : 0;
                   const translationKey = ISLAND_TRANSLATION_KEYS[item.island];
-                  const translatedIsland = translationKey ? t(`islands.${translationKey}`) : item.island;
+                  const translatedIsland = formatRankingIslandName(
+                    translationKey ? t(`islands.${translationKey}`) : item.island
+                  );
 
                   return (
                     <View key={item.island} style={styles.rankingRow}>

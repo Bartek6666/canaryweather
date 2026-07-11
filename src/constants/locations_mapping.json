@@ -376,6 +376,94 @@
         "Las Puntas",
         "La Caleta"
       ]
+    },
+    "B278": {
+      "name": "Palma de Mallorca Aeropuerto",
+      "island": "Mallorca",
+      "municipality": "Palma",
+      "latitude": 39.5608,
+      "longitude": 2.7367,
+      "altitude": 5,
+      "isNorthern": false,
+      "isCoastal": true,
+      "aliases": ["Mallorca", "Majorka", "Palma", "Palma de Mallorca", "Son Sant Joan"]
+    },
+    "B893": {
+      "name": "Menorca Aeropuerto",
+      "island": "Menorca",
+      "municipality": "Maó",
+      "latitude": 39.8547,
+      "longitude": 4.2156,
+      "altitude": 91,
+      "isNorthern": false,
+      "isCoastal": true,
+      "aliases": ["Menorca", "Menorka", "Mahón", "Maó", "Ciutadella"]
+    },
+    "B954": {
+      "name": "Ibiza Aeropuerto",
+      "island": "Ibiza",
+      "municipality": "Eivissa",
+      "latitude": 38.8764,
+      "longitude": 1.3844,
+      "altitude": 6,
+      "isNorthern": false,
+      "isCoastal": true,
+      "aliases": ["Ibiza", "Eivissa", "Sant Antoni", "Formentera", "Es Codolar"]
+    },
+    "6155A": {
+      "name": "Málaga Aeropuerto",
+      "island": "Costa del Sol",
+      "municipality": "Málaga",
+      "latitude": 36.6661,
+      "longitude": -4.4822,
+      "altitude": 7,
+      "isNorthern": false,
+      "isCoastal": true,
+      "aliases": ["Málaga", "Malaga", "Costa del Sol", "Marbella", "Torremolinos", "Fuengirola"]
+    },
+    "6325O": {
+      "name": "Almería Aeropuerto",
+      "island": "Costa de Almería",
+      "municipality": "Almería",
+      "latitude": 36.8464,
+      "longitude": -2.3569,
+      "altitude": 21,
+      "isNorthern": false,
+      "isCoastal": true,
+      "aliases": ["Almería", "Almeria", "Costa de Almería", "Roquetas de Mar", "Mojácar"]
+    },
+    "7031X": {
+      "name": "San Javier Aeropuerto",
+      "island": "Costa Cálida",
+      "municipality": "San Javier",
+      "latitude": 37.7783,
+      "longitude": -0.8058,
+      "altitude": 4,
+      "isNorthern": false,
+      "isCoastal": true,
+      "aliases": ["Murcia", "Costa Cálida", "San Javier", "La Manga", "Cartagena", "Mar Menor"]
+    },
+    "8025": {
+      "name": "Alicante",
+      "island": "Costa Blanca",
+      "municipality": "Alicante",
+      "latitude": 38.3725,
+      "longitude": -0.4942,
+      "altitude": 81,
+      "isNorthern": false,
+      "isCoastal": true,
+      "aliases": ["Alicante", "Alacant", "Costa Blanca", "Benidorm", "Torrevieja", "Calpe"]
+    },
+    "8416": {
+      "name": "València",
+      "island": "Costa de Valencia",
+      "municipality": "València",
+      "latitude": 39.4806,
+      "longitude": -0.3664,
+      "altitude": 13,
+      "isNorthern": false,
+      "isCoastal": true,
+      "aliases": ["Valencia", "València", "Costa de Valencia", "Gandía", "Cullera", "Sagunto"]
     }
   },
   "islands": {
@@ -413,6 +501,51 @@
       "mainStation": "C929I",
       "stations": ["C929I"],
       "backgroundImage": "el_hierro_coast.jpg"
+    },
+    "Mallorca": {
+      "mainStation": "B278",
+      "stations": ["B278"],
+      "backgroundImage": ""
+    },
+    "Menorca": {
+      "mainStation": "B893",
+      "stations": ["B893"],
+      "backgroundImage": ""
+    },
+    "Ibiza": {
+      "mainStation": "B954",
+      "stations": ["B954"],
+      "backgroundImage": ""
+    },
+    "Formentera": {
+      "mainStation": "B954",
+      "stations": ["B954"],
+      "backgroundImage": ""
+    },
+    "Costa del Sol": {
+      "mainStation": "6155A",
+      "stations": ["6155A"],
+      "backgroundImage": ""
+    },
+    "Costa de Almería": {
+      "mainStation": "6325O",
+      "stations": ["6325O"],
+      "backgroundImage": ""
+    },
+    "Costa Cálida": {
+      "mainStation": "7031X",
+      "stations": ["7031X"],
+      "backgroundImage": ""
+    },
+    "Costa Blanca": {
+      "mainStation": "8025",
+      "stations": ["8025"],
+      "backgroundImage": ""
+    },
+    "Costa de Valencia": {
+      "mainStation": "8416",
+      "stations": ["8416"],
+      "backgroundImage": ""
     }
   },
   "cities": [
@@ -605,7 +738,64 @@
     {"name": "Tarajalejo", "island": "Fuerteventura", "coords": {"lat": 28.1913, "lon": -14.1184}},
     {"name": "La Lajita", "island": "Fuerteventura", "coords": {"lat": 28.1834, "lon": -14.1520}},
     {"name": "Ajuy", "island": "Fuerteventura", "coords": {"lat": 28.4028, "lon": -14.1531}},
-    {"name": "Aguas Verdes", "island": "Fuerteventura", "coords": {"lat": 28.7119, "lon": -14.0208}}
+    {"name": "Aguas Verdes", "island": "Fuerteventura", "coords": {"lat": 28.7119, "lon": -14.0208}},
+    {"name": "Palma", "island": "Mallorca", "coords": {"lat": 39.5696, "lon": 2.6502}},
+    {"name": "Palma de Mallorca", "island": "Mallorca", "coords": {"lat": 39.5696, "lon": 2.6502}},
+    {"name": "Alcúdia", "island": "Mallorca", "coords": {"lat": 39.8531, "lon": 3.1211}},
+    {"name": "Cala d'Or", "island": "Mallorca", "coords": {"lat": 39.3781, "lon": 3.2331}},
+    {"name": "Magaluf", "island": "Mallorca", "coords": {"lat": 39.5089, "lon": 2.5306}},
+    {"name": "Sóller", "island": "Mallorca", "coords": {"lat": 39.7669, "lon": 2.7156}},
+    {"name": "Port de Pollença", "island": "Mallorca", "coords": {"lat": 39.9081, "lon": 3.0808}},
+    {"name": "Maó", "island": "Menorca", "coords": {"lat": 39.8885, "lon": 4.2658}},
+    {"name": "Mahón", "island": "Menorca", "coords": {"lat": 39.8885, "lon": 4.2658}},
+    {"name": "Ciutadella", "island": "Menorca", "coords": {"lat": 40.0022, "lon": 3.8397}},
+    {"name": "Cala en Porter", "island": "Menorca", "coords": {"lat": 39.8722, "lon": 4.1289}},
+    {"name": "Fornells", "island": "Menorca", "coords": {"lat": 40.0539, "lon": 4.1319}},
+    {"name": "Es Mercadal", "island": "Menorca", "coords": {"lat": 39.9906, "lon": 4.0864}},
+    {"name": "Sant Lluís", "island": "Menorca", "coords": {"lat": 39.8433, "lon": 4.2653}},
+    {"name": "Eivissa", "island": "Ibiza", "coords": {"lat": 38.9089, "lon": 1.4328}},
+    {"name": "Ibiza", "island": "Ibiza", "coords": {"lat": 38.9089, "lon": 1.4328}},
+    {"name": "Sant Antoni de Portmany", "island": "Ibiza", "coords": {"lat": 38.9803, "lon": 1.3036}},
+    {"name": "Santa Eulària", "island": "Ibiza", "coords": {"lat": 38.9847, "lon": 1.5347}},
+    {"name": "Playa d'en Bossa", "island": "Ibiza", "coords": {"lat": 38.8814, "lon": 1.4083}},
+    {"name": "Portinatx", "island": "Ibiza", "coords": {"lat": 39.1114, "lon": 1.5178}},
+    {"name": "Cala Llonga", "island": "Ibiza", "coords": {"lat": 38.9553, "lon": 1.5292}},
+    {"name": "Es Pujols", "island": "Formentera", "coords": {"lat": 38.7267, "lon": 1.4600}},
+    {"name": "La Savina", "island": "Formentera", "coords": {"lat": 38.7328, "lon": 1.4172}},
+    {"name": "Sant Francesc", "island": "Formentera", "coords": {"lat": 38.7047, "lon": 1.4306}},
+    {"name": "Es Caló", "island": "Formentera", "coords": {"lat": 38.7139, "lon": 1.5006}},
+    {"name": "Ses Illetes", "island": "Formentera", "coords": {"lat": 38.7461, "lon": 1.4356}},
+    {"name": "Cala Saona", "island": "Formentera", "coords": {"lat": 38.6906, "lon": 1.4022}},
+    {"name": "Málaga", "island": "Costa del Sol", "coords": {"lat": 36.7213, "lon": -4.4214}},
+    {"name": "Marbella", "island": "Costa del Sol", "coords": {"lat": 36.5101, "lon": -4.8863}},
+    {"name": "Torremolinos", "island": "Costa del Sol", "coords": {"lat": 36.6242, "lon": -4.4998}},
+    {"name": "Fuengirola", "island": "Costa del Sol", "coords": {"lat": 36.5397, "lon": -4.6244}},
+    {"name": "Nerja", "island": "Costa del Sol", "coords": {"lat": 36.7461, "lon": -3.8742}},
+    {"name": "Estepona", "island": "Costa del Sol", "coords": {"lat": 36.4272, "lon": -5.1450}},
+    {"name": "Almería", "island": "Costa de Almería", "coords": {"lat": 36.8340, "lon": -2.4637}},
+    {"name": "Roquetas de Mar", "island": "Costa de Almería", "coords": {"lat": 36.7642, "lon": -2.6147}},
+    {"name": "Mojácar", "island": "Costa de Almería", "coords": {"lat": 37.1394, "lon": -1.8514}},
+    {"name": "Aguadulce", "island": "Costa de Almería", "coords": {"lat": 36.8083, "lon": -2.5533}},
+    {"name": "Cabo de Gata", "island": "Costa de Almería", "coords": {"lat": 36.7219, "lon": -2.1931}},
+    {"name": "Adra", "island": "Costa de Almería", "coords": {"lat": 36.7497, "lon": -3.0206}},
+    {"name": "Cartagena", "island": "Costa Cálida", "coords": {"lat": 37.6257, "lon": -0.9966}},
+    {"name": "La Manga", "island": "Costa Cálida", "coords": {"lat": 37.6394, "lon": -0.7256}},
+    {"name": "Mazarrón", "island": "Costa Cálida", "coords": {"lat": 37.5992, "lon": -1.2589}},
+    {"name": "Águilas", "island": "Costa Cálida", "coords": {"lat": 37.4064, "lon": -1.5836}},
+    {"name": "San Pedro del Pinatar", "island": "Costa Cálida", "coords": {"lat": 37.8153, "lon": -0.7897}},
+    {"name": "Los Alcázares", "island": "Costa Cálida", "coords": {"lat": 37.7411, "lon": -0.8503}},
+    {"name": "Alicante", "island": "Costa Blanca", "coords": {"lat": 38.3452, "lon": -0.4810}},
+    {"name": "Benidorm", "island": "Costa Blanca", "coords": {"lat": 38.5411, "lon": -0.1225}},
+    {"name": "Torrevieja", "island": "Costa Blanca", "coords": {"lat": 37.9783, "lon": -0.6822}},
+    {"name": "Calpe", "island": "Costa Blanca", "coords": {"lat": 38.6447, "lon": 0.0447}},
+    {"name": "Dénia", "island": "Costa Blanca", "coords": {"lat": 38.8408, "lon": 0.1057}},
+    {"name": "Jávea", "island": "Costa Blanca", "coords": {"lat": 38.7892, "lon": 0.1661}},
+    {"name": "Valencia", "island": "Costa de Valencia", "coords": {"lat": 39.4699, "lon": -0.3763}},
+    {"name": "Gandía", "island": "Costa de Valencia", "coords": {"lat": 38.9683, "lon": -0.1817}},
+    {"name": "Cullera", "island": "Costa de Valencia", "coords": {"lat": 39.1622, "lon": -0.2519}},
+    {"name": "Sagunto", "island": "Costa de Valencia", "coords": {"lat": 39.6803, "lon": -0.2742}},
+    {"name": "Oliva", "island": "Costa de Valencia", "coords": {"lat": 38.9214, "lon": -0.1156}},
+    {"name": "El Saler", "island": "Costa de Valencia", "coords": {"lat": 39.3856, "lon": -0.3247}}
   ],
   "altitudeCorrection": {
     "description": "Temperature decreases by 0.6°C per 100m of elevation difference",

@@ -855,7 +855,7 @@ const RANKING_CACHE_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
  */
 export async function getWindRankingByIsland(month: number): Promise<IslandRanking[]> {
   // Check cache first
-  const cacheKey = `wind_ranking_v1_${month}`;
+  const cacheKey = `wind_ranking_v2_${month}`;
   try {
     const cached = await AsyncStorage.getItem(cacheKey);
     if (cached) {
@@ -955,7 +955,7 @@ export async function getWindRankingByIsland(month: number): Promise<IslandRanki
  */
 export async function getRainRankingByIsland(month: number): Promise<IslandRanking[]> {
   // Check cache first
-  const cacheKey = `rain_ranking_v4_${month}`;
+  const cacheKey = `rain_ranking_v5_${month}`;
   try {
     const cached = await AsyncStorage.getItem(cacheKey);
     if (cached) {
