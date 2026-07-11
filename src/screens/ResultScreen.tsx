@@ -19,7 +19,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 
-import { colors, spacing, typography, glass, glassTokens, glassText, borderRadius, gradients, getSunChanceColor, liveCard, light, fonts } from '../constants/theme';
+import { colors, spacing, typography, glass, glassTokens, glassText, borderRadius, gradients, liveCard, light, fonts } from '../constants/theme';
 import { AlertCard, AlertDetailModal, ClickableGlassCard, CoastalAlertCard, GlassCard, SnowAlertCard, SunChanceGauge, SunChanceModal, WeatherIcon, WindAlertCard, YearTemperatureChartModal } from '../components';
 import locationsMapping from '../constants/locations_mapping.json';
 import { calculateSunChanceWithFallback, SunChanceWithFallback, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult, calculateInterpolatedMonthlyStats, InterpolatedMonthlyStatsResult, fetchMostSevereCoastalAlert, fetchMostSevereWindAlert, fetchMostSevereSnowAlert, validateWeatherWithNearbyStation, WeatherValidationResult, interpolateLiveWeather, InterpolatedLiveWeatherResult, findNearestStations } from '../services/weatherService';
@@ -268,7 +268,7 @@ const BestTimeCard = React.memo(function BestTimeCard({ week, rank, delay = 0 }:
         <View style={styles.bestTimeStats}>
           <View style={styles.bestTimeStat}>
             <WeatherIcon condition={weatherCondition} size={18} showGlow={true} />
-            <Text style={[styles.bestTimeValue, { color: getSunChanceColor(week.sunChance) }]}>{week.sunChance}%</Text>
+            <Text style={[styles.bestTimeValue, { color: light.colors.accentDeep }]}>{week.sunChance}%</Text>
           </View>
           <View style={styles.bestTimeStat}>
             <MaterialCommunityIcons name="thermometer" size={16} color={light.colors.tempHot} />
@@ -335,7 +335,7 @@ const YearHistoryItem = React.memo(function YearHistoryItem({ data, month, delay
             <View style={styles.sunBarWrapper}>
               <View style={styles.sunBarBackground}>
                 <LinearGradient
-                  colors={['rgba(255, 255, 255, 0.15)', '#FFD700']}
+                  colors={['rgba(255, 255, 255, 0.15)', light.colors.accentDeep]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={[styles.sunBarFill, { width: `${sunChance}%` }]}
@@ -344,7 +344,7 @@ const YearHistoryItem = React.memo(function YearHistoryItem({ data, month, delay
                 <View style={[styles.sunBarGlow, { width: `${sunChance}%` }]} />
               </View>
             </View>
-            <Text style={[styles.sunBarPercent, { color: getSunChanceColor(sunChance) }]}>{sunChance}%</Text>
+            <Text style={[styles.sunBarPercent, { color: light.colors.accentDeep }]}>{sunChance}%</Text>
           </View>
 
           {/* Column 3: Temperatures */}
@@ -1143,7 +1143,7 @@ export default function ResultScreen({ navigation, route }: Props) {
         {bestWeeks.length > 0 && !isLoading && (
           <View style={styles.bestTimeSection}>
             <View style={styles.bestTimeHeader}>
-              <MaterialCommunityIcons name="trophy" size={22} color={light.colors.accent} />
+              <MaterialCommunityIcons name="trophy" size={22} color={light.colors.accentDeep} />
               <Text style={styles.bestTimeTitle}>{t('result.bestTimeToVisit')}</Text>
             </View>
             <Text style={styles.bestTimeSubtitle}>{t('result.top3Weeks')}</Text>
@@ -1373,7 +1373,7 @@ const styles = StyleSheet.create({
     height: 9,
     borderRadius: 5,
     backgroundColor: 'transparent',
-    shadowColor: '#FFD700',
+    shadowColor: light.colors.accentDeep,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.6,
     shadowRadius: 4,

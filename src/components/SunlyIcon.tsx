@@ -11,6 +11,8 @@ import Svg, {
   Path,
 } from 'react-native-svg';
 
+import { light } from '../constants/theme';
+
 interface SunlyIconProps {
   size?: number;
   // Cleaner variant for small sizes (e.g. the app-bar brand at ~32px): drops the
@@ -20,8 +22,8 @@ interface SunlyIconProps {
 }
 
 /**
- * Sunly brand icon — stylized sun over waves on a sky-blue rounded square.
- * Doubles as the source for the app icon (PNG export). viewBox is 100×100.
+ * Sunly brand icon — stylized sun over waves on a royal-blue rounded square
+ * (tile uses the app's primary token for brand cohesion). viewBox is 100×100.
  */
 export function SunlyIcon({ size = 120, simple = false }: SunlyIconProps) {
   return (
@@ -31,10 +33,11 @@ export function SunlyIcon({ size = 120, simple = false }: SunlyIconProps) {
           <Stop offset="0%" stopColor="#FFD700" stopOpacity={1} />
           <Stop offset="100%" stopColor="#FF8C00" stopOpacity={1} />
         </LinearGradient>
-        <RadialGradient id="skyGrad" cx="50%" cy={simple ? '38%' : '42%'} r={simple ? '65%' : '60%'}>
-          {/* Deeper sky in simple mode so the tile separates from the pale app-bar background */}
-          <Stop offset="0%" stopColor={simple ? '#8FD0F5' : '#B0E0FF'} stopOpacity={1} />
-          <Stop offset="100%" stopColor={simple ? '#3E9BD6' : '#5AABDC'} stopOpacity={1} />
+        <RadialGradient id="skyGrad" cx="50%" cy="40%" r="70%">
+          {/* Royal-blue tile — same token as the app's primary buttons, so the brand
+              icon stays consistent with the app's blue. Amber sun + white waves pop. */}
+          <Stop offset="0%" stopColor={light.colors.primary} stopOpacity={1} />
+          <Stop offset="100%" stopColor={light.colors.primaryDark} stopOpacity={1} />
         </RadialGradient>
         <ClipPath id="tile">
           <Rect width={100} height={100} rx={22} />
