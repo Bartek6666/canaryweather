@@ -29,7 +29,7 @@ import { useTranslation } from 'react-i18next';
 import { spacing, glassTokens, borderRadius, light, fonts } from '../constants/theme';
 import locationsMapping from '../constants/locations_mapping.json';
 import { findNearestStations, findNearestStation, NearbyStation } from '../services/weatherService';
-import { GlassCard, LanguageSwitcher, LocationPrompt } from '../components';
+import { GlassCard, LanguageSwitcher, LocationPrompt, SunlyIcon } from '../components';
 import { City } from '../types/weather';
 import { useSearchAnalytics } from '../hooks/useSearchAnalytics';
 
@@ -807,7 +807,7 @@ export default function SearchScreen({ navigation }: Props) {
               {/* Top app bar: brand + language switcher */}
               <View style={styles.appBar}>
                 <View style={styles.appBarBrand}>
-                  <Ionicons name="location" size={22} color={light.colors.primary} />
+                  <SunlyIcon size={32} simple />
                   <Text style={styles.brandName}>Sunly</Text>
                 </View>
                 <LanguageSwitcher delay={50} />
@@ -1086,7 +1086,7 @@ const styles = StyleSheet.create({
   appBarBrand: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: spacing.sm,
   },
   brandName: {
     fontFamily: fonts.extrabold,
