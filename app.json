@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Canary Weather",
+    "name": "Sunly",
     "slug": "canaryweather",
-    "version": "1.4.3",
+    "version": "1.5.0",
     "runtimeVersion": {
       "policy": "appVersion"
     },
@@ -27,10 +27,10 @@
       }
     },
     "android": {
-      "versionCode": 7,
+      "versionCode": 8,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#0077CC"
+        "backgroundColor": "#0052D4"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -58,7 +58,7 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow Canary Weather to use your location to find the nearest weather station."
+          "locationAlwaysAndWhenInUsePermission": "Allow Sunly to use your location to find the nearest weather station."
         }
       ],
       "expo-font",
