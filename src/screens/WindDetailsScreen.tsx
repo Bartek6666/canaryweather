@@ -18,12 +18,12 @@ import i18n from 'i18next';
 import Svg, { Circle } from 'react-native-svg';
 
 import { light, spacing, typography, borderRadius, fonts } from '../constants/theme';
-import { GlassCard, ScreenHeader, TradeWindStabilityCard } from '../components';
+import { GlassCard, ScreenHeader, TradeWindStabilityCard, IslandRankingCard } from '../components';
 import { trackWindDetailsView, trackWindStabilityView } from '../services/analyticsService';
 import { calculateWindStability, WindStabilityResult, getWindRankingByIsland, IslandRanking } from '../services/weatherService';
 import { RootStackParamList } from '../../App';
 import { MONTH_KEYS } from '../i18n';
-import { getRegionForIsland, ISLAND_TRANSLATION_KEYS, formatRankingIslandName } from '../constants/regions';
+import { getRegionForIsland } from '../constants/regions';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'WindDetails'>;
 
@@ -129,17 +129,6 @@ export default function WindDetailsScreen({ navigation, route }: Props) {
   }, []);
 
   const monthName = t(`months.${MONTH_KEYS[month - 1]}`);
-
-  // Ranking is grouped across all regions; show only the current region's
-  // islands/areas so a Balearic/mainland location isn't ranked against Canaries.
-  const regionRanking = useMemo(
-    () => islandRanking.filter((r) => getRegionForIsland(r.island) === region),
-    [islandRanking, region]
-  );
-  const rankingTitleKey =
-    region === 'canary'
-      ? 'wind.island_ranking_title'
-      : `wind.island_ranking_title_${region}`;
 
   // SVG gauge calculations
   const radius = (GAUGE_SIZE - STROKE_WIDTH) / 2;
@@ -267,61 +256,13 @@ export default function WindDetailsScreen({ navigation, route }: Props) {
           </GlassCard>
 
           {/* Island Wind Ranking */}
-          {regionRanking.length > 0 && (
-            <GlassCard scheme="light" style={styles.rankingCard} delay={650}>
-              <View style={styles.rankingInner}>
-                <View style={styles.rankingHeader}>
-                  <MaterialCommunityIcons name="podium" size={20} color={light.colors.cloud} />
-                  <View style={styles.rankingTitleContainer}>
-                    <Text style={styles.rankingTitle}>
-                      {t(rankingTitleKey, {
-                        month: i18n.language === 'pl'
-                          ? t(`monthsLocative.${MONTH_KEYS[month - 1]}`)
-                          : monthName
-                      })}
-                    </Text>
-                    <Text style={styles.rankingSubtitle}>
-                      {t('wind.island_ranking_month')}
-                    </Text>
-                  </View>
-                </View>
-                {regionRanking.map((item, index) => {
-                  const isCurrentIsland = item.island === island;
-                  const maxValue = regionRanking[0]?.value || 1;
-                  const barWidth = (item.value / maxValue) * 100;
-                  const translationKey = ISLAND_TRANSLATION_KEYS[item.island];
-                  const translatedIsland = formatRankingIslandName(
-                    translationKey ? t(`islands.${translationKey}`) : item.island
-                  );
-
-                  return (
-                    <View key={item.island} style={styles.rankingRow}>
-                      <Text style={styles.rankingPosition}>{index + 1}.</Text>
-                      <Text style={[
-                        styles.rankingIsland,
-                        isCurrentIsland && styles.rankingIslandCurrent
-                      ]} numberOfLines={1}>
-                        {translatedIsland}
-                      </Text>
-                      <View style={styles.rankingBarContainer}>
-                        <View style={[
-                          styles.rankingBar,
-                          { width: `${barWidth}%` },
-                          isCurrentIsland && styles.rankingBarCurrent
-                        ]} />
-                      </View>
-                      <Text style={[
-                        styles.rankingValue,
-                        isCurrentIsland && styles.rankingValueCurrent
-                      ]} numberOfLines={1}>
-                        {item.value} km/h
-                      </Text>
-                    </View>
-                  );
-                })}
-              </View>
-            </GlassCard>
-          )}
+          <IslandRankingCard
+            kind="wind"
+            ranking={islandRanking}
+            island={island}
+            month={month}
+            delay={650}
+          />
 
           <View style={styles.bottomSpacer} />
         </Animated.ScrollView>
@@ -432,77 +373,6 @@ const styles = StyleSheet.create({
     ...typography.body, fontFamily: fonts.regular,
     color: light.colors.textSecondary,
     lineHeight: 22,
-  },
-  rankingCard: {
-    width: '100%',
-    marginBottom: spacing.md,
-  },
-  rankingInner: {
-    padding: spacing.lg,
-  },
-  rankingHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: spacing.md,
-  },
-  rankingTitleContainer: {
-    flex: 1,
-    marginLeft: spacing.sm,
-  },
-  rankingTitle: {
-    ...typography.h3, fontFamily: fonts.semibold,
-    color: light.colors.textPrimary,
-  },
-  rankingSubtitle: {
-    ...typography.bodySmall, fontFamily: fonts.regular,
-    color: light.colors.textSecondary,
-    marginTop: 2,
-  },
-  rankingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  rankingPosition: {
-    width: 24,
-    fontSize: 13, fontFamily: fonts.semibold,
-    fontWeight: '600',
-    color: light.colors.textMuted,
-  },
-  rankingIsland: {
-    width: 100,
-    fontSize: 13, fontFamily: fonts.regular,
-    color: light.colors.textSecondary,
-  },
-  rankingIslandCurrent: {
-    color: light.colors.primary,
-    fontWeight: '600', fontFamily: fonts.semibold,
-  },
-  rankingBarContainer: {
-    flex: 1,
-    height: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.06)',
-    borderRadius: 4,
-    marginHorizontal: spacing.sm,
-    overflow: 'hidden',
-  },
-  rankingBar: {
-    height: '100%',
-    backgroundColor: 'rgba(0, 0, 0, 0.15)',
-    borderRadius: 4,
-  },
-  rankingBarCurrent: {
-    backgroundColor: light.colors.primary,
-  },
-  rankingValue: {
-    width: 80,
-    fontSize: 13, fontFamily: fonts.regular,
-    color: light.colors.textSecondary,
-    textAlign: 'right',
-  },
-  rankingValueCurrent: {
-    color: light.colors.primary,
-    fontWeight: '600', fontFamily: fonts.semibold,
   },
   bottomSpacer: {
     height: 40,

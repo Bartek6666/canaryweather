@@ -308,25 +308,6 @@ export const glassText = {
   muted: 'rgba(255, 255, 255, 0.5)',
 } as const;
 
-// ─── GRADIENTS ────────────────────────────────────────────────────────────────
-
-export const gradients = {
-  // FIGMA: Main app background gradient
-  // ORIGINAL: ['#001645', '#4B9AC6']
-  main: ['#0050AA', '#002D70'] as const,
-
-  // Time-of-day backgrounds (SearchScreen) - legacy, kept for reference
-  morning: ['#FF9A9E', '#FECFEF', '#FECFEF'] as const,
-  day: ['#667eea', '#764ba2', '#f093fb'] as const,
-  evening: ['#fa709a', '#fee140', '#fa709a'] as const,
-  night: ['#0c1445', '#1a237e', '#311b92'] as const,
-
-  // Weather-based backgrounds (ResultScreen)
-  sunny: ['#FFD93D', '#FF9500', '#FF6B35'] as const,
-  mixed: ['#667eea', '#764ba2', '#f093fb'] as const,
-  cloudy: ['#4B6CB7', '#182848', '#4B6CB7'] as const,
-} as const;
-
 // ─── LIVE WEATHER CARD DIMENSIONS (Figma) ────────────────────────────────────
 
 export const liveCard = {
@@ -348,105 +329,6 @@ export const animation = {
     gauge: 800,
   },
 } as const;
-
-// ─── ISLAND THEMES ────────────────────────────────────────────────────────────
-
-export interface IslandTheme {
-  name: string;
-  gradient: readonly [string, string, string];
-  accent: string;
-  icon: string;
-}
-
-const islandThemes: Record<string, IslandTheme> = {
-  'Tenerife': {
-    name: 'Tenerife',
-    gradient: ['#667eea', '#764ba2', '#f093fb'],
-    accent: '#764ba2',
-    icon: 'mountain',
-  },
-  'Gran Canaria': {
-    name: 'Gran Canaria',
-    gradient: ['#FFD93D', '#FF9500', '#FF6B35'],
-    accent: '#FF9500',
-    icon: 'beach',
-  },
-  'Lanzarote': {
-    name: 'Lanzarote',
-    gradient: ['#D4451A', '#8B2500', '#1A1A1A'],
-    accent: '#D4451A',
-    icon: 'terrain',
-  },
-  'Fuerteventura': {
-    name: 'Fuerteventura',
-    gradient: ['#F4A460', '#DEB887', '#C19A6B'],
-    accent: '#DEB887',
-    icon: 'surfing',
-  },
-  'La Palma': {
-    name: 'La Palma',
-    gradient: ['#2D6A4F', '#40916C', '#52B788'],
-    accent: '#40916C',
-    icon: 'palm-tree',
-  },
-  'La Gomera': {
-    name: 'La Gomera',
-    gradient: ['#1B4332', '#2D6A4F', '#40916C'],
-    accent: '#2D6A4F',
-    icon: 'forest',
-  },
-  'El Hierro': {
-    name: 'El Hierro',
-    gradient: ['#023E8A', '#0077B6', '#00B4D8'],
-    accent: '#0077B6',
-    icon: 'water',
-  },
-};
-
-const defaultIslandTheme: IslandTheme = {
-  name: 'Canarias',
-  gradient: ['#667eea', '#764ba2', '#f093fb'],
-  accent: colors.primary,
-  icon: 'sunny',
-};
-
-/**
- * Returns a color theme specific to the given Canary Island.
- * Use for per-island gradient backgrounds and accent colors.
- */
-export function getIslandTheme(islandName: string): IslandTheme {
-  return islandThemes[islandName] ?? defaultIslandTheme;
-}
-
-// ─── WEATHER GRADIENT HELPER ──────────────────────────────────────────────────
-
-/**
- * Returns a gradient based on sun chance percentage.
- */
-export function getWeatherGradient(sunChance: number): readonly [string, string, string] {
-  if (sunChance >= 70) return gradients.sunny;
-  if (sunChance >= 40) return gradients.mixed;
-  return gradients.cloudy;
-}
-
-/**
- * Returns the time-of-day gradient for the SearchScreen background.
- */
-export function getTimeGradient(): readonly [string, string, string] {
-  const hour = new Date().getHours();
-  if (hour >= 6 && hour < 12) return gradients.morning;
-  if (hour >= 12 && hour < 18) return gradients.day;
-  if (hour >= 18 && hour < 21) return gradients.evening;
-  return gradients.night;
-}
-
-// ─── SUN CHANCE COLOR HELPER ──────────────────────────────────────────────────
-
-export function getSunChanceColor(percentage: number): string {
-  if (percentage >= 70) return colors.sunChanceHigh;
-  if (percentage >= 40) return colors.sunChanceMedium;
-  return colors.sunChanceLow;
-}
 
 // ─── FONTS (Manrope) ──────────────────────────────────────────────────────────
 // Manrope font family — loaded in App.tsx via @expo-google-fonts/manrope.
@@ -518,7 +400,6 @@ export const theme = {
   glass,
   glassTokens,
   glassText,
-  gradients,
   animation,
   liveCard,
 } as const;

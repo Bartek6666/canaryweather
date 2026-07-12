@@ -166,7 +166,7 @@ export async function getYearlyMonthlyTemperatures(
 
   const sums = Array.from({ length: 12 }, () => ({ maxSum: 0, maxN: 0, minSum: 0, minN: 0 }));
   for (const row of data ?? []) {
-    const m = new Date(row.date).getMonth(); // 0-11
+    const m = Number(row.date.slice(5, 7)) - 1; // 0-11, parsed from 'YYYY-MM-DD' (timezone-safe)
     if (row.tmax !== null) { sums[m].maxSum += row.tmax; sums[m].maxN++; }
     if (row.tmin !== null) { sums[m].minSum += row.tmin; sums[m].minN++; }
   }

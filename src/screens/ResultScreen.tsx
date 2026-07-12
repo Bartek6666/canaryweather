@@ -19,7 +19,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 
-import { colors, spacing, typography, glass, glassTokens, glassText, borderRadius, gradients, liveCard, light, fonts } from '../constants/theme';
+import { colors, spacing, typography, glass, glassTokens, glassText, borderRadius, liveCard, light, fonts } from '../constants/theme';
 import { AlertCard, AlertDetailModal, ClickableGlassCard, CoastalAlertCard, GlassCard, SnowAlertCard, SunChanceGauge, SunChanceModal, WeatherIcon, WindAlertCard, YearTemperatureChartModal } from '../components';
 import locationsMapping from '../constants/locations_mapping.json';
 import { calculateSunChanceWithFallback, SunChanceWithFallback, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult, calculateInterpolatedMonthlyStats, InterpolatedMonthlyStatsResult, fetchMostSevereCoastalAlert, fetchMostSevereWindAlert, fetchMostSevereSnowAlert, validateWeatherWithNearbyStation, WeatherValidationResult, interpolateLiveWeather, InterpolatedLiveWeatherResult, findNearestStations } from '../services/weatherService';

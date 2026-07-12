@@ -63,7 +63,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 export default function App() {
   const [appIsReady, setAppIsReady] = useState(false);
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState<boolean | null>(null);
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     Manrope_400Regular,
     Manrope_500Medium,
     Manrope_600SemiBold,
@@ -101,14 +101,19 @@ export default function App() {
     prepare();
   }, []);
 
+  // Treat a font-load FAILURE as "ready" too — otherwise a failed font asset
+  // would leave the app stuck on the splash forever. On error we fall back to
+  // system fonts instead of hanging.
+  const fontsReady = fontsLoaded || !!fontError;
+
   const onLayoutRootView = useCallback(async () => {
-    if (appIsReady && fontsLoaded) {
+    if (appIsReady && fontsReady) {
       // Hide splash screen after app is ready and layout is complete
       await SplashScreen.hideAsync();
     }
-  }, [appIsReady, fontsLoaded]);
+  }, [appIsReady, fontsReady]);
 
-  if (!appIsReady || hasSeenOnboarding === null || !fontsLoaded) {
+  if (!appIsReady || hasSeenOnboarding === null || !fontsReady) {
     return null;
   }
 
