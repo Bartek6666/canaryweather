@@ -4,6 +4,53 @@ Ten plik zawiera notatki z implementacji i decyzji technicznych. Sprawdzaj go na
 
 ---
 
+## 2026-07-12: Audyt przedwydaniowy + BUILD EAS „Sunly" 1.5.0 (vc8)
+
+Przed wydaniem zrobiony audyt (tsc, martwy kod, sekrety, /code-review high na branchu
+`redesign`). Wynik: konfiguracja bezpieczna (DEV-reset usunięty, `USE_MOCK_DATA=__DEV__&&false`,
+`.env` gitignored, brak service_role w kodzie, RLS chroni zapis, EAS ma klucze produkcyjne).
+
+### Naprawy z audytu (commit `b2eaf3a`)
+- **App.tsx**: `useFonts` zwraca też `fontError`, który był ignorowany → przy awarii fontu apka
+  utykała na splashu na zawsze. Fix: `fontsReady = fontsLoaded || !!fontError` (fallback na font
+  systemowy) w bramce renderu i `onLayoutRootView`.
+- **weatherService `getYearlyMonthlyTemperatures`**: miesiąc liczony `new Date(row.date).getMonth()`
+  (lokalna strefa na dacie UTC) → dni graniczne w złym miesiącu dla userów spoza UTC. Fix:
+  `Number(row.date.slice(5,7))-1`. (To samo bucketowanie jest w rankingach — pre-existing, <0,3%,
+  zostawione.)
+- **Martwy kod**: usunięte `HeroLogo`, `WeatherEffects` (+ eksporty). `theme.ts`: usunięte martwe
+  `gradients`, `islandThemes`+interfejs, `getTimeGradient/getWeatherGradient/getIslandTheme`,
+  `getSunChanceColor` (osierocony po zmianie kolorów %); poprawiony zbiorczy `theme` + import
+  w ResultScreen. `app.json` `userInterfaceStyle` dark→light.
+- **Refaktor**: wspólny `IslandRankingCard` (kind='wind'|'rain') zamiast zduplikowanego bloku
+  rankingu w obu ekranach (region liczony w komponencie, różnice: jednostka/kolor/ikona).
+
+### Świadomie NIEzrobione z audytu
+- `USE_PLACE_LIST=false` wariant „listy" w SearchScreen — zostawiony (celowa alternatywa).
+- Ranking deszczu dzieli przez liczbę zmapowanych stacji (nie tych z danymi) — negligible.
+- **EAS: zdublowany `EXPO_PUBLIC_WAQI_TOKEN`** (3× PUBLIC per env, 12 mar + 1× SECRET 18 mar).
+  NIE blokuje buildu (build wczytał token OK; wszystkie kopie mają tę samą wartość, `EXPO_PUBLIC_*`
+  wtapia się przy buildzie więc zmiany w EAS nie ruszają już zbudowanej apki). Do posprzątania
+  kiedyś przez web UI (zostawić 1 wpis na środowisko). User poinformowany, odłożone.
+
+### RELEASE PREP + BUILD (commit `3b1e344`)
+- **Rebrand**: `app.json name` „Canary Weather"→**„Sunly"** (applicationId `com.canaryweather.app`
+  ZOSTAJE — permanentny). Komunikat lokalizacji → „Sunly". `adaptiveIcon.backgroundColor`
+  `#0077CC`→`#0052D4` (spójny z nową królewską ikoną).
+- **Wersja**: `1.4.3`→**`1.5.0`**, `android.versionCode` `7`→**`8`**, `package.json` →`1.5.0`.
+  iOS `buildNumber` NIETKNIĘTY (nie budujemy iOS — brak konta Apple Dev).
+- **BUILD**: `eas build -p android --profile production --non-interactive --no-wait`.
+  ID `0d486c8e-57e9-4272-beaa-170b8b51c5f1`. Keystore istniejący, fingerprint OK.
+  URL: https://expo.dev/accounts/bartek666/projects/canaryweather/builds/0d486c8e-57e9-4272-beaa-170b8b51c5f1
+
+### NASTĘPNE KROKI (po zakończeniu buildu)
+1. Pobrać AAB, wgrać do Google Play → **test zamknięty** (14 dni). **AAB wygasa po 30 dniach!**
+2. Release notes 4 języki w Play Console (en-GB/pl-PL/es-ES/de-DE) — jeszcze nie zrobione.
+3. Zmienić tytuł aplikacji w Play Console na „Sunly" (osobne od `app.json name`).
+4. Po teście → ponowny wniosek o produkcję (poprzedni odrzucony 29.06 za mało testerów).
+
+---
+
 ## 2026-07-11 (c): Drobne fixy rankingu wybrzeża + polska gramatyka „< 1 dzień"
 
 - **Nazwy wybrzeża ucinane w rankingu** (kolumna `rankingIsland` width 100): wszystkie obszary
