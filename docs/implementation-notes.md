@@ -4,6 +4,32 @@ Ten plik zawiera notatki z implementacji i decyzji technicznych. Sprawdzaj go na
 
 ---
 
+## 2026-07-12 (b): Fix 2 zgłoszeń usera na SearchScreen (branch `redesign`)
+
+Dwa błędy zgłoszone przez usera na ekranie wyszukiwania (po wysłaniu vc8 do testu):
+
+1. **Polska odmiana „popularne miejsca":** kafelek wyspy pokazywał `{count} popularne
+   miejsca` (np. „6 popularne miejsca") — brak odmiany. Fix: nowy klucz i18n z pluralizacją
+   `search.popularPlacesCount` (pl: `_one/_few/_many/_other` = „popularne miejsce / popularne
+   miejsca / popularnych miejsc"; en/es/de: `_one/_other`). `SearchScreen` l.986 →
+   `t('search.popularPlacesCount', { count: island.places.length })`. Nagłówek szuflady
+   (l.1003, `... - {t('search.popularPlaces')}`, bez liczby) ZOSTAWIONY — stary klucz
+   `popularPlaces` dalej istnieje jako etykieta bez liczebnika. Zweryfikowane `Intl.PluralRules('pl')`:
+   6→many→„6 popularnych miejsc". (i18next ma `compatibilityJSON: 'v4'`, więc CLDR działa —
+   ten sam wzorzec co `rainDaysText`/`wind.daysText`.)
+2. **Stopka „trust line" `search.footer`** („Sprawdzamy dane pogodowe z 10 lat - 19 stacji
+   AEMET" / „Data from 10 years • 19 AEMET stations") — user chciał ją usunąć (i tak podawała
+   nieaktualne „19 stacji"; jest ich teraz 27). Usunięty render (`SearchScreen` l.1040 tekst
+   + kreska `footerDivider` nad nim), osierocone style `footerStats`/`footerDivider` oraz
+   martwy klucz `search.footer` z 4 języków. **UWAGA:** to NIE disclaimer AEMET — `footer.dataSource`
+   („Dane: AEMET (aemet.es)") i `footer.disclaimer` („…nie jest powiązana z AEMET…") ZOSTAJĄ
+   (wymóg Google Play, Misleading Claims).
+
+tsc czysto, JSON 4 języków poprawny. **NIEZACOMMITOWANE.** Te fixy NIE są w wysłanym buildzie
+vc8 (test zamknięty) — wejdą dopiero w następnym buildzie EAS (przy okazji kolejnego wydania).
+
+---
+
 ## 2026-07-12: Audyt przedwydaniowy + BUILD EAS „Sunly" 1.5.0 (vc8)
 
 Przed wydaniem zrobiony audyt (tsc, martwy kod, sekrety, /code-review high na branchu

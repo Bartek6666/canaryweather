@@ -2,7 +2,7 @@
   "expo": {
     "name": "Sunly",
     "slug": "canaryweather",
-    "version": "1.5.0",
+    "version": "1.5.1",
     "runtimeVersion": {
       "policy": "appVersion"
     },
@@ -27,7 +27,7 @@
       }
     },
     "android": {
-      "versionCode": 8,
+      "versionCode": 9,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0052D4"

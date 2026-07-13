@@ -983,7 +983,7 @@ export default function SearchScreen({ navigation }: Props) {
                                   <MaterialCommunityIcons name={island.icon} size={26} color={selectedIsland === island.key ? '#FFFFFF' : light.colors.primary} />
                                 </View>
                                 <Text style={[styles.islandItemName, selectedIsland === island.key && styles.islandItemNameActive]} numberOfLines={1}>{t(`islands.${island.key}`)}</Text>
-                                <Text style={styles.islandItemSub} numberOfLines={1}>{island.places.length} {t('search.popularPlaces')}</Text>
+                                <Text style={styles.islandItemSub} numberOfLines={1}>{t('search.popularPlacesCount', { count: island.places.length })}</Text>
                               </View>
                             </GlassCard>
                           </TouchableOpacity>
@@ -1037,8 +1037,6 @@ export default function SearchScreen({ navigation }: Props) {
 
               {/* Footer with data source and disclaimer */}
               <View style={styles.footerSection}>
-                <Text style={styles.footerStats}>{t('search.footer')}</Text>
-                <View style={styles.footerDivider} />
                 <TouchableOpacity
                   onPress={() => Linking.openURL('https://www.aemet.es/')}
                   activeOpacity={0.7}
@@ -1367,20 +1365,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.xl,
     paddingTop: spacing.md,
     alignItems: 'center',
-  },
-  footerStats: {
-    fontFamily: fonts.medium,
-    fontSize: 12,
-    color: light.colors.textSecondary,
-    marginBottom: spacing.md,
-    textAlign: 'center',
-  },
-  footerDivider: {
-    width: 60,
-    height: 1,
-    backgroundColor: light.colors.textMuted,
-    opacity: 0.3,
-    marginBottom: spacing.md,
   },
   footerSource: {
     fontFamily: fonts.medium,
