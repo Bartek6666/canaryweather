@@ -118,3 +118,60 @@ Gdy chcesz szybko odpowiedzieć, a nie masz pod ręką liczby — pomóż ogóln
 **ES:**
 > [Lugar] en [mes] suele ser muy soleado 🌞 Si quieres un dato concreto — hago **Sunly**, una app
 > que calcula la «probabilidad de sol» con 10 años de AEMET: app.sunly.live
+
+---
+
+# Warianty EN (grupy anglojęzyczne — fora turystyczne Kanary / Costa del Sol)
+
+Te same zasady co wyżej: najpierw pomóż konkretem, prawdziwa liczba z apki w `[…%]`, szczera
+wzmianka „I built an app", link na końcu / na życzenie.
+
+## E1. Kanary / Costa del Sol — „what's the weather like in [month]?"
+
+Typowe: *„Coming to [Playa del Inglés / Costa Adeje / Málaga] in [month], what's the weather like?"*
+
+> Hi! [Month] is one of the best months there — [np. warm ~26°C, warm sea, lots of sun and very
+> little rain]. I actually built a little app (**Sunly**) that works out the “chance of sun” from
+> 10 years of official AEMET data — for [place] in [month] it comes out at **[…%]**, so you're in
+> good shape 🌞 If you want to check your dates: app.sunly.live
+
+## E2. Pytanie dwuczęściowe (pogoda + sprawa praktyczna: taxi/transfer/co zabrać)
+
+Typowe: *„…what's the weather like and how much is a taxi from the airport?"* Odpowiedz na OBIE
+części — to wygląda jak pomoc lokalsa, nie promo. Przy liczbach spoza apki (ceny, dystanse) dodaj
+„worth confirming", jeśli nie masz pewności.
+
+> Hi! [Month] is great there — around [X]°C, warm sea and mostly sunny, rain is rare. I built an
+> app (**Sunly**) that calculates the “chance of sun” from 10 years of AEMET data — [place] in
+> [month] comes out at **[…%]** 🌞
+> As for the taxi, it's roughly **€[…]** and about [X] min (worth confirming, but that's the usual
+> ballpark). Have a great trip! (app.sunly.live if you want to compare other spots/months)
+
+## E3. Porównawcze — „where's sunniest / warmest in [month]?"
+
+Typowe: *„Where should we go for winter sun — Canaries or somewhere on the mainland?"*
+
+> Canaries win for winter sun, no contest 🙂 I checked it in my own app just now — [place A] in
+> [month] gives **[…%]** chance of a sunny day, vs [place B] at **[…%]**. The app's **Sunly**
+> (I build it myself), based on 10 years of AEMET data — you can compare any spots: app.sunly.live
+
+## E4. Deszcz — „will it rain in [place] in [month]?"
+
+> Statistically [place] in [month] is dry — on average about [X] rainy days in the whole month. I
+> built an app (**Sunly**) that shows this from 10 years of AEMET data (chance of sun for [place]/
+> [month]: **[…%]**). If you want to check your dates: app.sunly.live 🌞
+
+## E5. Post dyskusyjny — „do you prefer summer or winter here?"
+
+Post o opinie, nie o dane → odezwij się jak realny głos w dyskusji, podbij jedną liczbą.
+Rozważ wersję BEZ linku (link dopiero, jak ktoś dopyta „what app?").
+
+> Winter every time for me 🌞 Back home [month] is grey, and down here you get ~22°C and sunshine
+> at the same time. I actually crunch these numbers for fun — from 10 years of AEMET data, [place]
+> in [month] has about **[…%]** chance of a sunny day, basically like a European summer. Made it
+> into an app (Sunly) if anyone wants to compare months: app.sunly.live
+
+## E6. Wariant „bez liczby" (szybka odpowiedź, gdy nie zdążysz otworzyć apki)
+
+> [Place] in [month] is usually lovely and sunny 🌞 If you want an actual figure — I build an app
+> (**Sunly**) that works out the “chance of sun” from 10 years of AEMET data: app.sunly.live
