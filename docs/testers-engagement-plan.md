@@ -18,7 +18,7 @@ i dają feedback, plus JEDNA aktualizacja (vc10) wypuszczona w reakcji na ich uw
 > wpuści apki do sklepu.
 > Prośba: **otwórz apkę kilka razy w tym tygodniu** (dosłownie 2 minuty za razem) i sprawdź pogodę
 > dla różnych miejsc — Twojego wymarzonego wyjazdu, Wysp Kanaryjskich, Balearów. A jak coś Ci nie
-> zagra albo masz pomysł — wpisz w formularzu: [LINK DO FORMULARZA].
+> zagra albo masz pomysł — wpisz w formularzu: https://forms.gle/eWMjBXnMZ4LBjChV9
 > Będę Ci ogromnie wdzięczny — to naprawdę robi różnicę. 🌞
 
 **Ważne:** wyślij to **osobiście** do ~15–20 osób (SMS/WhatsApp/Messenger), nie jako jeden masowy
