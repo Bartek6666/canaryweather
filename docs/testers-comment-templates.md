@@ -1,0 +1,120 @@
+# Szablony komentarzy — rekrutacja testerów Sunly
+
+**Cel:** reagować na pytania o pogodę w grupach turystycznych FB. Zamiast wrzucać własne posty
+(wymagają zgody admina, łatwo o bana), komentujesz pod pytaniami, które ktoś **sam** zadał —
+to normalna aktywność, nie promocja z nikąd.
+
+## Zasady (przeczytaj raz, potem trzymaj się ich)
+
+1. **Najpierw pomóż, potem link.** Odpowiedz konkretem, dopiero na końcu wspomnij apkę.
+2. **Cytuj PRAWDZIWĄ liczbę z apki.** Zanim skomentujesz — otwórz Sunly, sprawdź „szansę na
+   słońce" dla miejsca i miesiąca z pytania, wstaw tę liczbę w `[…%]`. To dowód, że apka działa,
+   zanim ktoś ją zainstaluje. NIE zmyślaj liczb.
+3. **Powiedz, że to Twoja apka** („robię akurat apkę Sunly"). Szczera autopromocja jest wybaczana,
+   ukryta — karana.
+4. **Nie wklejaj identycznego tekstu wszędzie.** FB wykrywa to jako spam. Parafrazuj, mieszaj.
+5. **Nie linkuj pod KAŻDYM komentarzem.** Czasem po prostu pomóż bez linku — budujesz wiarygodność.
+6. **Sprawdź regulamin grupy** — część zakazuje linków też w komentarzach. Jak tak, odpuść tę grupę.
+
+Link zawsze: **app.sunly.live**
+
+---
+
+## 1. Kanary zimą (Teneryfa / Gran Canaria / Fuerteventura, XI–III)
+
+Typowe pytanie: *„Jaka pogoda w grudniu/styczniu w [Costa Adeje / Playa del Inglés / Corralejo]?"*
+
+**PL:**
+> [Miejsce] to jedno z cieplejszych miejsc na Kanarach zimą — [miesiąc] historycznie wychodzi
+> bardzo dobrze, dni łagodne (~20–23°C), deszcz rzadko. Robię akurat apkę **Sunly**, która liczy
+> „szansę na słońce" z 10 lat danych AEMET — dla [miejsce] w [miesiąc] wyszło **[…%]**. Jest w
+> becie, jak chcesz sprawdzić dla swojego terminu: app.sunly.live 🌞
+
+**ES:**
+> [Lugar] es de los sitios más cálidos de Canarias en invierno — [mes] suele salir muy bien, días
+> suaves (~20–23°C) y poca lluvia. Estoy haciendo una app, **Sunly**, que calcula la
+> «probabilidad de sol» con 10 años de datos de AEMET — para [lugar] en [mes] da **[…%]**. Está en
+> beta, si quieres mirar tus fechas: app.sunly.live 🌞
+
+---
+
+## 2. Baleary latem (Majorka / Ibiza / Menorca, V–IX)
+
+Typowe pytanie: *„Jak pogoda w [czerwiec/wrzesień] na Majorce/Ibizie? Czy warto?"*
+
+**PL:**
+> [Miesiąc] na [wyspa] to praktycznie pewne słońce — historycznie prawie bez deszczu, upały
+> zaczynają się na dobre. Robię apkę **Sunly**, liczy „szansę na słońce" z 10 lat danych AEMET;
+> dla [wyspa] w [miesiąc] wyszło **[…%]**. W becie, gdybyś chciał sprawdzić inne miesiące:
+> app.sunly.live 🌞
+
+**ES:**
+> [Mes] en [isla] es sol casi garantizado — históricamente apenas llueve y ya aprieta el calor.
+> Hago una app, **Sunly**, que calcula la «probabilidad de sol» con 10 años de AEMET; para [isla]
+> en [mes] da **[…%]**. En beta, por si quieres comparar meses: app.sunly.live 🌞
+
+---
+
+## 3. Costa del Sol / wybrzeże Hiszpanii (Málaga, Alicante, Walencja)
+
+Typowe pytanie: *„Wybieram się do [Málaga/Alicante] w [miesiąc] — jak z pogodą?"*
+
+**PL:**
+> [Miejsce] ma jeden z najsłoneczniejszych klimatów w Europie — [miesiąc] zwykle bardzo udany.
+> Robię apkę **Sunly**, która z 10 lat danych AEMET liczy „szansę na słońce" — dla [miejsce] w
+> [miesiąc] wyszło **[…%]**. Jest w becie: app.sunly.live 🌞
+
+**ES:**
+> [Lugar] tiene uno de los climas más soleados de Europa — [mes] suele ser estupendo. Hago una
+> app, **Sunly**, que con 10 años de datos de AEMET calcula la «probabilidad de sol» — para
+> [lugar] en [mes] da **[…%]**. Está en beta: app.sunly.live 🌞
+
+---
+
+## 4. Porównawcze — „gdzie najcieplej / najsłoneczniej w [miesiąc]?"
+
+Typowe pytanie: *„Gdzie jechać po słońce w [luty]? Kanary czy Baleary?"*
+
+To najlepszy typ pytania dla Ciebie — apka JEST narzędziem do porównań.
+
+**PL:**
+> Sprawdziłem to akurat w swojej apce 🙂 W [miesiąc] [zwycięzca, np. Kanary] wygrywają — dla
+> [miejsce A] wyszło **[…%]** szansy na słońce, dla [miejsce B] **[…%]**. Apka to **Sunly**
+> (robię ją sam), liczy to z 10 lat danych AEMET — możesz porównać dowolne miejsca:
+> app.sunly.live 🌞
+
+**ES:**
+> Lo he mirado justo en mi app 🙂 En [mes] gana [ganador] — para [lugar A] da **[…%]** de
+> probabilidad de sol, y para [lugar B] **[…%]**. La app es **Sunly** (la hago yo), lo calcula
+> con 10 años de AEMET — puedes comparar los sitios que quieras: app.sunly.live 🌞
+
+---
+
+## 5. Deszcz / „czy będzie padać w [miejsce]?"
+
+Typowe pytanie: *„Jedziemy do [miejsce] w [miesiąc], boję się deszczu — jak to wygląda?"*
+
+**PL:**
+> Statystycznie [miejsce] w [miesiąc] jest suche — historycznie średnio [X] dni z deszczem w
+> całym miesiącu. Robię apkę **Sunly**, pokazuje to z 10 lat danych AEMET (szansa na słońce dla
+> [miejsce]/[miesiąc]: **[…%]**). W becie, jak chcesz sprawdzić swój termin: app.sunly.live 🌞
+
+**ES:**
+> Estadísticamente [lugar] en [mes] es seco — de media [X] días de lluvia en todo el mes. Hago una
+> app, **Sunly**, que lo muestra con 10 años de AEMET (probabilidad de sol para [lugar]/[mes]:
+> **[…%]**). En beta, por si quieres mirar tus fechas: app.sunly.live 🌞
+
+---
+
+## Wariant „bez liczby" (gdy nie zdążysz otworzyć apki)
+
+Gdy chcesz szybko odpowiedzieć, a nie masz pod ręką liczby — pomóż ogólnie i zaproś:
+
+**PL:**
+> [Miejsce] w [miesiąc] zwykle jest bardzo słoneczne 🌞 Jak chcesz konkretną liczbę — robię apkę
+> **Sunly**, która liczy „szansę na słońce" z 10 lat danych AEMET dla takich miejsc:
+> app.sunly.live
+
+**ES:**
+> [Lugar] en [mes] suele ser muy soleado 🌞 Si quieres un dato concreto — hago **Sunly**, una app
+> que calcula la «probabilidad de sol» con 10 años de AEMET: app.sunly.live
