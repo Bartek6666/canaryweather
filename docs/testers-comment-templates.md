@@ -121,6 +121,37 @@ Gdy chcesz szybko odpowiedzieć, a nie masz pod ręką liczby — pomóż ogóln
 
 ---
 
+## 7. Obawa o wiatr / „czy tam wieje całymi dniami?" (Kanary)
+
+Typowe: *„Słyszałem, że na Kanarach wieje bez przerwy i wieczorami trzeba bluzy — czy w każdym
+regionie tak jest? Może inna wyspa?"* To mit w ogólnej formie — decyduje **region**. Rozwiej go
+TWARDĄ liczbą: apka ma osobny ekran wiatru (średnia prędkość + **dni wietrzne >20 km/h**). Ta
+ostatnia liczba trafia prosto w obawę — jak wyjdzie mała, mit sam się rozsypuje.
+
+Fakty do oparcia komentarza: pasaty biją w **północ/wschód** wysp; **południe** (Costa Adeje,
+Los Cristianos, Las Américas na Teneryfie; Maspalomas na Gran Canarii) jest osłonięte górami —
+cieplej, słoneczniej, spokojniej. Najbardziej wietrzna wyspa: **Fuerteventura** (mekka surferów)
+— odradzać osobom nielubiącym wiatru.
+
+**PL:**
+> Cześć! W tak ogólnej formie to mit 🙂 Na [wyspa] kluczowy jest **region**: północ łapie pasaty
+> (chłodniej, więcej chmur), ale **południe** ([miejsce]) jest osłonięte górami — cieplej,
+> słoneczniej i znacznie spokojniej. Jak nie znosicie wiatru, odpuśćcie Fuerteventurę
+> (najbardziej wietrzna). Robię apkę **Sunly**, liczy to z 10 lat danych AEMET — dla [miejsce]
+> w [miesiąc] wychodzi **[…%]** szansy na słońce, średni wiatr **[… km/h]**, a dni naprawdę
+> wietrznych (>20 km/h) tylko **[…]** w miesiącu. Chcecie porównać regiony/wyspy pod kątem słońca
+> i wiatru: app.sunly.live 🌞
+
+**ES:**
+> ¡Hola! Dicho así en general es un mito 🙂 En [isla] lo que manda es la **zona**: el norte pilla
+> los alisios (más fresco y nublado), pero el **sur** ([lugar]) está resguardado por las montañas
+> — más cálido, soleado y tranquilo. Si no lleváis bien el viento, evitad Fuerteventura (la más
+> ventosa). Hago una app, **Sunly**, que lo calcula con 10 años de AEMET — para [lugar] en [mes]
+> da **[…%]** de sol, viento medio **[… km/h]** y solo **[…]** días realmente ventosos (>20 km/h)
+> al mes. Si queréis comparar zonas/islas por sol y viento: app.sunly.live 🌞
+
+---
+
 # Warianty EN (grupy anglojęzyczne — fora turystyczne Kanary / Costa del Sol)
 
 Te same zasady co wyżej: najpierw pomóż konkretem, prawdziwa liczba z apki w `[…%]`, szczera
