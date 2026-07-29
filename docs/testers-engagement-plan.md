@@ -1,5 +1,20 @@
 # Plan zaangażowania testerów — Sunly (2. podejście do produkcji)
 
+## 🔗 WAŻNE LINKI (pod ręką)
+
+**Formularz feedbacku — wysyłaj testerom (link „do wypełniania"):**
+- 🇵🇱 PL: **https://forms.gle/eWMjBXnMZ4LBjChV9**
+- 🇪🇸 ES: **https://forms.gle/YDEzfkzrgMhTjKza6**
+
+**Strona zapisu testerów:** https://app.sunly.live
+**Analityka wejść (GoatCounter):** https://sunly.goatcounter.com
+
+⚠️ **NIE wysyłaj testerom linku kończącego się na `/edit`** — to panel edycji formularza, tylko dla
+Ciebie. Testerom zawsze `forms.gle/…`. (Formularze ES: teksty i wiadomość w `docs/feedback-form-es.md`;
+szablony komentarzy FB w `docs/testers-comment-templates.md`.)
+
+---
+
 **Kontekst:** 2. odmowa dostępu do produkcji (2026-07-22), ten sam powód: za małe zaangażowanie
 testerów + niewidoczna pętla „opinie → poprawki". Testerzy zainstalowali apkę z Play, ale otwierają
 ją zbyt rzadko. Google wymaga **kolejnych 14 dni** testu zamkniętego (min. 12 testerów), licząc od
