@@ -4,6 +4,43 @@ Ten plik zawiera notatki z implementacji i decyzji technicznych. Sprawdzaj go na
 
 ---
 
+## 2026-08-05: 3. WNIOSEK O PRODUKCJĘ ZŁOŻONY (operacyjne, nie kod)
+
+Po 2 odmowach (29.06, 22.07) tym razem warunek Google **„12 testerów × 14 dni" SPEŁNIONY** —
+przycisk „Poproś o opublikowanie wersji produkcyjnej" aktywny → kliknięty **05.08 o 22:41**.
+Working tree `redesign` czysty (żadnych zmian w kodzie tej sesji — całość to działania w Play
+Console). Poprzednia notatka techniczna kończy się na 2026-07-12; okres 07-13→08-05 to wyłącznie
+rekrutacja/zaangażowanie testerów (szczegóły w pamięci `project_status` + `docs/testers-*`).
+
+### Kwestionariusz Google (odpowiedzi PL, limit 300 zn./pytanie) — co wpisano
+- **Jak pozyskano testerów:** organicznie, bez płatnych dostawców / znajomych / rodziny;
+  komentarze pod pytaniami o pogodę w grupach FB (Kanary/Baleary/wybrzeże), transparentnie „to
+  moja apka" → realna grupa docelowa.
+- **Jak łatwo było pozyskać (lista):** „Trudno".
+- **Zaangażowanie testerów:** naturalne, realne wyszukiwania; korzystali z kluczowych funkcji
+  (szansa na słońce, statystyki, wiatr, opady, live); analityka potwierdza ruch.
+- **Podsumowanie opinii + sposób zbierania:** formularze PL/ES + info@sunly.live + wiadomości;
+  chwalili dane o szansie na słońce, zgłosili drobne błędy → wdrożone.
+- **Odbiorcy:** osoby planujące wyjazd na Kanary/Baleary/wybrzeże, głównie spoza tych regionów.
+- **Wartość apki:** realna szansa na słońce z 10 lat danych AEMET + bieżąca pogoda → decyzja
+  o terminie/miejscu na faktach.
+- **Oczekiwane instalacje w 1. rok (lista):** 0–10 tys.
+- **Zmiany z testu:** polska odmiana, dane poza Kanarami (Baleary/wybrzeże), SearchScreen,
+  usunięte mylące info — wydane w kolejnych wersjach.
+- **Gotowość do produkcji:** 14 dni testu bez awarii, wdrożony feedback, zgodność (AEMET +
+  disclaimer), feedback już kosmetyczny.
+- **Co się zmieniło od 2. odmowy:** pełny wymóg 12×14 z realnie zaangażowanymi testerami.
+
+### Stan / następne kroki
+- **Decyzja Google ≤7 dni** (~do 12.08), e-mail na konto właściciela. Test zamknięty NIE
+  zatrzymywać do czasu decyzji.
+- ⚠️ **KOLIZJA: AAB vc9 wygasa ~12.08** — dokładnie w oknie decyzji. Jeśli zbliża się 12.08 bez
+  decyzji lub potrzebny nowy build → odświeżyć AAB (patrz pamięć `project_eas_build_gotchas`).
+- Po decyzji pozytywnej: wydać 1.5.1 (vc9) do produkcji (release notes 4 języki gotowe),
+  zmienić nazwę w sklepie na „Sunly" (Store listing → App name).
+
+---
+
 ## 2026-07-12 (b): Fix 2 zgłoszeń usera na SearchScreen (branch `redesign`)
 
 Dwa błędy zgłoszone przez usera na ekranie wyszukiwania (po wysłaniu vc8 do testu):
