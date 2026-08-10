@@ -32,6 +32,7 @@ import { findNearestStations, findNearestStation, NearbyStation } from '../servi
 import { GlassCard, LanguageSwitcher, LocationPrompt, SunlyIcon } from '../components';
 import { City } from '../types/weather';
 import { useSearchAnalytics } from '../hooks/useSearchAnalytics';
+import { getRecentSearches, addRecentSearch, RecentSearch } from '../utils/recentSearches';
 
 const LOCATION_PROMPT_KEY = 'location_prompt_dismissed';
 const MAX_CANARY_DISTANCE_KM = 150;
@@ -188,6 +189,16 @@ export default function SearchScreen({ navigation }: Props) {
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
   const [isLocationPromptLoading, setIsLocationPromptLoading] = useState(false);
 
+  // Recently searched places (persisted, refreshed whenever we return to this screen)
+  const [recentSearches, setRecentSearches] = useState<RecentSearch[]>([]);
+
+  useEffect(() => {
+    const loadRecent = () => { getRecentSearches().then(setRecentSearches); };
+    loadRecent();
+    const unsubscribe = navigation.addListener('focus', loadRecent);
+    return unsubscribe;
+  }, [navigation]);
+
   useEffect(() => {
     Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }).start();
   }, []);
@@ -317,6 +328,16 @@ export default function SearchScreen({ navigation }: Props) {
     setSearchMode('idle');
 
     if (nearest) {
+      addRecentSearch({
+        stationId: nearest.stationId,
+        locationName: city.name,
+        island: city.island,
+        lat: city.coords.lat,
+        lon: city.coords.lon,
+        isCoastal: city.isCoastal,
+        isHighAltitude: city.isHighAltitude,
+        isHighAltitudeFallback: nearest.isHighAltitudeFallback,
+      });
       navigation.navigate('Result', {
         stationId: nearest.stationId,
         locationName: city.name,
@@ -347,6 +368,13 @@ export default function SearchScreen({ navigation }: Props) {
     setGeocodeResults([]);
     setSearchMode('idle');
 
+    addRecentSearch({
+      stationId: station.stationId,
+      locationName: geocodeQuery,
+      island: station.island,
+      lat: geocodeCoords?.lat,
+      lon: geocodeCoords?.lon,
+    });
     navigation.navigate('Result', {
       stationId: station.stationId,
       locationName: geocodeQuery,
@@ -376,12 +404,33 @@ export default function SearchScreen({ navigation }: Props) {
     setGeocodeResults([]);
     setSearchMode('idle');
 
+    addRecentSearch({
+      stationId,
+      locationName: placeName,
+      island: islandName,
+      lat: coords.lat,
+      lon: coords.lon,
+    });
     navigation.navigate('Result', {
       stationId,
       locationName: placeName,
       locationCoords: coords,
     });
   }, [navigation, trackPopular]);
+
+  // Handle selection from the "recently searched" list
+  const handleSelectRecent = useCallback((item: RecentSearch) => {
+    Keyboard.dismiss();
+    addRecentSearch(item); // move it back to the top
+    navigation.navigate('Result', {
+      stationId: item.stationId,
+      locationName: item.locationName,
+      locationCoords: item.lat != null && item.lon != null ? { lat: item.lat, lon: item.lon } : undefined,
+      isHighAltitudeFallback: item.isHighAltitudeFallback,
+      isCoastal: item.isCoastal,
+      isHighAltitude: item.isHighAltitude,
+    });
+  }, [navigation]);
 
   const handleGetLocation = useCallback(async () => {
     setIsLoadingLocation(true);
@@ -926,6 +975,35 @@ export default function SearchScreen({ navigation }: Props) {
                 </TouchableOpacity>
               </View>
 
+              {/* Recently searched places */}
+              {!hasAnyResults && searchMode !== 'no_results' && searchQuery.length === 0 && recentSearches.length > 0 && (
+                <View style={styles.recentSection}>
+                  <Text style={styles.popularTitle}>{t('search.recentlySearched')}</Text>
+                  <View style={styles.placesList}>
+                    {recentSearches.map((item, index) => (
+                      <TouchableOpacity
+                        key={`${item.stationId}-${item.locationName}`}
+                        activeOpacity={0.85}
+                        onPress={() => handleSelectRecent(item)}
+                      >
+                        <GlassCard scheme="light" style={styles.placeCard} delay={80 + index * 40}>
+                          <View style={styles.placeCardInner}>
+                            <View style={styles.placeIconCircle}>
+                              <Ionicons name="time-outline" size={20} color={light.colors.primary} />
+                            </View>
+                            <View style={styles.placeCardCenter}>
+                              <Text style={styles.placeCardName}>{item.locationName}</Text>
+                              <Text style={styles.placeCardIsland} numberOfLines={1}>{item.island}</Text>
+                            </View>
+                            <Ionicons name="chevron-forward" size={20} color={light.colors.textMuted} />
+                          </View>
+                        </GlassCard>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              )}
+
               {/* FIGMA: STYLE_TARGET — Popular destinations grid */}
               {!hasAnyResults && searchMode !== 'no_results' && searchQuery.length === 0 && (
                 <View style={styles.popularSection}>
@@ -1181,6 +1259,7 @@ const styles = StyleSheet.create({
   },
   noResultsText: { fontFamily: fonts.medium, fontSize: 15, color: light.colors.textSecondary, marginTop: spacing.sm + 2 },
   noResultsHint: { fontFamily: fonts.regular, fontSize: 13, color: light.colors.textMuted, marginTop: spacing.xs, textAlign: 'center', paddingHorizontal: spacing.xl - spacing.xs },
+  recentSection: { marginTop: spacing.xs, marginBottom: spacing.sm + spacing.xs },
   popularSection: { marginTop: spacing.xs },
   popularTitle: {
     fontFamily: fonts.bold,

@@ -19,6 +19,7 @@
     "fromNearestStation": "from nearest weather station",
     "searching": "Searching...",
     "popularDestinations": "Popular destinations",
+    "recentlySearched": "Recently searched",
     "popularPlaces": "popular places",
     "popularPlacesCount_one": "{{count}} popular place",
     "popularPlacesCount_other": "{{count}} popular places",
