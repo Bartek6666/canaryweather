@@ -9,6 +9,7 @@ import {
   Animated,
   ImageBackground,
   RefreshControl,
+  AppState,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
@@ -587,7 +588,18 @@ export default function ResultScreen({ navigation, route }: Props) {
 
     // Auto-refresh every 5 minutes - always fetch fresh data (bypass cache)
     const interval = setInterval(() => loadLiveWeather(true), 5 * 60 * 1000);
-    return () => clearInterval(interval);
+
+    // Refresh immediately when the app returns to the foreground. OS suspends the
+    // interval above while backgrounded, so without this the screen would keep
+    // showing a stale reading (e.g. last night's temperature) until the next tick.
+    const appStateSub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') loadLiveWeather(true);
+    });
+
+    return () => {
+      clearInterval(interval);
+      appStateSub.remove();
+    };
   }, [station, stationId, locationCoords]);
 
   // Fetch Calima status from Open-Meteo Air Quality API
