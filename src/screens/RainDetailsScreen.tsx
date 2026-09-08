@@ -3,38 +3,26 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   Animated,
   Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { StatusBar } from 'expo-status-bar';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
 import Svg, { Circle } from 'react-native-svg';
 
-import { colors, spacing, typography, gradients, borderRadius } from '../constants/theme';
-import { GlassCard, ScreenHeader } from '../components';
+import { light, spacing, typography, borderRadius, fonts } from '../constants/theme';
+import { GlassCard, ScreenHeader, IslandRankingCard } from '../components';
 import { trackRainDetailsView } from '../services/analyticsService';
 import { calculateRainStats, RainStatsResult, getRainRankingByIsland, IslandRanking } from '../services/weatherService';
 import { RootStackParamList } from '../../App';
 import { MONTH_KEYS } from '../i18n';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'RainDetails'>;
-
-// Map island names from data to translation keys
-const ISLAND_TRANSLATION_KEYS: Record<string, string> = {
-  'Tenerife': 'tenerife',
-  'Gran Canaria': 'granCanaria',
-  'Fuerteventura': 'fuerteventura',
-  'Lanzarote': 'lanzarote',
-  'La Palma': 'laPalma',
-  'La Gomera': 'laGomera',
-  'El Hierro': 'elHierro',
-};
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const GAUGE_SIZE = Math.min(SCREEN_WIDTH * 0.75, 300);
@@ -126,12 +114,12 @@ export default function RainDetailsScreen({ navigation, route }: Props) {
 
   return (
     <View style={styles.container}>
-      {/* Background gradient */}
+      <StatusBar style="dark" />
+      {/* Background gradient (light) */}
       <LinearGradient
-        colors={[...gradients.main]}
+        colors={[...light.gradient]}
         style={StyleSheet.absoluteFillObject}
       />
-      <View style={styles.overlay} />
 
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <ScreenHeader
@@ -139,6 +127,7 @@ export default function RainDetailsScreen({ navigation, route }: Props) {
           stationName={stationName}
           island={island}
           onBack={() => navigation.goBack()}
+          scheme="light"
         />
 
         <Animated.ScrollView
@@ -148,7 +137,7 @@ export default function RainDetailsScreen({ navigation, route }: Props) {
         >
           {/* Month indicator */}
           <View style={styles.monthBadge}>
-            <Ionicons name="calendar-outline" size={16} color={colors.primary} />
+            <Ionicons name="calendar-outline" size={16} color={light.colors.primary} />
             <Text style={styles.monthBadgeText}>{monthName}</Text>
           </View>
 
@@ -160,7 +149,7 @@ export default function RainDetailsScreen({ navigation, route }: Props) {
                 cx={GAUGE_SIZE / 2}
                 cy={GAUGE_SIZE / 2}
                 r={radius}
-                stroke="rgba(255, 255, 255, 0.1)"
+                stroke="rgba(0, 0, 0, 0.06)"
                 strokeWidth={STROKE_WIDTH}
                 fill="transparent"
               />
@@ -193,13 +182,13 @@ export default function RainDetailsScreen({ navigation, route }: Props) {
 
               {/* Confidence badge */}
               {rainStats && (
-                <View style={[styles.confidenceBadge, { borderColor: colors.rain }]}>
+                <View style={[styles.confidenceBadge, { borderColor: light.colors.rain }]}>
                   <Ionicons
                     name={rainStats.confidence === 'high' ? 'checkmark-circle' : rainStats.confidence === 'medium' ? 'ellipse-outline' : 'alert-circle-outline'}
                     size={14}
-                    color={colors.rain}
+                    color={light.colors.rain}
                   />
-                  <Text style={[styles.confidenceText, { color: colors.rain }]}>
+                  <Text style={[styles.confidenceText, { color: light.colors.rain }]}>
                     {t(`result.confidence${rainStats.confidence.charAt(0).toUpperCase() + rainStats.confidence.slice(1)}`)}
                   </Text>
                 </View>
@@ -209,25 +198,37 @@ export default function RainDetailsScreen({ navigation, route }: Props) {
 
           {/* Rain Intensity Info Card */}
           {rainStats && rainStats.sampleCount > 0 && (
-            <GlassCard style={styles.intensityCard} delay={450}>
+            <GlassCard scheme="light" style={styles.intensityCard} delay={450}>
               <View style={styles.intensityInner}>
                 <View style={styles.intensityHeader}>
-                  <Ionicons name="water" size={20} color={colors.rain} />
+                  <Ionicons name="water" size={20} color={light.colors.rain} />
                   <View style={styles.intensityTitleContainer}>
                     <Text style={styles.intensityTitle}>{t('rain.intensity_info')}</Text>
                     <Text style={styles.intensitySubtitle}>{locationName || stationName}</Text>
+                    <View style={styles.intensityCaption}>
+                      <Ionicons name="time-outline" size={14} color={light.colors.textMuted} />
+                      <Text style={styles.intensityCaptionText}>{t('rain.basedOnMeasurements')}</Text>
+                    </View>
                   </View>
                 </View>
-                <View style={styles.intensityStats}>
-                  <View style={styles.intensityStat}>
-                    <Text style={styles.intensityStatValue}>{rainStats.averagePrecip} mm</Text>
-                    <Text style={styles.intensityStatLabel}>{t('rain.avg_precip')}</Text>
-                  </View>
-                  <View style={styles.intensityStat}>
-                    <Text style={styles.intensityStatValue}>
-                      {rainStats.rainyDaysPerYear} {t('rain.of_days', { total: getDaysInMonth(month) })}
+                <View style={styles.tileRow}>
+                  <View style={styles.tile}>
+                    <View style={styles.tileIconCircle}>
+                      <Ionicons name="rainy-outline" size={18} color={light.colors.rain} />
+                    </View>
+                    <Text style={styles.tileValue} numberOfLines={1} adjustsFontSizeToFit>
+                      {rainStats.averagePrecip}<Text style={styles.tileUnit}> mm</Text>
                     </Text>
-                    <Text style={styles.intensityStatLabel}>{t('rain.rainy_days_avg')}</Text>
+                    <Text style={styles.tileLabel}>{t('rain.avg_precip')}</Text>
+                  </View>
+                  <View style={styles.tile}>
+                    <View style={styles.tileIconCircle}>
+                      <Ionicons name="calendar-outline" size={18} color={light.colors.rain} />
+                    </View>
+                    <Text style={styles.tileValue} numberOfLines={1} adjustsFontSizeToFit>
+                      {rainStats.rainyDaysPerYear} <Text style={styles.tileUnit}>{t('rain.of_days', { total: getDaysInMonth(month) })}</Text>
+                    </Text>
+                    <Text style={styles.tileLabel}>{t('rain.rainy_days_avg')}</Text>
                   </View>
                 </View>
               </View>
@@ -235,10 +236,10 @@ export default function RainDetailsScreen({ navigation, route }: Props) {
           )}
 
           {/* Historical Context Card */}
-          <GlassCard style={styles.contextCard} delay={550}>
+          <GlassCard scheme="light" style={styles.contextCard} delay={550}>
             <View style={styles.contextInner}>
               <View style={styles.contextHeader}>
-                <Ionicons name="time-outline" size={20} color={colors.rain} />
+                <Ionicons name="time-outline" size={20} color={light.colors.rain} />
                 <Text style={styles.contextTitle}>{t('rain.historical_context')}</Text>
               </View>
               <Text style={styles.contextText}>
@@ -254,59 +255,13 @@ export default function RainDetailsScreen({ navigation, route }: Props) {
           </GlassCard>
 
           {/* Island Rain Ranking */}
-          {islandRanking.length > 0 && (
-            <GlassCard style={styles.rankingCard} delay={750}>
-              <View style={styles.rankingInner}>
-                <View style={styles.rankingHeader}>
-                  <MaterialCommunityIcons name="podium" size={20} color={colors.rain} />
-                  <View style={styles.rankingTitleContainer}>
-                    <Text style={styles.rankingTitle}>
-                      {t('rain.island_ranking_title', {
-                        month: i18n.language === 'pl'
-                          ? t(`monthsLocative.${MONTH_KEYS[month - 1]}`)
-                          : monthName
-                      })}
-                    </Text>
-                    <Text style={styles.rankingSubtitle}>
-                      {t('rain.island_ranking_month')}
-                    </Text>
-                  </View>
-                </View>
-                {islandRanking.map((item, index) => {
-                  const isCurrentIsland = item.island === island;
-                  const maxValue = islandRanking[0]?.value || 1;
-                  const barWidth = maxValue > 0 ? (item.value / maxValue) * 100 : 0;
-                  const translationKey = ISLAND_TRANSLATION_KEYS[item.island];
-                  const translatedIsland = translationKey ? t(`islands.${translationKey}`) : item.island;
-
-                  return (
-                    <View key={item.island} style={styles.rankingRow}>
-                      <Text style={styles.rankingPosition}>{index + 1}.</Text>
-                      <Text style={[
-                        styles.rankingIsland,
-                        isCurrentIsland && styles.rankingIslandCurrent
-                      ]}>
-                        {translatedIsland}
-                      </Text>
-                      <View style={styles.rankingBarContainer}>
-                        <View style={[
-                          styles.rankingBar,
-                          { width: `${Math.max(barWidth, 2)}%` },
-                          isCurrentIsland && styles.rankingBarCurrent
-                        ]} />
-                      </View>
-                      <Text style={[
-                        styles.rankingValue,
-                        isCurrentIsland && styles.rankingValueCurrent
-                      ]}>
-                        {item.value} mm
-                      </Text>
-                    </View>
-                  );
-                })}
-              </View>
-            </GlassCard>
-          )}
+          <IslandRankingCard
+            kind="rain"
+            ranking={islandRanking}
+            island={island}
+            month={month}
+            delay={750}
+          />
 
           <View style={styles.bottomSpacer} />
         </Animated.ScrollView>
@@ -321,11 +276,7 @@ const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0a1628',
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+    backgroundColor: light.colors.background,
   },
   safeArea: {
     flex: 1,
@@ -340,16 +291,18 @@ const styles = StyleSheet.create({
   monthBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: light.colors.surface,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.full,
     marginBottom: spacing.lg,
     gap: spacing.xs,
+    borderWidth: 1,
+    borderColor: light.colors.border,
   },
   monthBadgeText: {
-    ...typography.label,
-    color: colors.textPrimary,
+    ...typography.label, fontFamily: fonts.medium,
+    color: light.colors.textPrimary,
   },
   gaugeContainer: {
     width: GAUGE_SIZE,
@@ -368,14 +321,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   gaugeValue: {
-    fontSize: 48,
+    fontSize: 48, fontFamily: fonts.bold,
     fontWeight: '700',
-    color: colors.textPrimary,
+    color: light.colors.textPrimary,
     letterSpacing: -2,
   },
   gaugeLabel: {
-    ...typography.label,
-    color: colors.textSecondary,
+    ...typography.label, fontFamily: fonts.medium,
+    color: light.colors.textSecondary,
     marginTop: -4,
     textAlign: 'center',
   },
@@ -390,7 +343,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   confidenceText: {
-    fontSize: 12,
+    fontSize: 12, fontFamily: fonts.semibold,
     fontWeight: '600',
   },
   intensityCard: {
@@ -410,32 +363,66 @@ const styles = StyleSheet.create({
     marginLeft: spacing.sm,
   },
   intensityTitle: {
-    ...typography.h3,
-    color: colors.textPrimary,
+    ...typography.h3, fontFamily: fonts.semibold,
+    color: light.colors.textPrimary,
   },
   intensitySubtitle: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
+    ...typography.bodySmall, fontFamily: fonts.regular,
+    color: light.colors.textSecondary,
     marginTop: 2,
   },
-  intensityStats: {
+  intensityCaption: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: spacing.md,
-  },
-  intensityStat: {
     alignItems: 'center',
+    gap: spacing.xs,
+    marginTop: 4,
   },
-  intensityStatValue: {
-    fontSize: 24,
+  intensityCaptionText: {
+    ...typography.label, fontFamily: fonts.medium,
+    color: light.colors.textMuted,
+  },
+  tileRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  tile: {
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: light.colors.border,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xs,
+  },
+  tileIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(19, 133, 255, 0.1)',
+    marginBottom: spacing.sm,
+  },
+  tileValue: {
+    fontSize: 16, fontFamily: fonts.bold,
     fontWeight: '700',
-    color: colors.rain,
-  },
-  intensityStatLabel: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    marginTop: spacing.xs,
+    color: light.colors.textPrimary,
     textAlign: 'center',
+  },
+  tileUnit: {
+    fontSize: 11, fontFamily: fonts.medium,
+    fontWeight: '500',
+    color: light.colors.textSecondary,
+  },
+  tileLabel: {
+    fontSize: 12, fontFamily: fonts.semibold,
+    fontWeight: '600',
+    color: light.colors.textMuted,
+    textTransform: 'uppercase',
+    textAlign: 'center',
+    marginTop: spacing.xs,
   },
   contextCard: {
     width: '100%',
@@ -450,85 +437,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   contextTitle: {
-    ...typography.h3,
-    color: colors.textPrimary,
+    ...typography.h3, fontFamily: fonts.semibold,
+    color: light.colors.textPrimary,
     marginLeft: spacing.sm,
   },
   contextText: {
-    ...typography.body,
-    color: colors.textSecondary,
+    ...typography.body, fontFamily: fonts.regular,
+    color: light.colors.textSecondary,
     lineHeight: 22,
-  },
-  rankingCard: {
-    width: '100%',
-    marginBottom: spacing.md,
-  },
-  rankingInner: {
-    padding: spacing.lg,
-  },
-  rankingHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: spacing.md,
-  },
-  rankingTitleContainer: {
-    flex: 1,
-    marginLeft: spacing.sm,
-  },
-  rankingTitle: {
-    ...typography.h3,
-    color: colors.textPrimary,
-  },
-  rankingSubtitle: {
-    ...typography.bodySmall,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  rankingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  rankingPosition: {
-    width: 24,
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.textMuted,
-  },
-  rankingIsland: {
-    width: 100,
-    fontSize: 13,
-    color: colors.textSecondary,
-  },
-  rankingIslandCurrent: {
-    color: colors.rain,
-    fontWeight: '600',
-  },
-  rankingBarContainer: {
-    flex: 1,
-    height: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 4,
-    marginHorizontal: spacing.sm,
-    overflow: 'hidden',
-  },
-  rankingBar: {
-    height: '100%',
-    backgroundColor: 'rgba(77, 171, 247, 0.4)',
-    borderRadius: 4,
-  },
-  rankingBarCurrent: {
-    backgroundColor: colors.rain,
-  },
-  rankingValue: {
-    width: 50,
-    fontSize: 13,
-    color: colors.textSecondary,
-    textAlign: 'right',
-  },
-  rankingValueCurrent: {
-    color: colors.rain,
-    fontWeight: '600',
   },
   bottomSpacer: {
     height: 40,

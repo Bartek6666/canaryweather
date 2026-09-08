@@ -94,7 +94,18 @@ export type Island =
   | 'Fuerteventura'
   | 'La Palma'
   | 'La Gomera'
-  | 'El Hierro';
+  | 'El Hierro'
+  // Balearic Islands
+  | 'Mallorca'
+  | 'Menorca'
+  | 'Ibiza'
+  | 'Formentera'
+  // SE Spanish coast (mainland areas treated as "areas")
+  | 'Costa del Sol'
+  | 'Costa de Almería'
+  | 'Costa Cálida'
+  | 'Costa Blanca'
+  | 'Costa de Valencia';
 
 export interface IslandConfig {
   mainStation: string;

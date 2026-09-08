@@ -1,0 +1,1511 @@
+<!-- Onboarding (Jasny) -->
+<!DOCTYPE html>
+
+<html class="light" lang="pl"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Canary Weather - Onboarding</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-low": "#f0f4f7",
+                    "on-background": "#191c1e",
+                    "error-container": "#ffdad6",
+                    "on-secondary": "#ffffff",
+                    "error": "#ba1a1a",
+                    "on-surface-variant": "#434654",
+                    "on-tertiary-container": "#001f28",
+                    "inverse-primary": "#b3c5ff",
+                    "on-error-container": "#410002",
+                    "on-primary-container": "#ffffff",
+                    "on-secondary-fixed": "#221b00",
+                    "tertiary-fixed": "#b6ebff",
+                    "on-primary": "#ffffff",
+                    "surface-variant": "#e1e2ec",
+                    "secondary-fixed": "#ffe16d",
+                    "on-tertiary-fixed": "#001f28",
+                    "secondary": "#6a5c00",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-high": "#e7e8ee",
+                    "on-primary-fixed": "#00184a",
+                    "surface-tint": "#0754d6",
+                    "tertiary": "#00687a",
+                    "outline": "#737785",
+                    "secondary-container": "#e9c400",
+                    "on-tertiary-fixed-variant": "#004e60",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary-container": "#221b00",
+                    "surface-dim": "#d9dbdf",
+                    "primary": "#0754d6",
+                    "outline-variant": "#c3c6d7",
+                    "tertiary-container": "#b6ebff",
+                    "inverse-on-surface": "#f1f0f4",
+                    "on-secondary-fixed-variant": "#544600",
+                    "inverse-surface": "#2f3033",
+                    "primary-fixed": "#dbe1ff",
+                    "surface-container-highest": "#e1e2e5",
+                    "tertiary-fixed-dim": "#47d6ff",
+                    "background": "#f8f9ff",
+                    "on-primary-fixed-variant": "#003ea6",
+                    "on-surface": "#191c1e",
+                    "secondary-fixed-dim": "#e9c400",
+                    "primary-container": "#0754d6",
+                    "surface-container": "#eceef3",
+                    "surface": "#f8f9ff",
+                    "on-error": "#ffffff",
+                    "primary-fixed-dim": "#b3c5ff",
+                    "surface-bright": "#f8f9ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "card-padding": "20px",
+                    "container-margin": "24px",
+                    "unit": "8px",
+                    "gutter": "16px",
+                    "section-gap": "40px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Manrope"],
+                    "data-mono": ["Inter"],
+                    "display-xl": ["Manrope"],
+                    "headline-md": ["Manrope"],
+                    "body-md": ["Manrope"],
+                    "headline-lg-mobile": ["Manrope"],
+                    "body-lg": ["Manrope"],
+                    "label-md": ["Manrope"]
+            },
+            "fontSize": {
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "data-mono": ["16px", {"lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "500"}],
+                    "display-xl": ["72px", {"lineHeight": "80px", "letterSpacing": "-0.04em", "fontWeight": "800"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background: radial-gradient(circle at 50% -20%, #7ecbff 0%, #e0f2ff 50%, #f8f9ff 100%);
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .glass-panel {
+            backdrop-filter: blur(24px) saturate(180%);
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px rgba(0, 100, 255, 0.08);
+        }
+
+        .glow-active {
+            box-shadow: 0 10px 25px -5px rgba(7, 84, 214, 0.4);
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+    </style>
+<style>
+        body {
+          min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="font-body-md text-on-background selection:bg-primary selection:text-on-primary">
+<!-- Atmospheric Shader Background -->
+<div class="fixed inset-0 z-0"></div>
+<!-- Main Onboarding Canvas -->
+<main class="relative z-10 flex flex-col items-center justify-between min-h-screen px-container-margin py-12 text-center">
+<!-- Top Branding Anchor -->
+<header class="flex flex-col items-center gap-unit">
+<div class="flex items-center justify-center w-16 h-16 rounded-full glass-panel mb-4 animate-float">
+<span class="material-symbols-outlined text-4xl text-secondary-container" data-icon="wb_sunny" style="font-variation-settings: 'FILL' 1;">wb_sunny</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-primary tracking-wider">Canary Weather</h2>
+</header>
+<!-- Centered Hero Content -->
+<section class="max-w-xl w-full flex flex-col items-center gap-section-gap">
+<div class="space-y-gutter">
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface">
+                    Znajdź słońce na Kanarach
+                </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-sm mx-auto">
+                    Analizujemy 10 lat danych historycznych, abyś mógł sprawdzić swoje szanse na błękitne niebo.
+                </p>
+</div>
+<!-- Visual Bento-style Data Teaser -->
+<div class="grid grid-cols-2 gap-gutter w-full mt-4">
+<div class="glass-panel p-card-padding rounded-xl flex flex-col items-center justify-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="history">history</span>
+<span class="font-label-md text-label-md uppercase opacity-60 text-on-surface-variant">Analiza</span>
+<span class="font-headline-md text-headline-md text-on-surface">10 Lat</span>
+</div>
+<div class="glass-panel p-card-padding rounded-xl flex flex-col items-center justify-center gap-2">
+<span class="material-symbols-outlined text-secondary-container" data-icon="cloud_done">cloud_done</span>
+<span class="font-label-md text-label-md uppercase opacity-60 text-on-surface-variant">Precyzja</span>
+<span class="font-headline-md text-headline-md text-on-surface">AEMET</span>
+</div>
+</div>
+</section>
+<!-- Primary Action Area -->
+<footer class="w-full max-w-sm flex flex-col items-center gap-gutter">
+<button class="w-full h-16 rounded-[12px] bg-primary-container text-on-primary-container font-headline-md text-headline-md glow-active active:scale-95 transition-all flex items-center justify-center gap-unit group">
+                Zaczynamy
+                <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform" data-icon="arrow_forward">arrow_forward</span>
+</button>
+<div class="flex flex-col items-center gap-2">
+<p class="font-label-md text-label-md text-on-surface-variant opacity-60 uppercase tracking-widest">
+                    Dane: AEMET
+                </p>
+<div class="flex gap-4">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Regulamin</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors" href="#">Prywatność</a>
+</div>
+</div>
+</footer>
+</main>
+<!-- Ambient Light Effects -->
+<div class="fixed top-0 left-0 w-64 h-64 pointer-events-none rounded-full blur-[100px] bg-primary/20 opacity-0 transition-opacity duration-700" id="cursor-glow"></div>
+<script>
+        // Micro-interaction for ambient mouse glow
+        document.addEventListener('mousemove', (e) => {
+            const glow = document.getElementById('cursor-glow');
+            glow.style.opacity = '1';
+            glow.style.transform = `translate(${e.clientX - 128}px, ${e.clientY - 128}px)`;
+        });
+    </script>
+</body></html>
+
+<!-- Szczegóły Opadów (Jasny) -->
+<!DOCTYPE html>
+
+<html class="light" lang="pl"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Szczegóły opadów - Lipiec</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.5);
+            --glass-blur: 20px;
+        }
+
+        body {
+            /* Adjusted for a more vibrant, saturated blue "clear sky" feel */
+            background: radial-gradient(circle at top right, #38b6ff, #e0f2fe, #f0f9ff);
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: #1d2022;
+            overflow-x: hidden;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+            border: 1px solid var(--glass-border);
+            border-radius: 1.5rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 122, 255, 0.08);
+        }
+
+        .glass-button {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .glass-button:hover {
+            background: rgba(255, 255, 255, 0.6);
+        }
+
+        .ambient-glow-active {
+            box-shadow: 0 10px 25px -5px rgba(0, 82, 212, 0.25);
+        }
+
+        .chart-bar-glow {
+            filter: drop-shadow(0 0 6px rgba(0, 82, 212, 0.3));
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#f8fafb",
+                        "on-background": "#1d2022",
+                        "error-container": "#ffdad6",
+                        "on-secondary": "#221b00",
+                        "error": "#ba1a1a",
+                        "on-surface-variant": "#434654",
+                        "on-tertiary-container": "#001f28",
+                        "inverse-primary": "#b3c5ff",
+                        "on-error-container": "#410002",
+                        "on-primary-container": "#00184a",
+                        "on-secondary-fixed": "#221b00",
+                        "tertiary-fixed": "#b6ebff",
+                        "on-primary": "#ffffff",
+                        "surface-variant": "#e2e2ec",
+                        "secondary-fixed": "#ffe16d",
+                        "on-tertiary-fixed": "#001f28",
+                        "secondary": "#544600",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-high": "#e8eaed",
+                        "on-primary-fixed": "#00184a",
+                        "surface-tint": "#0754d6",
+                        "tertiary": "#00657c",
+                        "outline": "#737785",
+                        "secondary-container": "#ffe16d",
+                        "on-tertiary-fixed-variant": "#004e60",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-container": "#221b00",
+                        "surface-dim": "#d9dbdf",
+                        "primary": "#0754d6",
+                        "outline-variant": "#c3c6d7",
+                        "tertiary-container": "#b6ebff",
+                        "inverse-on-surface": "#f0f0f3",
+                        "on-secondary-fixed-variant": "#544600",
+                        "inverse-surface": "#2d3133",
+                        "primary-fixed": "#dbe1ff",
+                        "surface-container-highest": "#e1e3e7",
+                        "tertiary-fixed-dim": "#47d6ff",
+                        "background": "transparent",
+                        "on-primary-fixed-variant": "#003ea6",
+                        "on-surface": "#191c1e",
+                        "secondary-fixed-dim": "#e9c400",
+                        "primary-container": "#dbe1ff",
+                        "surface-container": "#eff1f3",
+                        "surface": "transparent",
+                        "on-error": "#ffffff",
+                        "primary-fixed-dim": "#b3c5ff",
+                        "surface-bright": "#f8fafb"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "card-padding": "20px",
+                        "container-margin": "24px",
+                        "unit": "8px",
+                        "gutter": "16px",
+                        "section-gap": "40px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Manrope"],
+                        "data-mono": ["Inter"],
+                        "display-xl": ["Manrope"],
+                        "headline-md": ["Manrope"],
+                        "body-md": ["Manrope"],
+                        "headline-lg-mobile": ["Manrope"],
+                        "body-lg": ["Manrope"],
+                        "label-md": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "data-mono": ["16px", {"lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "500"}],
+                        "display-xl": ["72px", {"lineHeight": "80px", "letterSpacing": "-0.04em", "fontWeight": "800"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="font-body-md text-on-surface selection:bg-primary/30">
+<!-- Top AppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-container-margin h-16 backdrop-blur-3xl border-b border-white/20 bg-white/40 shadow-sm">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" data-icon="location_on">location_on</span>
+<h1 class="font-headline-md text-headline-md font-bold text-on-surface">Canary Weather</h1>
+</div>
+<button class="hover:bg-white/20 rounded-full transition-colors p-2 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="language">language</span>
+</button>
+</header>
+<main class="pt-24 pb-32 px-container-margin max-w-[1280px] mx-auto space-y-section-gap">
+<!-- Hero Header -->
+<section class="flex flex-col gap-unit">
+<h2 class="font-headline-lg text-headline-lg text-on-background">Szczegóły opadów - Lipiec</h2>
+<p class="font-body-md text-on-surface-variant">Analiza statystyczna dla archipelagu Wysp Kanaryjskich.</p>
+</section>
+<!-- Stats Bento Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<!-- Avg Rain -->
+<div class="glass-card p-card-padding flex flex-col justify-between">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label-md text-label-md text-primary uppercase tracking-widest">Średnie Opady</span>
+<span class="material-symbols-outlined text-primary" data-icon="water_drop">water_drop</span>
+</div>
+<div>
+<span class="font-display-xl text-[48px] leading-tight font-extrabold text-on-surface">2</span>
+<span class="font-headline-md text-headline-md text-on-surface-variant ml-1">mm</span>
+</div>
+<div class="mt-4 text-on-surface-variant font-label-md text-label-md">Wartość miesięczna</div>
+</div>
+<!-- Rainy Days -->
+<div class="glass-card p-card-padding flex flex-col justify-between">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label-md text-label-md text-tertiary uppercase tracking-widest">Dni deszczowe</span>
+<span class="material-symbols-outlined text-tertiary" data-icon="umbrella">umbrella</span>
+</div>
+<div>
+<span class="font-display-xl text-[48px] leading-tight font-extrabold text-on-surface">0.5</span>
+<span class="font-headline-md text-headline-md text-on-surface-variant ml-1">dni</span>
+</div>
+<div class="mt-4 text-on-surface-variant font-label-md text-label-md">Prawdopodobieństwo &lt; 2%</div>
+</div>
+<!-- Dry Days -->
+<div class="glass-card p-card-padding flex flex-col justify-between">
+<div class="flex justify-between items-start mb-4">
+<span class="font-label-md text-label-md text-secondary uppercase tracking-widest">Dni bez opadów</span>
+<span class="material-symbols-outlined text-secondary" data-icon="wb_sunny">wb_sunny</span>
+</div>
+<div>
+<span class="font-display-xl text-[48px] leading-tight font-extrabold text-on-surface">30</span>
+<span class="font-headline-md text-headline-md text-on-surface-variant ml-1">dni</span>
+</div>
+<div class="mt-4 text-on-surface-variant font-label-md text-label-md">Gwarantowana aura</div>
+</div>
+</div>
+<!-- Monthly Min/Max Chart -->
+<section class="glass-card p-card-padding">
+<h3 class="font-headline-md text-headline-md mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="equalizer">equalizer</span>
+            Porównanie miesięczne Min/Max
+        </h3>
+<div class="relative h-64 w-full flex items-end justify-around gap-2 px-4 border-b border-black/5">
+<!-- Bar 1: Maj -->
+<div class="flex flex-col items-center gap-2 w-full max-w-[60px]">
+<div class="w-full bg-black/5 rounded-t-lg relative group h-[40px]">
+<div class="absolute bottom-0 w-full bg-primary/20 rounded-t-lg transition-all duration-500 h-1/2 group-hover:h-2/3"></div>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant">Maj</span>
+</div>
+<!-- Bar 2: Czerwiec -->
+<div class="flex flex-col items-center gap-2 w-full max-w-[60px]">
+<div class="w-full bg-black/5 rounded-t-lg relative group h-[25px]">
+<div class="absolute bottom-0 w-full bg-primary/20 rounded-t-lg h-1/3 group-hover:h-1/2"></div>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant">Cze</span>
+</div>
+<!-- Bar 3: Lipiec (Active) -->
+<div class="flex flex-col items-center gap-2 w-full max-w-[60px]">
+<div class="w-full bg-primary/10 rounded-t-lg relative group h-[15px] ambient-glow-active">
+<div class="absolute bottom-0 w-full bg-secondary-container rounded-t-lg h-full chart-bar-glow"></div>
+<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-on-background text-on-primary px-2 py-1 rounded text-[10px] font-bold border border-white/20 whitespace-nowrap">Current</div>
+</div>
+<span class="font-label-md text-label-md text-primary font-bold">Lip</span>
+</div>
+<!-- Bar 4: Sierpień -->
+<div class="flex flex-col items-center gap-2 w-full max-w-[60px]">
+<div class="w-full bg-black/5 rounded-t-lg relative group h-[18px]">
+<div class="absolute bottom-0 w-full bg-primary/20 rounded-t-lg h-full group-hover:bg-primary/40"></div>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant">Sie</span>
+</div>
+<!-- Bar 5: Wrzesień -->
+<div class="flex flex-col items-center gap-2 w-full max-w-[60px]">
+<div class="w-full bg-black/5 rounded-t-lg relative group h-[35px]">
+<div class="absolute bottom-0 w-full bg-primary/20 rounded-t-lg h-3/4 group-hover:h-4/5"></div>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant">Wrz</span>
+</div>
+</div>
+</section>
+<!-- Explainer: Shadow Effect -->
+<section class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+<div class="glass-card overflow-hidden h-full min-h-[300px] relative">
+<div class="absolute inset-0 bg-cover bg-center" data-alt="A dramatic aerial view of the Canary Islands landscape..." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB6TnnsQETFlbAjjcYMDAt1PhjR93wP6Tmt2JwQyJvsC9kKtY-_L5dyp-kF0vk3mWKtI6oxYJ9RE6rLNSOr3R-uCsWwKeLNmPIrg98ibhEZplussJKZm-cUCJHWYzGCjOl7qAg9iDM2MFmNG2SSyiARa3qf-eSqMVlNly-f4BhIrxXhVBDD_HSVxlxG5nTbIyc1Z7rdaapaln6bGVHZuGeqRAUcEfnBu8H2NrehhHw8bGtw_UJm6rM3KVQANGD4uj6mEwvNfdIfEIM')"></div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+<div class="absolute bottom-0 p-card-padding">
+<span class="bg-secondary-container text-on-secondary-container font-label-md text-label-md px-2 py-1 rounded-full mb-3 inline-block">Zjawisko Geograficzne</span>
+<h3 class="font-headline-md text-headline-md text-white">Północ vs Południe</h3>
+</div>
+</div>
+<div class="glass-card p-card-padding flex flex-col justify-center">
+<h4 class="font-headline-md text-headline-md mb-4 text-primary">Cień opadowy</h4>
+<p class="font-body-lg text-body-lg text-on-surface-variant mb-6 leading-relaxed">
+                Wysokie góry wysp (jak Teide) blokują wilgotne pasaty z północnego wschodu. Skutkuje to "cieniem opadowym" na południu, gdzie deszcz jest rzadkością nawet zimą, podczas gdy północne zbocza cieszą się subtropikalną roślinnością.
+            </p>
+<div class="flex gap-4">
+<div class="flex items-center gap-2 text-label-md font-label-md text-on-surface">
+<span class="material-symbols-outlined text-tertiary" data-icon="cloud">cloud</span>
+                    Północ: Wilgotna
+                </div>
+<div class="flex items-center gap-2 text-label-md font-label-md text-on-surface">
+<span class="material-symbols-outlined text-secondary" data-icon="sunny">sunny</span>
+                    Południe: Suche
+                </div>
+</div>
+</div>
+</section>
+<!-- Island Ranking -->
+<section class="space-y-gutter">
+<h3 class="font-headline-md text-headline-md px-2">Ranking opadów (Lipiec)</h3>
+<div class="space-y-3">
+<!-- 1st Place -->
+<div class="glass-card p-card-padding flex items-center justify-between border-l-4 border-l-secondary-container ambient-glow-active">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-secondary-container flex items-center justify-center text-on-secondary-container font-bold text-xl shadow-sm">
+<span class="material-symbols-outlined" data-icon="workspace_premium" data-weight="fill">workspace_premium</span>
+</div>
+<div>
+<div class="font-headline-md text-on-surface">Lanzarote</div>
+<div class="font-label-md text-on-surface-variant">Najniższe prawdopodobieństwo</div>
+</div>
+</div>
+<div class="text-right">
+<div class="font-headline-md text-secondary">0.1 mm</div>
+<div class="font-label-md text-on-surface-variant">Suma mies.</div>
+</div>
+</div>
+<!-- 2nd Place -->
+<div class="glass-card p-card-padding flex items-center justify-between opacity-95">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-white/30 flex items-center justify-center text-on-surface font-bold text-xl">
+                        2
+                    </div>
+<div>
+<div class="font-headline-md text-on-surface">Fuerteventura</div>
+<div class="font-label-md text-on-surface-variant">Region pustynny</div>
+</div>
+</div>
+<div class="text-right">
+<div class="font-headline-md text-on-surface">0.2 mm</div>
+</div>
+</div>
+<!-- 3rd Place -->
+<div class="glass-card p-card-padding flex items-center justify-between opacity-90">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-white/30 flex items-center justify-center text-on-surface font-bold text-xl">
+                        3
+                    </div>
+<div>
+<div class="font-headline-md text-on-surface">Gran Canaria</div>
+<div class="font-label-md text-on-surface-variant">Mikroklimaty</div>
+</div>
+</div>
+<div class="text-right">
+<div class="font-headline-md text-on-surface">0.5 mm</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Footer -->
+<footer class="w-full flex flex-col items-center gap-unit mt-auto pt-section-gap pb-container-margin text-on-surface-variant font-label-md text-label-md">
+<p>Dane: AEMET. Aplikacja nieoficjalna.</p>
+<div class="flex gap-4">
+<a class="hover:text-primary underline transition-colors" href="#">Terms</a>
+<a class="hover:text-primary underline transition-colors" href="#">Privacy</a>
+</div>
+<p class="mt-4 opacity-50">© 2024 Canary Weather Data Systems</p>
+</footer>
+</main>
+<!-- Bottom Nav -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-safe h-20 backdrop-blur-3xl border-t border-white/20 bg-white/40 shadow-lg">
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-3 hover:bg-white/20 rounded-xl transition-colors active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary text-on-primary rounded-full p-3 shadow-md active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="analytics" data-weight="fill">analytics</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-3 hover:bg-white/20 rounded-xl transition-colors active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</a>
+</nav>
+</body></html>
+
+<!-- Wyszukiwanie (Jasny) -->
+<!DOCTYPE html>
+
+<html class="light" lang="pl"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Canary Weather - Szukaj</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-low": "#f0f4f7",
+                    "on-background": "#191c1e",
+                    "error-container": "#ffdad6",
+                    "on-secondary": "#ffffff",
+                    "error": "#ba1a1a",
+                    "on-surface-variant": "#43474e",
+                    "on-tertiary-container": "#001f28",
+                    "inverse-primary": "#b3c5ff",
+                    "on-error-container": "#410002",
+                    "on-primary-container": "#00184a",
+                    "on-secondary-fixed": "#221b00",
+                    "tertiary-fixed": "#b6ebff",
+                    "on-primary": "#ffffff",
+                    "surface-variant": "#dee3eb",
+                    "secondary-fixed": "#ffe16d",
+                    "on-tertiary-fixed": "#001f28",
+                    "secondary": "#6d5e00",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-high": "#e1e2e5",
+                    "on-primary-fixed": "#00184a",
+                    "surface-tint": "#0754d6",
+                    "tertiary": "#00687b",
+                    "outline": "#73777f",
+                    "secondary-container": "#ffe16d",
+                    "on-tertiary-fixed-variant": "#004e60",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary-container": "#221b00",
+                    "surface-dim": "#d9dbde",
+                    "primary": "#0754d6",
+                    "outline-variant": "#c3c6cf",
+                    "tertiary-container": "#b6ebff",
+                    "inverse-on-surface": "#f1f0f4",
+                    "on-secondary-fixed-variant": "#544600",
+                    "inverse-surface": "#2e3133",
+                    "primary-fixed": "#dbe1ff",
+                    "surface-container-highest": "#dbdde1",
+                    "tertiary-fixed-dim": "#47d6ff",
+                    "background": "#f8f9ff",
+                    "on-primary-fixed-variant": "#003ea6",
+                    "on-surface": "#191c1e",
+                    "secondary-fixed-dim": "#e9c400",
+                    "primary-container": "#dbe1ff",
+                    "surface-container": "#eceef1",
+                    "surface": "#f8f9ff",
+                    "on-error": "#ffffff",
+                    "primary-fixed-dim": "#b3c5ff",
+                    "surface-bright": "#f8f9ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "card-padding": "20px",
+                    "container-margin": "24px",
+                    "unit": "8px",
+                    "gutter": "16px",
+                    "section-gap": "40px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Manrope"],
+                    "data-mono": ["Inter"],
+                    "display-xl": ["Manrope"],
+                    "headline-md": ["Manrope"],
+                    "body-md": ["Manrope"],
+                    "headline-lg-mobile": ["Manrope"],
+                    "body-lg": ["Manrope"],
+                    "label-md": ["Manrope"]
+            },
+            "fontSize": {
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "data-mono": ["16px", {"lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "500"}],
+                    "display-xl": ["72px", {"lineHeight": "80px", "letterSpacing": "-0.04em", "fontWeight": "800"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background: linear-gradient(180deg, #e0f2ff 0%, #b3d9ff 100%);
+            color: #191c1e;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.45);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        .active-glow {
+            box-shadow: 0 8px 24px -4px rgba(7, 84, 214, 0.35);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .search-container:focus-within .search-icon {
+            color: #0754d6;
+        }
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="light font-body-md text-body-md">
+<!-- Top App Bar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-container-margin h-16 bg-white/30 backdrop-blur-3xl border-b border-white/20 shadow-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">location_on</span>
+<span class="font-headline-md text-headline-md font-bold text-on-surface">Canary Weather</span>
+</div>
+<button class="hover:bg-white/20 rounded-full transition-colors p-2 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-on-surface-variant">language</span>
+</button>
+</header>
+<!-- Main Content -->
+<main class="flex-grow pt-24 pb-32 px-container-margin max-w-[1280px] mx-auto w-full">
+<!-- Header Section -->
+<section class="mb-section-gap">
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-unit">
+            Twoja prognoza na wyspach
+        </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-lg">
+            Odkryj mikroklimat Wysp Kanaryjskich dzięki danym z precyzyjnych stacji pomiarowych.
+        </p>
+</section>
+<!-- Search Area -->
+<section class="mb-section-gap space-y-gutter">
+<div class="search-container glass-panel rounded-full flex items-center px-6 h-16 shadow-lg focus-within:ring-2 focus-within:ring-primary/40 transition-all">
+<span class="material-symbols-outlined search-icon text-on-surface-variant mr-4 transition-colors">search</span>
+<input class="bg-transparent border-none focus:ring-0 w-full text-body-lg placeholder:text-on-surface-variant/60 text-on-surface" placeholder="Szukaj miejsca..." type="text"/>
+</div>
+<button class="flex items-center gap-3 bg-primary text-on-primary px-6 py-4 rounded-xl font-label-md text-label-md active:scale-95 transition-transform active-glow">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">my_location</span>
+<span>Moja lokalizacja</span>
+</button>
+</section>
+<!-- Popular Directions -->
+<section class="mb-section-gap">
+<div class="flex justify-between items-end mb-gutter">
+<h2 class="font-headline-md text-headline-md text-on-surface">Popularne kierunki</h2>
+<span class="font-label-md text-label-md text-primary font-bold cursor-pointer hover:underline">Zobacz wszystkie</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+<!-- Destination Card 1 -->
+<div class="glass-panel p-card-padding rounded-xl flex items-center justify-between hover:bg-white/50 transition-all cursor-pointer group shadow-md">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full overflow-hidden bg-surface-container-high shrink-0 border border-white/40">
+<img class="w-full h-full object-cover" data-alt="Aerial view of Costa Adeje beach" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHhNDAexx8aePWk85CQag3T9g478nQshQv-UV1wrTOhKlUr79ZFhkZ2Jpsoyp451Lo7MaisZV9dM6v6dyXvah0JIj_2jhrVpkItHAoJsljkQLHo8Ks4dFwBHY4T_5s-pUINSi9ISBmQLDkpUHudYAswmWLtFqpaYaVuj0RQfDvuk7va9-em7yxUbqNoM4NyJQhpYcWC9BrjXZrwb1xMFQcZAkLGXVhnjE4Dy1m4fGN7aDvLHnWiH6tK0gjH1of_kj28vQnS0Mu2H0"/>
+</div>
+<div>
+<h3 class="font-body-lg font-bold text-on-surface">Costa Adeje</h3>
+<p class="font-label-md text-label-md text-on-surface-variant">Tenerife</p>
+</div>
+</div>
+<div class="text-right">
+<span class="font-data-mono text-data-mono text-primary font-bold">2.4 km</span>
+<p class="font-label-md text-label-md text-on-surface-variant/70">od stacji</p>
+</div>
+</div>
+<!-- Destination Card 2 -->
+<div class="glass-panel p-card-padding rounded-xl flex items-center justify-between hover:bg-white/50 transition-all cursor-pointer group shadow-md">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full overflow-hidden bg-surface-container-high shrink-0 border border-white/40">
+<img class="w-full h-full object-cover" data-alt="Maspalomas dunes" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC9z5jVDIceGFcaOvLPmNXlUc6DDSTXl1uVGQVBV7EAr4MDOS8JBjamCy0DTyjZ6inZhkaO6oY5fyFuUtbzldoPobfHS0x2zpRyNNJ_HwKOyaEUkMZ0PnMc_GLlJvyUI3A6DibIP6F5GyTeCuwVUsGezR9n-JJ6f3WXCBT4iGZgoapPRzCW1KOFyRBOgjNQFwTpcwAYI3JjZ7aHxUf13-3nrE5ruuAP-tA53K1ZwYJfhws50agEhiBskJ59UrtUlo_d0LjELQ9vPfE"/>
+</div>
+<div>
+<h3 class="font-body-lg font-bold text-on-surface">Playa del Inglés</h3>
+<p class="font-label-md text-label-md text-on-surface-variant">Gran Canaria</p>
+</div>
+</div>
+<div class="text-right">
+<span class="font-data-mono text-data-mono text-primary font-bold">1.8 km</span>
+<p class="font-label-md text-label-md text-on-surface-variant/70">od stacji</p>
+</div>
+</div>
+<!-- Destination Card 3 -->
+<div class="glass-panel p-card-padding rounded-xl flex items-center justify-between hover:bg-white/50 transition-all cursor-pointer group shadow-md">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full overflow-hidden bg-surface-container-high shrink-0 border border-white/40">
+<img class="w-full h-full object-cover" data-alt="Corralejo coastal view" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCqTEdsrGpPhhjq0DBBmFIk3nFJcnGjLMYF1fnzjCeUSdR7COzf6VHGDWfZDVNtqcjYH-i9_TdG6eCcRgQHs0_nkBSyDdEvYIaPkNyR8Q1PmivrtWyBWJfO67NLk52p0UHPNxWs-7CZiv0H-TxrYLLb1QjEH71kQxZs5KBYSt8Km3cJVBM41Xg7PXZru7vtyW4JmdciQr1F0ouORuuhP8FNWcBKJxkzAlZY6ilzwnh5ySWTyVYR0hCL12MwEN-xEW5LOMIpk-HkM6E"/>
+</div>
+<div>
+<h3 class="font-body-lg font-bold text-on-surface">Corralejo</h3>
+<p class="font-label-md text-label-md text-on-surface-variant">Fuerteventura</p>
+</div>
+</div>
+<div class="text-right">
+<span class="font-data-mono text-data-mono text-primary font-bold">4.1 km</span>
+<p class="font-label-md text-label-md text-on-surface-variant/70">od stacji</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Footer -->
+<footer class="w-full flex flex-col items-center gap-unit mt-auto pt-section-gap pb-container-margin">
+<div class="flex items-center gap-4 font-label-md text-label-md text-on-surface-variant">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">history</span> Dane z 10 lat</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">sensors</span> 19 stacji AEMET</span>
+</div>
+<p class="font-label-md text-label-md text-on-surface-variant/70">Data provided by AEMET</p>
+<div class="flex gap-gutter mt-2">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary underline transition-colors" href="#">Terms</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary underline transition-colors" href="#">Privacy</a>
+</div>
+</footer>
+</main>
+<!-- Bottom Nav Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-safe h-20 bg-white/40 backdrop-blur-3xl border-t border-white/20 shadow-[0_-4px_24px_rgba(0,0,0,0.05)]">
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-3 hover:bg-white/30 rounded-xl transition-colors active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">home</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary text-on-primary rounded-full p-3 active:scale-90 transition-transform shadow-lg active-glow" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">analytics</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-3 hover:bg-white/30 rounded-xl transition-colors active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">settings</span>
+</a>
+</nav>
+<!-- Interactions Script -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('focus', () => {
+            console.log('Search focused');
+        });
+
+        const interactables = document.querySelectorAll('button, .glass-panel, nav a');
+        interactables.forEach(el => {
+            el.addEventListener('mousedown', () => {
+                el.classList.add('scale-95');
+            });
+            el.addEventListener('mouseup', () => {
+                el.classList.remove('scale-95');
+            });
+            el.addEventListener('mouseleave', () => {
+                el.classList.remove('scale-95');
+            });
+        });
+    });
+</script>
+</body></html>
+
+<!-- Szczegóły Wiatru (Jasny) -->
+<!DOCTYPE html>
+
+<html class="light" lang="pl"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Szczegóły wiatru - Canary Weather</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-low": "#f0f4f7",
+                    "on-background": "#191c1e",
+                    "error-container": "#ffdad6",
+                    "on-secondary": "#221b00",
+                    "error": "#ba1a1a",
+                    "on-surface-variant": "#434654",
+                    "on-tertiary-container": "#001f28",
+                    "inverse-primary": "#b3c5ff",
+                    "on-error-container": "#410002",
+                    "on-primary-container": "#00184a",
+                    "on-secondary-fixed": "#221b00",
+                    "tertiary-fixed": "#b6ebff",
+                    "on-primary": "#ffffff",
+                    "surface-variant": "#e1e2ec",
+                    "secondary-fixed": "#ffe16d",
+                    "on-tertiary-fixed": "#001f28",
+                    "secondary": "#6a5f00",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-high": "#e6e8ea",
+                    "on-primary-fixed": "#00184a",
+                    "surface-tint": "#0754d6",
+                    "tertiary": "#00657c",
+                    "outline": "#747785",
+                    "secondary-container": "#ffdb3c",
+                    "on-tertiary-fixed-variant": "#004e60",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary-container": "#221b00",
+                    "surface-dim": "#d9dbde",
+                    "primary": "#0754d6",
+                    "outline-variant": "#c3c6d7",
+                    "tertiary-container": "#b6ebff",
+                    "inverse-on-surface": "#f0f1f3",
+                    "inverse-surface": "#2d3133",
+                    "primary-fixed": "#dbe1ff",
+                    "surface-container-highest": "#e0e2e5",
+                    "tertiary-fixed-dim": "#47d6ff",
+                    "background": "#f8f9ff",
+                    "on-primary-fixed-variant": "#003ea6",
+                    "on-surface": "#191c1e",
+                    "secondary-fixed-dim": "#e9c400",
+                    "primary-container": "#dbe1ff",
+                    "surface-container": "#eeeff1",
+                    "surface": "#f8f9ff",
+                    "on-error": "#ffffff",
+                    "primary-fixed-dim": "#b3c5ff",
+                    "surface-bright": "#f8f9ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "card-padding": "20px",
+                    "container-margin": "24px",
+                    "unit": "8px",
+                    "gutter": "16px",
+                    "section-gap": "40px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Manrope"],
+                    "data-mono": ["Inter"],
+                    "display-xl": ["Manrope"],
+                    "headline-md": ["Manrope"],
+                    "body-md": ["Manrope"],
+                    "headline-lg-mobile": ["Manrope"],
+                    "body-lg": ["Manrope"],
+                    "label-md": ["Manrope"]
+            },
+            "fontSize": {
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "data-mono": ["16px", {"lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "500"}],
+                    "display-xl": ["72px", {"lineHeight": "80px", "letterSpacing": "-0.04em", "fontWeight": "800"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #f0f7ff;
+            color: #191c1e;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            background-image: radial-gradient(at 0% 0%, hsla(210, 100%, 90%, 1) 0, transparent 60%), 
+                              radial-gradient(at 100% 0%, hsla(200, 100%, 85%, 1) 0, transparent 60%), 
+                              radial-gradient(at 50% 100%, hsla(195, 100%, 94%, 1) 0, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.45);
+            backdrop-filter: blur(24px) saturate(160%);
+            -webkit-backdrop-filter: blur(24px) saturate(160%);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px -4px rgba(0, 100, 200, 0.08);
+        }
+
+        .ambient-glow {
+            box-shadow: 0 0 30px 0 rgba(7, 84, 214, 0.1);
+        }
+
+        .ranking-1 { background-color: #ffdb3c; color: #725f00; }
+        .ranking-2 { background-color: #e0e2e5; color: #191c1e; }
+        .ranking-3 { background-color: #f0f1f3; color: #434654; }
+    </style>
+<style>
+        body {
+          min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-body-md text-on-surface">
+<!-- TopAppBar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-container-margin h-16 backdrop-blur-3xl border-b border-white/30 bg-white/40 shadow-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="location_on">location_on</span>
+<h1 class="font-headline-md text-headline-md font-bold text-on-surface">Canary Weather</h1>
+</div>
+<button class="p-2 hover:bg-white/20 rounded-full transition-colors active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-primary" data-icon="language">language</span>
+</button>
+</header>
+<main class="flex-1 mt-20 px-container-margin max-w-[1280px] mx-auto w-full pb-32">
+<!-- Header Section -->
+<header class="mb-section-gap">
+<h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface mb-2">Szczegóły wiatru - Lipiec</h2>
+<div class="flex items-center gap-2 text-on-surface-variant font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px]" data-icon="history">history</span>
+<span>Na podstawie 10 lat pomiarów</span>
+</div>
+</header>
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<!-- Main Hero Card: Current Condition -->
+<section class="md:col-span-7 glass-panel p-card-padding flex flex-col justify-between ambient-glow min-h-[300px]">
+<div class="flex justify-between items-start">
+<div>
+<span class="font-label-md text-label-md text-primary uppercase tracking-wider mb-2 block">Aktualna Prędkość</span>
+<div class="flex items-baseline gap-2">
+<span class="font-display-xl text-display-xl text-on-surface">18</span>
+<span class="font-headline-md text-headline-md text-on-surface-variant">km/h</span>
+</div>
+</div>
+<div class="bg-primary-container/30 px-4 py-2 rounded-full border border-primary/20 backdrop-blur-md">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="air">air</span>
+<span class="font-label-md text-label-md text-on-primary-container">Skala Beauforta: 3</span>
+</div>
+</div>
+</div>
+<div class="mt-8">
+<p class="font-headline-md text-headline-md text-on-surface mb-1">Łagodny wiatr</p>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-md">Liście i cienkie gałązki w ciągłym ruchu, wiatr rozwija lekkie flagi.</p>
+</div>
+<div class="mt-8 flex items-center gap-4">
+<div class="flex-1 h-2 bg-black/5 rounded-full overflow-hidden">
+<div class="h-full bg-primary" style="width: 25%"></div>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant">25% Max</span>
+</div>
+</section>
+<!-- Secondary Card: Passat Guarantee -->
+<section class="md:col-span-5 glass-panel p-card-padding flex flex-col justify-center items-center text-center relative overflow-hidden group">
+<div class="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent pointer-events-none"></div>
+<span class="material-symbols-outlined text-6xl text-primary mb-4 transition-transform group-hover:scale-110 duration-500" data-icon="verified" style="font-variation-settings: 'FILL' 1;">verified</span>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">Gwarancja Pasatów</h3>
+<div class="bg-secondary-container text-on-secondary-container px-6 py-2 rounded-full font-label-md text-label-md font-bold mb-4 shadow-sm">
+                    BARDZO STABILNE
+                </div>
+<p class="font-body-md text-body-md text-on-surface-variant px-4">
+                    W lipcu wiatry północno-wschodnie dominują z prawdopodobieństwem 92% dzięki wyżowi azorskiemu.
+                </p>
+</section>
+<!-- Statistics Bento Grid -->
+<section class="md:col-span-4 glass-panel p-card-padding">
+<span class="font-label-md text-label-md text-on-surface-variant block mb-4 uppercase">Średnia prędkość</span>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center border border-primary/10">
+<span class="material-symbols-outlined text-primary" data-icon="speed">speed</span>
+</div>
+<span class="font-headline-lg text-headline-lg text-on-surface">15 <span class="text-label-md text-on-surface-variant">km/h</span></span>
+</div>
+</section>
+<section class="md:col-span-4 glass-panel p-card-padding">
+<span class="font-label-md text-label-md text-on-surface-variant block mb-4 uppercase">Zakres prędkości</span>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center border border-primary/10">
+<span class="material-symbols-outlined text-primary" data-icon="trending_up">trending_up</span>
+</div>
+<span class="font-headline-lg text-headline-lg text-on-surface">10-25 <span class="text-label-md text-on-surface-variant">km/h</span></span>
+</div>
+</section>
+<section class="md:col-span-4 glass-panel p-card-padding">
+<span class="font-label-md text-label-md text-on-surface-variant block mb-4 uppercase">Dni &gt;20 km/h</span>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center border border-primary/10">
+<span class="material-symbols-outlined text-primary" data-icon="calendar_today">calendar_today</span>
+</div>
+<span class="font-headline-lg text-headline-lg text-on-surface">12 <span class="text-label-md text-on-surface-variant">dni</span></span>
+</div>
+</section>
+<!-- Island Ranking Section -->
+<section class="md:col-span-12 mt-4">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-6">Ranking wysp wiatrowych (Lipiec)</h3>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<!-- 1st Place -->
+<div class="glass-panel p-card-padding relative overflow-hidden group">
+<div class="flex justify-between items-start mb-6">
+<div class="w-12 h-12 rounded-full ranking-1 flex items-center justify-center font-bold text-xl shadow-md border-2 border-white">1</div>
+<div class="text-right">
+<span class="font-label-md text-label-md text-primary font-bold">Idealne dla:</span>
+<p class="text-on-surface font-semibold">Kitesurfing</p>
+</div>
+</div>
+<h4 class="font-headline-md text-headline-md text-on-surface mb-2">Fuerteventura</h4>
+<p class="text-on-surface-variant font-body-md">Słynne spoty Sotavento i Flag Beach oferują niemal 100% pewność wiatru w tym miesiącu.</p>
+<div class="mt-4 pt-4 border-t border-black/5">
+<img class="w-full h-32 object-cover rounded-lg shadow-sm" data-alt="Aerial cinematic shot of turquoise waters in Sotavento, Fuerteventura, with dozens of colorful kitesurfers dotting the coast. The lighting is golden hour, highlighting the white sand dunes and the deep blue Atlantic ocean. The UI-inspired photography is sharp, vibrant, and captures the breezy atmosphere of the Canary Islands." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDfEUq_P_2-73bT9LwXxxelREZB4VR-XW8aKgCZlYcd9VxSFBXTxoG0WenWfC8PeaUilDwWh8Ei1-M_dXu2Eal7L0YGpotgsowlQPeG1dnaqjJHCvvScKX08R_Nh8TG1UtzdvkhZqXrZsAo4wI03cTrukpaVGblSwBlK-QGjRcuKQBGDNL5ohipx-HNgmL0d7TC5JV-W9Hfh5agCXicX1ZyBy73zYwuGbCUITSYoBJz2rQgqMil7_fxLqDS1TXuv3e8gQmsYgJfJRY"/>
+</div>
+</div>
+<!-- 2nd Place -->
+<div class="glass-panel p-card-padding">
+<div class="flex justify-between items-start mb-6">
+<div class="w-12 h-12 rounded-full ranking-2 flex items-center justify-center font-bold text-xl shadow-md border-2 border-white">2</div>
+<div class="text-right">
+<span class="font-label-md text-label-md text-primary font-bold">Idealne dla:</span>
+<p class="text-on-surface font-semibold">Windsurfing</p>
+</div>
+</div>
+<h4 class="font-headline-md text-headline-md text-on-surface mb-2">Lanzarote</h4>
+<p class="text-on-surface-variant font-body-md">Costa Teguise zapewnia stałe warunki dla średniozaawansowanych i pro.</p>
+<div class="mt-4 pt-4 border-t border-black/5 opacity-80">
+<img class="w-full h-32 object-cover rounded-lg grayscale shadow-sm" data-alt="Dramatic landscape of Lanzarote's volcanic coastline with clear blue waves crashing against dark volcanic rocks. Professional outdoor photography with high contrast, showcasing the unique geological beauty and the powerful wind energy of the island. Cool ocean tones dominate the palette with hints of volcanic black and bright white sea foam." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCqfULirTGTMpdINYg8OxKAufBwsCkcu-w0GceTJSFUEjbnRSw7vDhBzZUyq7aDndka_1kMpqFj3oLsqs2u4QIvFM188YidIk5JxlB6uQMPbw0p_-auUQTUEQNy_K7b57ME2IEFDZ87ayvgilWgaFmiGzbMF_patAchRnHkdDL_smO7XdWY7BQY9X7NNjKNUK1pQp57icJjPTSddPOLkv6R_-0pYgVXzQIiFVcEtHcLDYEv4oDj3iVTVxABKJqlMEluTYuTIFaGmTg"/>
+</div>
+</div>
+<!-- 3rd Place -->
+<div class="glass-panel p-card-padding">
+<div class="flex justify-between items-start mb-6">
+<div class="w-12 h-12 rounded-full ranking-3 flex items-center justify-center font-bold text-xl shadow-md border-2 border-white">3</div>
+<div class="text-right">
+<span class="font-label-md text-label-md text-primary font-bold">Idealne dla:</span>
+<p class="text-on-surface font-semibold">Wingfoil</p>
+</div>
+</div>
+<h4 class="font-headline-md text-headline-md text-on-surface mb-2">Teneryfa</h4>
+<p class="text-on-surface-variant font-body-md">El Medano to klasyk z unikalnym mikroklimatem i silnym efektem Venturiego.</p>
+<div class="mt-4 pt-4 border-t border-black/5 opacity-60">
+<img class="w-full h-32 object-cover rounded-lg grayscale shadow-sm" data-alt="Wide scenic view of El Medano beach in Tenerife featuring the iconic Red Mountain in the background. The atmosphere is hazy and warm, reflecting the summer heat tempered by strong Atlantic winds. Cinematic travel photography with a soft depth of field and a focus on the atmospheric perspective of the coastal horizon." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCn4sIeU8WvvRZT-uk59TfyKG7yjY1iIYrjcCeXlSZ_SoTEar3CbaXqMLQcKCN6rKrqJMPgIKZKi975sQbo8qTd2pnKUgj3TJBy690B8I2sEN5JDUKf_K5JHrjOU80u0jaq1sMocvpPedS-FLQCGEm9oZV15L0fguU7I9cr1_ICkAsEhuG4Ywvyl1CkXqR-TNHGiUh_8QgXU2Zu0MH-6fVJ8vYNxP6aJSSPFpLYrhIiFvCaEpVEtNQrXtkJ4Xhwt_a9FlhHy0xe3rw"/>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full flex flex-col items-center gap-unit mt-auto pt-section-gap pb-container-margin bg-transparent">
+<p class="font-label-md text-label-md text-on-surface-variant">Data provided by AEMET</p>
+<div class="flex gap-4">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary underline transition-colors" href="#">Terms</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary underline transition-colors" href="#">Privacy</a>
+</div>
+</footer>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-safe h-20 backdrop-blur-3xl border-t border-white/30 bg-white/40 shadow-lg md:hidden">
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-3 hover:bg-white/20 transition-colors active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary text-on-primary rounded-full p-3 shadow-md active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="analytics" style="font-variation-settings: 'FILL' 1;">analytics</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-3 hover:bg-white/20 transition-colors active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</a>
+</nav>
+<script>
+        document.querySelectorAll('.glass-panel').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+            });
+        });
+    </script>
+</body></html>
+
+<!-- Wyniki: Teneryfa (Jasny) -->
+<!DOCTYPE html>
+
+<html class="light" lang="pl"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>Canary Weather - Tenerife</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Inter:wght@500&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-low": "#f0f4f7",
+                    "on-background": "#191c1e",
+                    "error-container": "#ffdad6",
+                    "on-secondary": "#221b00",
+                    "error": "#ba1a1a",
+                    "on-surface-variant": "#43474e",
+                    "on-tertiary-container": "#001f28",
+                    "inverse-primary": "#b3c5ff",
+                    "on-error-container": "#410002",
+                    "on-primary-container": "#00184a",
+                    "on-secondary-fixed": "#221b00",
+                    "tertiary-fixed": "#b6ebff",
+                    "on-primary": "#ffffff",
+                    "surface-variant": "#dee3eb",
+                    "secondary-fixed": "#ffe16d",
+                    "on-tertiary-fixed": "#001f28",
+                    "secondary": "#6b5e00",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-high": "#e1e2e8",
+                    "on-primary-fixed": "#00184a",
+                    "surface-tint": "#0052d4",
+                    "tertiary": "#00687a",
+                    "outline": "#73777f",
+                    "secondary-container": "#ffe16d",
+                    "on-tertiary-fixed-variant": "#004e5d",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary-container": "#221b00",
+                    "surface-dim": "#d9dadd",
+                    "primary": "#0052d4",
+                    "outline-variant": "#c3c6cf",
+                    "tertiary-container": "#b6ebff",
+                    "inverse-on-surface": "#f0f0f3",
+                    "on-secondary-fixed-variant": "#524700",
+                    "inverse-surface": "#2e3133",
+                    "primary-fixed": "#dbe1ff",
+                    "surface-container-highest": "#dbdce1",
+                    "tertiary-fixed-dim": "#47d6ff",
+                    "background": "#f8f9ff",
+                    "on-primary-fixed-variant": "#003ea6",
+                    "on-surface": "#191c1e",
+                    "secondary-fixed-dim": "#e9c400",
+                    "primary-container": "#dbe1ff",
+                    "surface-container": "#edf0f7",
+                    "surface": "#f8f9ff",
+                    "on-error": "#ffffff",
+                    "primary-fixed-dim": "#b3c5ff",
+                    "surface-bright": "#f8f9ff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "card-padding": "20px",
+                    "container-margin": "24px",
+                    "unit": "8px",
+                    "gutter": "16px",
+                    "section-gap": "40px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Manrope"],
+                    "data-mono": ["Inter"],
+                    "display-xl": ["Manrope"],
+                    "headline-md": ["Manrope"],
+                    "body-md": ["Manrope"],
+                    "headline-lg-mobile": ["Manrope"],
+                    "body-lg": ["Manrope"],
+                    "label-md": ["Manrope"]
+            },
+            "fontSize": {
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "data-mono": ["16px", {"lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "500"}],
+                    "display-xl": ["72px", {"lineHeight": "80px", "letterSpacing": "-0.04em", "fontWeight": "800"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.05em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #f0f7ff;
+            color: #191c1e;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.05);
+            border-radius: 1.5rem;
+        }
+
+        .ambient-glow-bg {
+            background: radial-gradient(circle at 10% 20%, rgba(19, 133, 255, 0.1) 0%, transparent 40%),
+                        radial-gradient(circle at 90% 10%, rgba(0, 82, 212, 0.15) 0%, transparent 40%),
+                        radial-gradient(circle at 50% 100%, rgba(182, 235, 255, 0.2) 0%, #f0f7ff 100%);
+        }
+
+        .gauge-ring {
+            stroke-dasharray: 283;
+            stroke-dashoffset: 42; /* (1 - 0.85) * 283 */
+            transition: stroke-dashoffset 1s ease-out;
+        }
+
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-body-md overflow-x-hidden ambient-glow-bg">
+<!-- Top Navigation -->
+<nav class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-container-margin h-16 backdrop-blur-xl border-b border-primary/10 bg-white/40 shadow-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">location_on</span>
+<span class="font-headline-md text-headline-md font-bold text-on-surface">Canary Weather</span>
+</div>
+<button class="hover:bg-primary/5 rounded-full transition-colors p-2 active:scale-95">
+<span class="material-symbols-outlined text-on-surface-variant">language</span>
+</button>
+</nav>
+<!-- Main Content -->
+<main class="flex-1 mt-20 mb-24 px-container-margin max-w-[1280px] mx-auto w-full space-y-gutter">
+<!-- 1. Now Section -->
+<section class="glass-card relative overflow-hidden p-card-padding flex flex-col md:flex-row items-center justify-between gap-6">
+<div class="flex flex-col gap-2">
+<div class="flex items-center gap-2">
+<div class="bg-primary/10 px-3 py-1 rounded-full flex items-center gap-2">
+<span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+<span class="font-label-md text-label-md uppercase tracking-widest text-primary">LIVE</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant">Tenerife Sur</span>
+</div>
+<div class="flex items-baseline gap-2">
+<h1 class="font-display-xl text-[64px] md:text-display-xl leading-none text-on-surface">24°C</h1>
+<span class="material-symbols-outlined text-[48px] text-amber-500" style="font-variation-settings: 'FILL' 1;">wb_sunny</span>
+</div>
+<p class="font-headline-md text-headline-md text-on-surface-variant">Słonecznie</p>
+</div>
+<div class="grid grid-cols-2 gap-4 w-full md:w-auto">
+<div class="bg-primary/5 rounded-xl p-4 flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">humidity_percentage</span>
+<div>
+<p class="font-label-md text-label-md text-on-surface-variant">Wilgotność</p>
+<p class="font-data-mono text-data-mono text-on-surface">12%</p>
+</div>
+</div>
+<div class="bg-primary/5 rounded-xl p-4 flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">air</span>
+<div>
+<p class="font-label-md text-label-md text-on-surface-variant">Wiatr</p>
+<p class="font-data-mono text-data-mono text-on-surface">15km/h</p>
+</div>
+</div>
+</div>
+</section>
+<!-- 2. Alert Section -->
+<section class="w-full">
+<div class="glass-card bg-orange-50/50 border-orange-200 p-4 flex items-center gap-4">
+<div class="bg-orange-500 p-2 rounded-lg">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">warning</span>
+</div>
+<div class="flex-1">
+<h3 class="font-label-md text-label-md font-bold text-orange-600 uppercase">Pomarańczowy Alert</h3>
+<p class="font-body-md text-body-md text-on-surface">Calima (Pył znad Sahary) - Ograniczona widoczność.</p>
+</div>
+</div>
+</section>
+<!-- 3. Chance of Sun Gauge -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<div class="glass-card p-card-padding flex flex-col items-center justify-center text-center space-y-4">
+<div class="relative w-48 h-48">
+<svg class="w-full h-full -rotate-90" viewbox="0 0 100 100">
+<circle class="text-primary/5" cx="50" cy="50" fill="none" r="45" stroke="currentColor" stroke-width="8"></circle>
+<circle class="text-amber-400 gauge-ring" cx="50" cy="50" fill="none" r="45" stroke="currentColor" stroke-linecap="round" stroke-width="8"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="font-display-xl text-headline-lg text-on-surface">85%</span>
+<span class="font-label-md text-label-md text-on-surface-variant">Słońca</span>
+</div>
+</div>
+<div class="space-y-1">
+<p class="font-headline-md text-headline-md text-on-surface">Wysoka Pewność</p>
+<p class="font-label-md text-label-md text-on-surface-variant">Na podstawie danych historycznych</p>
+</div>
+</div>
+<!-- 6. Summary Card -->
+<div class="glass-card p-card-padding flex flex-col justify-center gap-4">
+<span class="material-symbols-outlined text-primary text-4xl">info</span>
+<p class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface">
+                    W lipcu na Teneryfie słońce świeci przez 85% czasu.
+                </p>
+<div class="h-1 w-24 bg-primary/40 rounded-full"></div>
+</div>
+</section>
+<!-- 4. Month Selector -->
+<section class="w-full overflow-x-auto no-scrollbar py-2">
+<div class="flex items-center gap-3">
+<!-- Chips -->
+<button class="px-6 py-2 rounded-full glass-card border-primary/5 hover:bg-white/60 transition-all font-label-md text-label-md shrink-0 text-on-surface-variant">STYCZEŃ</button>
+<button class="px-6 py-2 rounded-full glass-card border-primary/5 hover:bg-white/60 transition-all font-label-md text-label-md shrink-0 text-on-surface-variant">LUTY</button>
+<button class="px-6 py-2 rounded-full glass-card border-primary/5 hover:bg-white/60 transition-all font-label-md text-label-md shrink-0 text-on-surface-variant">MARZEC</button>
+<button class="px-6 py-2 rounded-full glass-card border-primary/5 hover:bg-white/60 transition-all font-label-md text-label-md shrink-0 text-on-surface-variant">KWIECIEŃ</button>
+<button class="px-6 py-2 rounded-full glass-card border-primary/5 hover:bg-white/60 transition-all font-label-md text-label-md shrink-0 text-on-surface-variant">MAJ</button>
+<button class="px-6 py-2 rounded-full glass-card border-primary/5 hover:bg-white/60 transition-all font-label-md text-label-md shrink-0 text-on-surface-variant">CZERWIEC</button>
+<button class="px-8 py-2 rounded-full bg-primary text-white font-label-md text-label-md font-bold shadow-lg shadow-primary/20 shrink-0">LIPIEC</button>
+<button class="px-6 py-2 rounded-full glass-card border-primary/5 hover:bg-white/60 transition-all font-label-md text-label-md shrink-0 text-on-surface-variant">SIERPIEŃ</button>
+<button class="px-6 py-2 rounded-full glass-card border-primary/5 hover:bg-white/60 transition-all font-label-md text-label-md shrink-0 text-on-surface-variant">WRZESIEŃ</button>
+<button class="px-6 py-2 rounded-full glass-card border-primary/5 hover:bg-white/60 transition-all font-label-md text-label-md shrink-0 text-on-surface-variant">PAŹDZIERNIK</button>
+<button class="px-6 py-2 rounded-full glass-card border-primary/5 hover:bg-white/60 transition-all font-label-md text-label-md shrink-0 text-on-surface-variant">LISTOPAD</button>
+<button class="px-6 py-2 rounded-full glass-card border-primary/5 hover:bg-white/60 transition-all font-label-md text-label-md shrink-0 text-on-surface-variant">GRUDZIEŃ</button>
+</div>
+</section>
+<!-- 5. Stats Grid -->
+<section class="grid grid-cols-1 sm:grid-cols-3 gap-gutter">
+<div class="glass-card p-card-padding flex flex-col items-center text-center gap-2">
+<span class="material-symbols-outlined text-red-500" style="font-variation-settings: 'FILL' 1;">device_thermostat</span>
+<p class="font-label-md text-label-md text-on-surface-variant uppercase">Śr. Maksymalna</p>
+<p class="font-headline-lg text-headline-lg text-on-surface">28°C</p>
+</div>
+<div class="glass-card p-card-padding flex flex-col items-center text-center gap-2">
+<span class="material-symbols-outlined text-blue-500" style="font-variation-settings: 'FILL' 1;">device_thermostat</span>
+<p class="font-label-md text-label-md text-on-surface-variant uppercase">Śr. Minimalna</p>
+<p class="font-headline-lg text-headline-lg text-on-surface">21°C</p>
+</div>
+<div class="glass-card p-card-padding flex flex-col items-center text-center gap-2">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">cloudy_snowing</span>
+<p class="font-label-md text-label-md text-on-surface-variant uppercase">Dni Deszczowe</p>
+<p class="font-headline-lg text-headline-lg text-on-surface">1 dzień</p>
+</div>
+</section>
+<!-- 7. Best Time Weeks -->
+<section class="space-y-4">
+<h2 class="font-headline-md text-headline-md text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-amber-500">stars</span>
+                Najsłoneczniejsze tygodnie
+            </h2>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<!-- 1st -->
+<div class="glass-card p-card-padding relative overflow-hidden group hover:scale-[1.02] transition-transform cursor-pointer border-amber-200/50">
+<div class="absolute top-0 right-0 p-4">
+<div class="w-10 h-10 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center font-bold">1</div>
+</div>
+<p class="font-label-md text-label-md text-amber-600 font-bold mb-1">TYDZIEŃ 28</p>
+<p class="font-headline-md text-headline-md text-on-surface">08.07 — 14.07</p>
+<div class="mt-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-amber-500">sunny</span>
+<span class="font-body-md text-body-md text-on-surface-variant">92% Szans</span>
+</div>
+</div>
+<!-- 2nd -->
+<div class="glass-card p-card-padding opacity-90 hover:opacity-100 transition-opacity cursor-pointer">
+<div class="absolute top-0 right-0 p-4">
+<div class="w-10 h-10 bg-primary/5 text-on-surface rounded-full flex items-center justify-center font-bold">2</div>
+</div>
+<p class="font-label-md text-label-md text-on-surface-variant font-bold mb-1">TYDZIEŃ 29</p>
+<p class="font-headline-md text-headline-md text-on-surface">15.07 — 21.07</p>
+<div class="mt-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant">sunny</span>
+<span class="font-body-md text-body-md text-on-surface-variant">88% Szans</span>
+</div>
+</div>
+<!-- 3rd -->
+<div class="glass-card p-card-padding opacity-70 hover:opacity-100 transition-opacity cursor-pointer">
+<div class="absolute top-0 right-0 p-4">
+<div class="w-10 h-10 bg-primary/5 text-on-surface rounded-full flex items-center justify-center font-bold">3</div>
+</div>
+<p class="font-label-md text-label-md text-on-surface-variant font-bold mb-1">TYDZIEŃ 30</p>
+<p class="font-headline-md text-headline-md text-on-surface">22.07 — 28.07</p>
+<div class="mt-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant">sunny</span>
+<span class="font-body-md text-body-md text-on-surface-variant">84% Szans</span>
+</div>
+</div>
+</div>
+</section>
+<!-- 8. CTA Cards -->
+<section class="grid grid-cols-1 sm:grid-cols-2 gap-gutter">
+<button class="glass-card p-6 flex items-center justify-between group active:scale-95 transition-transform text-left">
+<div class="flex items-center gap-4">
+<div class="p-3 rounded-full bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
+<span class="material-symbols-outlined">air</span>
+</div>
+<span class="font-headline-md text-headline-md text-on-surface">Szczegóły wiatru</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:translate-x-1 transition-transform">chevron_right</span>
+</button>
+<button class="glass-card p-6 flex items-center justify-between group active:scale-95 transition-transform text-left">
+<div class="flex items-center gap-4">
+<div class="p-3 rounded-full bg-blue-100/50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+<span class="material-symbols-outlined">rainy</span>
+</div>
+<span class="font-headline-md text-headline-md text-on-surface">Szczegóły opadów</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:translate-x-1 transition-transform">chevron_right</span>
+</button>
+</section>
+</main>
+<!-- Bottom Navigation Shell -->
+<div class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-safe h-20 backdrop-blur-xl border-t border-primary/10 bg-white/40 shadow-lg md:hidden">
+<button class="flex flex-col items-center justify-center text-on-surface-variant p-3 active:scale-90 transition-transform">
+<span class="material-symbols-outlined">home</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-primary text-white rounded-full p-3 active:scale-90 transition-transform shadow-lg shadow-primary/30">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">analytics</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant p-3 active:scale-90 transition-transform">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+<!-- Footer -->
+<footer class="w-full flex flex-col items-center gap-unit mt-auto pt-section-gap pb-container-margin px-container-margin">
+<p class="font-label-md text-label-md text-on-surface-variant">Data provided by AEMET</p>
+<p class="text-center font-label-md text-[10px] text-on-surface-variant/60 max-w-md">Canary Weather jest niezależną platformą i nie jest oficjalnie powiązana z AEMET (Agencia Estatal de Meteorología), jednak korzysta z ich publicznych zasobów danych.</p>
+<div class="flex gap-4">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary underline transition-colors" href="#">Terms</a>
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary underline transition-colors" href="#">Privacy</a>
+</div>
+</footer>
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const cards = document.querySelectorAll('.glass-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'all 0.5s ease-out ' + (index * 0.05) + 's';
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 100);
+            });
+        });
+    </script>
+</body></html>

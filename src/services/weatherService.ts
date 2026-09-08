@@ -124,6 +124,59 @@ const MIN_SUN_HOURS = locationsMapping.sunChanceConfig.minSunHours;
 const MAX_PRECIP = locationsMapping.sunChanceConfig.maxPrecip;
 const NORTHERN_MULTIPLIER = locationsMapping.sunChanceConfig.northernMultiplier;
 
+/** Average monthly temperatures for a single year (used by the "last 10 years" drill-down chart). */
+export interface MonthlyTemperature {
+  month: number; // 1-12
+  avgTmax: number | null;
+  avgTmin: number | null;
+}
+
+/**
+ * Returns average monthly max/min temperatures for a station across one calendar year.
+ * One year is ~365 daily rows (well under the row limit), so a single query is enough.
+ * Months without data return nulls.
+ */
+export async function getYearlyMonthlyTemperatures(
+  stationId: string,
+  year: number
+): Promise<MonthlyTemperature[]> {
+  const result: MonthlyTemperature[] = Array.from({ length: 12 }, (_, i) => ({
+    month: i + 1,
+    avgTmax: null,
+    avgTmin: null,
+  }));
+
+  let data;
+  try {
+    const res = await supabase
+      .from('weather_data')
+      .select('date, tmax, tmin')
+      .eq('station_id', stationId)
+      .gte('date', `${year}-01-01`)
+      .lte('date', `${year}-12-31`);
+    if (res.error) {
+      console.warn('[YearChart] Cannot fetch monthly temperatures:', res.error.message);
+      return result;
+    }
+    data = res.data;
+  } catch {
+    console.warn('[YearChart] Network error fetching monthly temperatures');
+    return result;
+  }
+
+  const sums = Array.from({ length: 12 }, () => ({ maxSum: 0, maxN: 0, minSum: 0, minN: 0 }));
+  for (const row of data ?? []) {
+    const m = Number(row.date.slice(5, 7)) - 1; // 0-11, parsed from 'YYYY-MM-DD' (timezone-safe)
+    if (row.tmax !== null) { sums[m].maxSum += row.tmax; sums[m].maxN++; }
+    if (row.tmin !== null) { sums[m].minSum += row.tmin; sums[m].minN++; }
+  }
+  for (let i = 0; i < 12; i++) {
+    result[i].avgTmax = sums[i].maxN > 0 ? Math.round((sums[i].maxSum / sums[i].maxN) * 10) / 10 : null;
+    result[i].avgTmin = sums[i].minN > 0 ? Math.round((sums[i].minSum / sums[i].minN) * 10) / 10 : null;
+  }
+  return result;
+}
+
 /**
  * Calculates sun chance for a given station and date range
  * Sun Chance = (days with sol > 6h AND precip = 0) / total days
@@ -212,17 +265,16 @@ export async function calculateSunChance(
 
   const sunChance = totalDays > 0 ? Math.round((sunnyDays / totalDays) * 100) : 0;
 
-  // Determine confidence based on percentage value (same as rain)
-  // High confidence when result is far from 50% (clear prediction)
-  // Low confidence when close to 50% (uncertain)
+  // Sun-chance level tier based on the percentage magnitude (how strong the sun outlook is).
+  // A trip planner reads this as "how likely is sun", so higher % = better tier.
+  // (This differs from the rain stat's confidence, which measures distance from a 50% coin-flip.)
   let confidence: 'high' | 'medium' | 'low';
-  const distanceFrom50 = Math.abs(sunChance - 50);
-  if (distanceFrom50 >= 25) {
-    confidence = 'high'; // <= 25% or >= 75%
-  } else if (distanceFrom50 >= 10) {
-    confidence = 'medium'; // 26-40% or 60-74%
+  if (sunChance >= 70) {
+    confidence = 'high';
+  } else if (sunChance >= 45) {
+    confidence = 'medium';
   } else {
-    confidence = 'low'; // 41-59%
+    confidence = 'low';
   }
 
   return {
@@ -421,7 +473,9 @@ export async function getMonthlyStats(stationId: string): Promise<MonthlyStats[]
     // Calculate number of unique years to get average rain days per year
     const uniqueYears = new Set(monthData.map((d) => new Date(d.date).getFullYear()));
     const yearsCount = uniqueYears.size || 1;
-    const rainDaysAvg = Math.round(rainDaysTotal / yearsCount);
+    // Keep 1 decimal so the UI can show "< 1 day" instead of a misleading "0"
+    // for very dry months (e.g. Maspalomas in July ≈ 0.3 rainy days).
+    const rainDaysAvg = Math.round((rainDaysTotal / yearsCount) * 10) / 10;
 
     const sunnyDays = monthData.filter(
       (d) => d.sol !== null && d.sol > MIN_SUN_HOURS && (d.precip === null || d.precip <= MAX_PRECIP)
@@ -699,7 +753,9 @@ export async function calculateRainStats(
   // Calculate number of unique years in the data
   const uniqueYears = new Set(monthData.map((row) => new Date(row.date).getFullYear()));
   const yearsCount = uniqueYears.size || 1;
-  const rainyDaysPerYear = Math.round(totalRainyDays / yearsCount);
+  // Keep one decimal so rare-rain months stay consistent with the dry-day gauge
+  // (e.g. 0.3 rainy days/year matches 99% dry — rounding to 0 looked like a contradiction)
+  const rainyDaysPerYear = Math.round((totalRainyDays / yearsCount) * 10) / 10;
 
   // Calculate percentage of days WITHOUT rain (positive messaging)
   const daysWithoutRain = Math.round(((totalDays - totalRainyDays) / totalDays) * 100);
@@ -799,7 +855,7 @@ const RANKING_CACHE_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
  */
 export async function getWindRankingByIsland(month: number): Promise<IslandRanking[]> {
   // Check cache first
-  const cacheKey = `wind_ranking_v1_${month}`;
+  const cacheKey = `wind_ranking_v2_${month}`;
   try {
     const cached = await AsyncStorage.getItem(cacheKey);
     if (cached) {
@@ -899,7 +955,7 @@ export async function getWindRankingByIsland(month: number): Promise<IslandRanki
  */
 export async function getRainRankingByIsland(month: number): Promise<IslandRanking[]> {
   // Check cache first
-  const cacheKey = `rain_ranking_v2_${month}`;
+  const cacheKey = `rain_ranking_v5_${month}`;
   try {
     const cached = await AsyncStorage.getItem(cacheKey);
     if (cached) {
@@ -974,10 +1030,13 @@ export async function getRainRankingByIsland(month: number): Promise<IslandRanki
     for (const [island, stats] of islandStats) {
       const yearsCount = stats.years.size || 1;
       if (stats.totalDays > 0) {
-        // Average monthly precipitation per year
+        // Average monthly precipitation per year, per station — divide by stationCount
+        // so islands with more stations aren't ranked rainier just for having more sensors.
+        // Keep one decimal so very dry islands stay consistent with the intensity card
+        // (rounding to 0 mm looked like "no rain" despite the gauge/card showing some).
         ranking.push({
           island,
-          value: Math.round(stats.totalPrecip / yearsCount),
+          value: Math.round((stats.totalPrecip / yearsCount / stats.stationCount) * 10) / 10,
           stationCount: stats.stationCount,
         });
       }
@@ -1270,7 +1329,7 @@ export async function calculateInterpolatedMonthlyStats(
     avg_sol: Math.round(interpolatedAvgSol * 10) / 10,
     avg_wind: Math.round(interpolatedAvgWind * 10) / 10,
     sun_chance: Math.round(interpolatedSunChance),
-    rain_days: Math.round(interpolatedRainDays),
+    rain_days: Math.round(interpolatedRainDays * 10) / 10,
     total_days: Math.round(totalDays / validResults.length),
   };
 
@@ -2115,6 +2174,7 @@ interface WeatherAPIResponse {
     wind_kph: number;
     gust_kph: number;
     cloud: number;
+    precip_mm: number;
     is_day: number;
     condition: {
       text: string;
@@ -2127,12 +2187,35 @@ interface WeatherAPIResponse {
  * Maps WeatherAPI condition code to our internal WeatherCondition
  * WeatherAPI codes: https://www.weatherapi.com/docs/weather_conditions.json
  */
-function mapWeatherAPICode(code: number, isNight: boolean): { condition: WeatherCondition; labelKey: string } {
+// Below this WeatherAPI precip reading (mm) we treat it as "not actually raining"
+const NEGLIGIBLE_PRECIP_MM = 0.1;
+// Light/patchy rain codes that frequently signal "nearby" rain rather than rain at the point
+const LIGHT_PATCHY_RAIN_CODES = [1063, 1150, 1153, 1168, 1171, 1180, 1183];
+
+function mapWeatherAPICode(
+  code: number,
+  isNight: boolean,
+  precipMm?: number,
+  cloud?: number
+): { condition: WeatherCondition; labelKey: string } {
   // Clear/Sunny
   if (code === 1000) {
     return isNight
       ? { condition: 'clear-night', labelKey: 'clearNight' }
       : { condition: 'sunny', labelKey: 'clearSky' };
+  }
+
+  // Correction: WeatherAPI's light/"patchy rain nearby" codes often report no actual
+  // precipitation at the location. When its own precip reading is negligible, classify by
+  // cloud cover instead of showing false rain (e.g. Las Palmas: code 1063, precip 0.01mm,
+  // cloud 25% at night → moon behind light clouds, not "light rain").
+  if (LIGHT_PATCHY_RAIN_CODES.includes(code) && precipMm !== undefined && precipMm < NEGLIGIBLE_PRECIP_MM) {
+    if (cloud !== undefined && cloud >= 70) {
+      return { condition: 'cloudy', labelKey: 'overcast' };
+    }
+    return isNight
+      ? { condition: 'partly-cloudy-night', labelKey: 'partlyCloudyNight' }
+      : { condition: 'partly-sunny', labelKey: 'partlyCloudy' };
   }
 
   // Partly cloudy
@@ -2242,9 +2325,17 @@ async function fetchWeatherAPICondition(lat: number, lon: number): Promise<OpenM
     }
 
     const isNight = data.current.is_day === 0;
-    const { condition, labelKey } = mapWeatherAPICode(data.current.condition.code, isNight);
+    const { condition, labelKey } = mapWeatherAPICode(
+      data.current.condition.code,
+      isNight,
+      data.current.precip_mm,
+      data.current.cloud
+    );
 
-    console.log(`[WeatherAPI] ${data.current.condition.text} (code ${data.current.condition.code}), ${Math.round(data.current.temp_c)}°C, wind ${Math.round(data.current.wind_kph)} km/h, gusts ${Math.round(data.current.gust_kph)} km/h, humidity ${data.current.humidity}%`);
+    console.log(`[WeatherAPI] ${data.current.condition.text} (code ${data.current.condition.code}), ${Math.round(data.current.temp_c)}°C, wind ${Math.round(data.current.wind_kph)} km/h, gusts ${Math.round(data.current.gust_kph)} km/h, humidity ${data.current.humidity}%, precip ${data.current.precip_mm}mm, cloud ${data.current.cloud}%`);
+    if (LIGHT_PATCHY_RAIN_CODES.includes(data.current.condition.code) && data.current.precip_mm < NEGLIGIBLE_PRECIP_MM) {
+      console.log(`[WeatherAPI] Correcting false rain (code ${data.current.condition.code}, precip ${data.current.precip_mm}mm) → ${condition}`);
+    }
 
     return {
       weatherCode: data.current.condition.code,

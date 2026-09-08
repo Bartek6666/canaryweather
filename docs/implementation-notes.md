@@ -4,6 +4,532 @@ Ten plik zawiera notatki z implementacji i decyzji technicznych. Sprawdzaj go na
 
 ---
 
+## 2026-08-05: 3. WNIOSEK O PRODUKCJĘ ZŁOŻONY (operacyjne, nie kod)
+
+Po 2 odmowach (29.06, 22.07) tym razem warunek Google **„12 testerów × 14 dni" SPEŁNIONY** —
+przycisk „Poproś o opublikowanie wersji produkcyjnej" aktywny → kliknięty **05.08 o 22:41**.
+Working tree `redesign` czysty (żadnych zmian w kodzie tej sesji — całość to działania w Play
+Console). Poprzednia notatka techniczna kończy się na 2026-07-12; okres 07-13→08-05 to wyłącznie
+rekrutacja/zaangażowanie testerów (szczegóły w pamięci `project_status` + `docs/testers-*`).
+
+### Kwestionariusz Google (odpowiedzi PL, limit 300 zn./pytanie) — co wpisano
+- **Jak pozyskano testerów:** organicznie, bez płatnych dostawców / znajomych / rodziny;
+  komentarze pod pytaniami o pogodę w grupach FB (Kanary/Baleary/wybrzeże), transparentnie „to
+  moja apka" → realna grupa docelowa.
+- **Jak łatwo było pozyskać (lista):** „Trudno".
+- **Zaangażowanie testerów:** naturalne, realne wyszukiwania; korzystali z kluczowych funkcji
+  (szansa na słońce, statystyki, wiatr, opady, live); analityka potwierdza ruch.
+- **Podsumowanie opinii + sposób zbierania:** formularze PL/ES + info@sunly.live + wiadomości;
+  chwalili dane o szansie na słońce, zgłosili drobne błędy → wdrożone.
+- **Odbiorcy:** osoby planujące wyjazd na Kanary/Baleary/wybrzeże, głównie spoza tych regionów.
+- **Wartość apki:** realna szansa na słońce z 10 lat danych AEMET + bieżąca pogoda → decyzja
+  o terminie/miejscu na faktach.
+- **Oczekiwane instalacje w 1. rok (lista):** 0–10 tys.
+- **Zmiany z testu:** polska odmiana, dane poza Kanarami (Baleary/wybrzeże), SearchScreen,
+  usunięte mylące info — wydane w kolejnych wersjach.
+- **Gotowość do produkcji:** 14 dni testu bez awarii, wdrożony feedback, zgodność (AEMET +
+  disclaimer), feedback już kosmetyczny.
+- **Co się zmieniło od 2. odmowy:** pełny wymóg 12×14 z realnie zaangażowanymi testerami.
+
+### Stan / następne kroki
+- **Decyzja Google ≤7 dni** (~do 12.08), e-mail na konto właściciela. Test zamknięty NIE
+  zatrzymywać do czasu decyzji.
+- ⚠️ **KOLIZJA: AAB vc9 wygasa ~12.08** — dokładnie w oknie decyzji. Jeśli zbliża się 12.08 bez
+  decyzji lub potrzebny nowy build → odświeżyć AAB (patrz pamięć `project_eas_build_gotchas`).
+- Po decyzji pozytywnej: wydać 1.5.1 (vc9) do produkcji (release notes 4 języki gotowe),
+  zmienić nazwę w sklepie na „Sunly" (Store listing → App name).
+
+---
+
+## 2026-07-12 (b): Fix 2 zgłoszeń usera na SearchScreen (branch `redesign`)
+
+Dwa błędy zgłoszone przez usera na ekranie wyszukiwania (po wysłaniu vc8 do testu):
+
+1. **Polska odmiana „popularne miejsca":** kafelek wyspy pokazywał `{count} popularne
+   miejsca` (np. „6 popularne miejsca") — brak odmiany. Fix: nowy klucz i18n z pluralizacją
+   `search.popularPlacesCount` (pl: `_one/_few/_many/_other` = „popularne miejsce / popularne
+   miejsca / popularnych miejsc"; en/es/de: `_one/_other`). `SearchScreen` l.986 →
+   `t('search.popularPlacesCount', { count: island.places.length })`. Nagłówek szuflady
+   (l.1003, `... - {t('search.popularPlaces')}`, bez liczby) ZOSTAWIONY — stary klucz
+   `popularPlaces` dalej istnieje jako etykieta bez liczebnika. Zweryfikowane `Intl.PluralRules('pl')`:
+   6→many→„6 popularnych miejsc". (i18next ma `compatibilityJSON: 'v4'`, więc CLDR działa —
+   ten sam wzorzec co `rainDaysText`/`wind.daysText`.)
+2. **Stopka „trust line" `search.footer`** („Sprawdzamy dane pogodowe z 10 lat - 19 stacji
+   AEMET" / „Data from 10 years • 19 AEMET stations") — user chciał ją usunąć (i tak podawała
+   nieaktualne „19 stacji"; jest ich teraz 27). Usunięty render (`SearchScreen` l.1040 tekst
+   + kreska `footerDivider` nad nim), osierocone style `footerStats`/`footerDivider` oraz
+   martwy klucz `search.footer` z 4 języków. **UWAGA:** to NIE disclaimer AEMET — `footer.dataSource`
+   („Dane: AEMET (aemet.es)") i `footer.disclaimer` („…nie jest powiązana z AEMET…") ZOSTAJĄ
+   (wymóg Google Play, Misleading Claims).
+
+tsc czysto, JSON 4 języków poprawny. **NIEZACOMMITOWANE.** Te fixy NIE są w wysłanym buildzie
+vc8 (test zamknięty) — wejdą dopiero w następnym buildzie EAS (przy okazji kolejnego wydania).
+
+---
+
+## 2026-07-12: Audyt przedwydaniowy + BUILD EAS „Sunly" 1.5.0 (vc8)
+
+Przed wydaniem zrobiony audyt (tsc, martwy kod, sekrety, /code-review high na branchu
+`redesign`). Wynik: konfiguracja bezpieczna (DEV-reset usunięty, `USE_MOCK_DATA=__DEV__&&false`,
+`.env` gitignored, brak service_role w kodzie, RLS chroni zapis, EAS ma klucze produkcyjne).
+
+### Naprawy z audytu (commit `b2eaf3a`)
+- **App.tsx**: `useFonts` zwraca też `fontError`, który był ignorowany → przy awarii fontu apka
+  utykała na splashu na zawsze. Fix: `fontsReady = fontsLoaded || !!fontError` (fallback na font
+  systemowy) w bramce renderu i `onLayoutRootView`.
+- **weatherService `getYearlyMonthlyTemperatures`**: miesiąc liczony `new Date(row.date).getMonth()`
+  (lokalna strefa na dacie UTC) → dni graniczne w złym miesiącu dla userów spoza UTC. Fix:
+  `Number(row.date.slice(5,7))-1`. (To samo bucketowanie jest w rankingach — pre-existing, <0,3%,
+  zostawione.)
+- **Martwy kod**: usunięte `HeroLogo`, `WeatherEffects` (+ eksporty). `theme.ts`: usunięte martwe
+  `gradients`, `islandThemes`+interfejs, `getTimeGradient/getWeatherGradient/getIslandTheme`,
+  `getSunChanceColor` (osierocony po zmianie kolorów %); poprawiony zbiorczy `theme` + import
+  w ResultScreen. `app.json` `userInterfaceStyle` dark→light.
+- **Refaktor**: wspólny `IslandRankingCard` (kind='wind'|'rain') zamiast zduplikowanego bloku
+  rankingu w obu ekranach (region liczony w komponencie, różnice: jednostka/kolor/ikona).
+
+### Świadomie NIEzrobione z audytu
+- `USE_PLACE_LIST=false` wariant „listy" w SearchScreen — zostawiony (celowa alternatywa).
+- Ranking deszczu dzieli przez liczbę zmapowanych stacji (nie tych z danymi) — negligible.
+- **EAS: zdublowany `EXPO_PUBLIC_WAQI_TOKEN`** (3× PUBLIC per env, 12 mar + 1× SECRET 18 mar).
+  NIE blokuje buildu (build wczytał token OK; wszystkie kopie mają tę samą wartość, `EXPO_PUBLIC_*`
+  wtapia się przy buildzie więc zmiany w EAS nie ruszają już zbudowanej apki). Do posprzątania
+  kiedyś przez web UI (zostawić 1 wpis na środowisko). User poinformowany, odłożone.
+
+### RELEASE PREP + BUILD (commit `3b1e344`)
+- **Rebrand**: `app.json name` „Canary Weather"→**„Sunly"** (applicationId `com.canaryweather.app`
+  ZOSTAJE — permanentny). Komunikat lokalizacji → „Sunly". `adaptiveIcon.backgroundColor`
+  `#0077CC`→`#0052D4` (spójny z nową królewską ikoną).
+- **Wersja**: `1.4.3`→**`1.5.0`**, `android.versionCode` `7`→**`8`**, `package.json` →`1.5.0`.
+  iOS `buildNumber` NIETKNIĘTY (nie budujemy iOS — brak konta Apple Dev).
+- **BUILD**: `eas build -p android --profile production --non-interactive --no-wait`.
+  ID `0d486c8e-57e9-4272-beaa-170b8b51c5f1`. Keystore istniejący, fingerprint OK.
+  URL: https://expo.dev/accounts/bartek666/projects/canaryweather/builds/0d486c8e-57e9-4272-beaa-170b8b51c5f1
+
+### NASTĘPNE KROKI (po zakończeniu buildu)
+1. Pobrać AAB, wgrać do Google Play → **test zamknięty** (14 dni). **AAB wygasa po 30 dniach!**
+2. Release notes 4 języki w Play Console (en-GB/pl-PL/es-ES/de-DE) — jeszcze nie zrobione.
+3. Zmienić tytuł aplikacji w Play Console na „Sunly" (osobne od `app.json name`).
+4. Po teście → ponowny wniosek o produkcję (poprzedni odrzucony 29.06 za mało testerów).
+
+---
+
+## 2026-07-11 (c): Drobne fixy rankingu wybrzeża + polska gramatyka „< 1 dzień"
+
+- **Nazwy wybrzeża ucinane w rankingu** (kolumna `rankingIsland` width 100): wszystkie obszary
+  kontynentalne zaczynają się od „Costa " (nietłumaczone we wszystkich 4 językach). Nowy helper
+  `formatRankingIslandName` w `regions.ts`: `^Costa ` → „C. " (np. „C. de Valencia") — mieści się
+  bez zmiany szerokości kolumny ani wykresu. Użyty w rankingu Wiatr i Opady. Nazwy Kanarów/
+  Balearów bez zmian (nie zaczynają się od „Costa").
+- **`rainDaysLessThanOne` pl** „< 1 dnia" → „< 1 dzień" (poprawna odmiana; en/es/de OK). Klucz
+  wspólny dla kafelka „Dni deszczowe" i podsumowania na ResultScreen.
+- tsc czysto.
+
+---
+
+## 2026-07-11 (b): Fix zgłoszeń usera — karta „pasatów" + ranking poza Kanarami
+
+Branch `redesign`, niezacommitowane. Zgłoszenie dla Palma (Baleary): (1) karta „Stabilność
+Pasatów" na ekranie Wiatr — pasaty/alisios NIE występują na Morzu Śródziemnym; (2) ranking
+tytułował „Wiatr na Wyspach Kanaryjskich" i mieszał wszystkie regiony.
+
+### Rozwiązanie — świadomość regionu (canary / balearic / mainland)
+- **Nowy wspólny moduł** `src/constants/regions.ts`: `Region`, `getRegionForIsland(island)`
+  (mapa `island`→region, fallback `canary`) oraz `ISLAND_TRANSLATION_KEYS` dla WSZYSTKICH
+  16 wysp/obszarów (wcześniej każdy ekran miał lokalną mapę tylko 7 Kanarów → Baleary/wybrzeże
+  pokazywały surową nazwę zamiast tłumaczenia, np. „Majorka").
+- **Karta pasatów** (`TradeWindStabilityCard`): nowy prop `isTradeWind` (default `true`).
+  Poza Kanarami (`region !== 'canary'`) tytuł → `wind.stabilityTitle_generic` („Stabilność
+  Wiatru"), opis → `wind.stabilityDescGeneric_{high,medium,low}` (bez słowa pasaty/alisios/
+  Passat/trade). Sam WSKAŹNIK (spójność wiatru) zostaje — to poprawna, użyteczna statystyka
+  wszędzie; usunięto tylko kanaryjską ramę narracyjną. `WindDetailsScreen` przekazuje
+  `isTradeWind={region === 'canary'}`.
+- **Ranking (Wiatr i Opady)**: filtrowany do regionu bieżącej lokalizacji
+  (`regionRanking = islandRanking.filter(getRegionForIsland === region)`), `maxValue`
+  liczony z listy po filtrze (i tak posortowana malejąco). Tytuł zależny od regionu:
+  canary → istniejący `island_ranking_title`; balearic/mainland → nowe
+  `island_ranking_title_{balearic,mainland}` (Baleary „na Balearach", wybrzeże „na wybrzeżu
+  Hiszpanii" — osobne klucze, bo polska/niemiecka odmiana różni się od „Wysp Kanaryjskich").
+  Zmiana tylko w ekranach — funkcje `getWindRankingByIsland`/`getRainRankingByIsland`
+  w `weatherService` NIETKNIĘTE (nadal zwracają wszystkie regiony; filtr w UI).
+- **i18n (4 języki)**: dodane `wind.stabilityTitle_generic`, `wind.stabilityDescGeneric_*`,
+  `wind.island_ranking_title_{balearic,mainland}`, `rain.island_ranking_title_{balearic,mainland}`.
+- `RainDetailsScreen` dostał import `useMemo` (nie miał). tsc czysto (exit 0).
+- **BUMP CACHE (druga iteracja tego samego zgłoszenia):** po powyższym user zgłosił, że dla
+  Palmy ranking NIE pojawia się wcale. Diagnoza: dane OK (B278 ma 3527 wierszy `velmedia`,
+  3188 `precip`; replikacja rankingu za lipiec zwraca Mallorca/Menorca/Ibiza + costy), filtr
+  regionu OK (wszystkie 15 obszarów, też akcentowane, klasyfikują się poprawnie). Przyczyną
+  był **nieaktualny cache AsyncStorage na telefonie** (7 dni) sprzed dodania danych Balearów:
+  trzymał listę tylko-Kanary, więc po filtrze do `balearic` wychodziła pusta lista → karta
+  chowana. Fix: bump kluczy cache w `weatherService` — `wind_ranking_v1→v2`,
+  `rain_ranking_v4→v5` (wymusza przeliczenie z nowymi regionami). Ta sama technika co przy
+  poprzednich zmianach wartości rankingu.
+
+### DO SPRAWDZENIA / kolejne zgłoszenia
+- To były 2 z „pierwszych błędów" usera — mogą być kolejne (zebrać na telefonie).
+- Alerty AEMET/Calima dla nowych regionów wciąż neutralne (świadomy kompromis, patrz niżej).
+
+---
+
+## 2026-07-11: Rozszerzenie geograficzne — Baleary + wybrzeże SE Hiszpanii (DUŻE, przed wydaniem)
+
+Branch `redesign`. Wszystko **NIEZACOMMITOWANE** (working tree zmodyfikowany). tsc czysto.
+Aplikacja pokazuje teraz „Szansę na Słońce" + pełne statystyki dla Balearów i całego
+południowo-wschodniego wybrzeża Hiszpanii. **Funkcja sterowana danymi** — zero nowej logiki
+liczenia; wszystko przez `locations_mapping.json` + import do Supabase + kafelki/i18n.
+
+### STAN NA KONIEC SESJI
+- **Działa na telefonie** (user potwierdził), ALE **user zgłosił pierwsze błędy** —
+  szczegóły do zebrania NA STARCIE nowej sesji (do ustalenia z userem, potem fix).
+- Serwer Expo działał na 8082 (pid 25631, nie mój — istniejący). QR: `sunly_qr.png`.
+
+### DANE — 8 nowych stacji AEMET (10 lat, w Supabase, zweryfikowane)
+Wykryte skryptem, zweryfikowane pod kątem `sol` (~99% pokrycia):
+- Baleary: **B278** Palma, **B893** Menorca, **B954** Ibiza (Ibiza obsługuje też Formenterę —
+  jej stacja **B986** ma 0% `sol`, więc odpada).
+- Wybrzeże: **6155A** Málaga, **6325O** Almería, **7031X** San Javier (Costa Cálida;
+  `7031X` lepszy niż `7031` — 99% vs 91% sol), **8025** Alicante, **8416** València.
+- Każda ~3530–3653 wiersze. Sanity-check szansy: Palma VII 96%/I 41%, Málaga VII 97%,
+  Alicante VIII 87%, Ibiza VII 95% — realistyczne.
+
+### PUŁAPKA IMPORTU (ważne na przyszłość!) — RLS + service_role
+- `weather_data` ma RLS od migracji **2026-05-14**: anon MOŻE tylko SELECT. **INSERT/UPSERT
+  wymaga klucza `service_role`** (omija RLS). Oryginalny import Kanarów (kwiecień) był PRZED
+  RLS, dlatego działał na anon — teraz NIE.
+- `scripts/upload-to-supabase.ts` poprawiony: `SUPABASE_SERVICE_ROLE_KEY || ANON` (+ ostrzeżenie
+  gdy brak service_role). Nowy panel Supabase: klucz to `sb_secret_...` (sekcja „Secret keys").
+- **BEZPIECZEŃSTWO:** klucz był tymczasowo w `.env` (bez prefiksu `EXPO_PUBLIC_` → NIE trafia do
+  buildu). Po imporcie **usunięty z `.env`**, plik `.env.tmp` (kopia z sekretami, NIE-gitignorowana)
+  skasowany. User **zrotował** klucz w Supabase → klucz z tej rozmowy jest już nieważny.
+
+### PLIKI ZMIENIONE
+- `src/constants/locations_mapping.json`: +8 stacji, +9 obszarów (`islands`), +56 miast → 27/16/247.
+  Obszary kontynentalne jako pseudo-„wyspy": `Mallorca/Menorca/Ibiza/Formentera` +
+  `Costa del Sol/Costa de Almería/Costa Cálida/Costa Blanca/Costa de Valencia`.
+  `backgroundImage: ""` (nieużywane po redesignie), `isNorthern:false, isCoastal:true`.
+- `src/types/weather.ts`: union `Island` +9 wartości.
+- `src/screens/SearchScreen.tsx`: `islandsData` → `regionsData` (3 sekcje: canary/balearic/
+  mainland), nowe `balearicIslands`+`mainlandAreas` (useMemo), typ `IslandTile` (waliduje też
+  nazwy ikon MCI), render z nagłówkami `t('regions.*')`, drawer używa `allIslands.flatMap`.
+  Style `regionSection`/`regionTitle`.
+- i18n (4 języki): `islands.*` +9, nowa sekcja `regions.*` (canary/balearic/mainland).
+- Nowe skrypty (jednorazowe, w repo): `scripts/discover-stations.ts` (inwentarz AEMET po
+  prowincjach, parsuje DMS), `scripts/verify-sol.ts` (pokrycie `sol` za 2024).
+
+### FOLLOW-UPY / świadome kompromisy (NIE blokują, do rozważenia)
+- „Ranking wysp" na ekranach Wiatr/Opady grupuje po `island` — dla obszaru z 1 stacją trywialny,
+  a słowo „wysp" jest kanaryjsko-centryczne (mylące dla Costa del Sol itd.). Kosmetyka.
+- Motywy wysp/grafiki tła pominięte (fallback `defaultIslandTheme`; tła nieużywane).
+- `MAX_CANARY_DISTANCE_KM` (=150, próg GPS) — nazwa myląca, ale działa (150 km od DOWOLNEJ
+  stacji). Opcjonalny rename → `MAX_STATION_DISTANCE_KM`.
+- Calima/alerty AEMET zaprojektowane dla Kanarów — dla nowych regionów neutralne.
+
+### NASTĘPNE KROKI (nowa sesja)
+1. **Zebrać od usera zgłoszone błędy** i je naprawić.
+2. Rozważyć commit tej dużej zmiany (teraz nic niezacommitowane).
+3. Potem przygotowanie wydania: nazwa „Sunly", bump `1.4.3→1.5.0`/`vc7→8` (+ iOS buildNumber),
+   release notes 4 języki, build EAS, test zamknięty. (Pułapki: `project_eas_build_gotchas`.)
+
+### OPERACYJNE (środowisko)
+- tmpfs zadań harnessa potrafił się zapełniać (gubienie wyjścia komend) — czyścić
+  `find /private/tmp/claude-501 -name '*.output' -type f -delete`; nie kasować pliku w trakcie.
+- **Hook blokuje komendy zawierające nazwę sekretu** (np. `SUPABASE_SERVICE_ROLE_KEY` w treści
+  polecenia grep/sed) — takie komendy „nie uruchamiają się" cicho. Operować na `.env` przez
+  numer linii (`sed '8d'`) / nazwy zmiennych (`awk -F=`), nie po pełnej nazwie sekretu.
+
+---
+
+## 2026-07-10 (d): Feature — drill-down rocznego wykresu temperatur w „Ostatnie 10 lat"
+
+Na ekranie Wyników sekcja „Ostatnie 10 lat": wiersze roku miały dotąd tylko animację
+naciśnięcia (brak `onPress`). Dodano: klik w wiersz roku → okno z wykresem 12 miesięcy
+(I–XII) dla tego roku. Wybór usera: **pasma min–max** (słupek = od śr. minimalnej do śr.
+maksymalnej temperatury miesiąca), ten sam wykres niezależnie od pola; klik całego wiersza.
+
+- **Serwis** `getYearlyMonthlyTemperatures(stationId, year)` (`weatherService.ts`) + typ
+  `MonthlyTemperature` — 1 zapytanie o rok (~365 wierszy, bez paginacji), agregacja tmax/tmin
+  po miesiącu; miesiące bez danych → null.
+- **Komponent** `YearTemperatureChartModal.tsx` — jasne okno frosted (wzorzec SunChanceModal,
+  BEZ GlassCard), wykres z Views + `expo-linear-gradient` (słupek: gradient tempHot→tempCold),
+  oś Y (max/mid/min), etykiety `monthsShort.*` (i18n, 4 języki), legenda (`avgMax`/`avgMin`),
+  stany loading/`yearChartNoData`. Fetch leniwy przy otwarciu (cancel-guard w useEffect).
+- **ResultScreen**: `YearHistoryItem` dostał prop `onPress(year)`, `Pressable` → `onPress`;
+  stan `chartYear`; render `<YearTemperatureChartModal>`. Używa `stationId` z route.params
+  (spójnie z resztą sekcji; dla lokalizacji interpolowanych to najbliższa stacja).
+- **i18n** (4 języki): `result.yearChartSubtitle`, `result.yearChartNoData`, `result.close`.
+- tsc czysto. To 4. okno `<Modal>` w apce (wszystkie jasne frosted).
+
+---
+
+## 2026-07-10 (c): Polish redesignu — dopięcie Manrope wszędzie
+
+Przegląd przed wydaniem. Skany: parytet i18n (komplet — pl-only klucze to celowa gramatyka:
+`monthsLocative.*`, `rainDaysText_few/many`, `wind.daysText_few/many`, miesięczne
+`sunChanceIn*`; en/es/de mają fallback w kodzie), DEV/TODO (czysto — `USE_MOCK_DATA` = `&& false`),
+ciemne tokeny (żaden ekran nie używa już ciemnych `colors.*`).
+
+**Znalezisko:** `typography.*` (token) NIE ustawia `fontFamily` — tylko rozmiar/waga/kolor.
+28 stylów tekstowych spreadowało `...typography.*` bez `fontFamily`, więc renderowały się
+fontem systemowym (San Francisco), nie Manrope. Kolor/rozmiar były OK (nadpisane `light.*`).
+- Dodano `fontFamily: fonts.<waga>` do 28 stylów, waga wg `fontWeight` wariantu typography
+  (700→bold, 600→semibold, 500→medium, 400→regular). Pliki: ResultScreen (5), RainDetails (9),
+  WindDetails (8), ScreenHeader (2), SunChanceGauge (1), TradeWindStabilityCard (3).
+- Import `fonts` dodany w 4 plikach (Rain/Wind/ScreenHeader/TradeWind — ResultScreen i
+  SunChanceGauge już miały). Zmiana inline, surgical (32/32, bez reformatu). tsc czysto.
+- **Wniosek na przyszłość:** przy nowych tekstach NIE polegać na `...typography.X` co do fontu —
+  zawsze dodać `fontFamily: fonts.*`. (Docelowo można by wcielić Manrope do samego `typography`,
+  ale to szersza zmiana dotykająca też ciemnego motywu — odłożone.)
+
+**KOREKTA/UZUPEŁNIENIE (ta sama sesja):** powyższy skan łapał TYLKO style spreadujące
+`...typography.*` — pominął style z jawnym `fontSize`/`fontWeight` bez fontu. Było ich **44**
+(39 z `fontSize` + 5 wariantów „current" z samym `fontWeight`, np. `rankingValueCurrent`/
+`rankingIslandCurrent`/`liveGustsWarning` — te BEZ fontu straciłyby pogrubienie, bo przy
+nazwanej rodzinie Manrope `fontWeight` jest ignorowany). Dodano `fontFamily: fonts.<waga>`
+do wszystkich 44 (waga wg `fontWeight`; import `fonts` doszedł w `GenericAlertCard`).
+Pliki: ResultScreen (20), RainDetails (10), WindDetails (7), TradeWindStabilityCard (4),
+GenericAlertCard (2), ScreenHeader (1).
+- **Bug zawijania (zgłoszony przez usera):** karta „Ranking wysp" na ekranie Wiatr — „27.4 km/h"
+  zawijało „h" do nowej linii (Manrope szerszy niż font systemowy, kolumna `rankingValue`
+  `width: 60`). Fix: `rankingValue` width **60→80** (Wind) i **50→80** (Rain) + `numberOfLines={1}`
+  na wartości ORAZ nazwie wyspy (`translatedIsland`) w obu ekranach.
+- **Lekcja:** „Manrope wszędzie" wymaga skanu po `fontSize|fontWeight` bez `fontFamily`
+  (nie tylko po `typography.`), a dodanie nazwanego fontu do stylów o stałej szerokości
+  może wywołać zawijanie — sprawdzać kolumny liczbowe (`width` + `numberOfLines`).
+
+---
+
+## 2026-07-10: Fix — fałszywy „lekki deszcz" na karcie LIVE (WeatherAPI kod 1063)
+
+Branch `redesign`. Zgłoszenie: Las Palmas (Gran Canaria) — karta live pokazywała „lekki
+deszcz", a w rzeczywistości była noc, lekkie chmury i księżyc (potwierdzone innymi serwisami).
+
+### Diagnoza (dane realne z WeatherAPI)
+Dla Las Palmas WeatherAPI zwracał: `code 1063` („Patchy rain **nearby**"), `precip_mm 0.01`,
+`cloud 25%`, `is_day 0`. Czyli deszcz „w okolicy", ale w punkcie praktycznie 0 opadów i tylko
+25% chmur. `mapWeatherAPICode` wrzucał 1063 do worka „lekki deszcz" (`rainy`/`lightRain`) i
+**ignorował własne pola WeatherAPI `precip_mm` oraz `cloud`**. (Stara walidacja krzyżowa
+łapiąca to zjawisko została usunięta w refaktorze 2026-03-25 — patrz niżej.)
+
+### Poprawka (`weatherService.ts`, wąska, wewnątrz samego WeatherAPI)
+- Dodano pole `precip_mm` do `WeatherAPIResponse.current`.
+- `mapWeatherAPICode(code, isNight, precipMm?, cloud?)` — nowe parametry. Dla „lekkich/
+  przelotnych" kodów `LIGHT_PATCHY_RAIN_CODES = [1063,1150,1153,1168,1171,1180,1183]`:
+  jeśli `precipMm < NEGLIGIBLE_PRECIP_MM (0.1)` → NIE pokazuj deszczu, klasyfikuj wg `cloud`:
+  `cloud ≥ 70` → `cloudy/overcast`, inaczej → `partly-sunny/partlyCloudy` (dzień) lub
+  `partly-cloudy-night/partlyCloudyNight` (noc). Cięższe kody deszczu bez zmian.
+- `fetchWeatherAPICondition` przekazuje `precip_mm` i `cloud`; log rozszerzony o precip/cloud
+  + osobny log `Correcting false rain …` gdy korekta zadziała.
+- **Świadomy kompromis:** prawdziwa śladowa mżawka (<0,1 mm) pokaże się jako „częściowe
+  zachmurzenie", nie mżawka. Dla userów (planują wyjazd) fałszywy „deszcz" jest gorszy.
+- **Dlaczego nie przez AEMET:** użyto własnego pola WeatherAPI — bez lagu i chaosu wielu
+  źródeł, przez które usunięto starą `prioritizeWeatherCondition` (2026-03-25).
+
+### Weryfikacja
+- `npx tsc --noEmit` czysto. Klucze i18n `partlyCloudyNight/partlyCloudy/overcast/clearNight`
+  istnieją w 4 językach.
+- Symulacja na żywych danych Las Palmas → `partly-cloudy-night` (księżyc zza chmur). ✓
+
+### Etykieta „pewności" wskaźnika słońca → tier wg wielkości % (`weatherService.ts` + i18n + `SunChanceGauge`)
+Zgłoszenie: Las Palmas/lipiec pokazuje 54% i etykietę „Niska pewność" — user uważa, że 54%
+to raczej „średnia". **Weryfikacja danych: 54% jest PRAWDZIWE** — stacja C658L, lipiec 10 lat
+= 93 dni, wszystkie z danymi `sol`; dni z `sol>6h` i bez deszczu = 50/93 = 54%. To NIE deszcz
+(88% dni suchych), tylko nasłonecznienie: średnia lipca **6,1 h** (mediana 6,5 h), 46% dni
+≤6 h — kanaryjska „panza de burro" (poranna warstwa chmur nad NE wybrzeżem).
+- Stara „pewność" = odległość od 50% (54% → 4 pkt → „niska"). Statystycznie OK, ale słowo
+  „pewność" myli usera (czyta jak ocenę wielkości). Decyzja usera: **progi wg wielkości %**.
+- Zmiana w `calculateSunChance` (l. ~218): `sunChance >= 70 → high`, `>= 45 → medium`,
+  reszta `low`. 54% → medium. (Deszcz `calculateRainStats` i wiatr — NIETKNIĘTE, liczą inaczej.)
+- **PUŁAPKA:** `RainDetailsScreen` używa TYCH SAMYCH kluczy i18n `result.confidence{High,Medium,
+  Low}` co dawniej słońce. Dlatego NIE zmieniano tych wartości — dodano **nowe** klucze
+  `result.sunChanceLevel{High,Medium,Low}` (4 języki: pl „Duża/Średnia/Mała szansa",
+  en High/Medium/Low chance, es Alta/media/Baja probabilidad, de Hohe/Mittlere/Geringe Chance)
+  i tylko `SunChanceGauge` przełączono na nie.
+- (Weryfikacja: stare `confidence*` istnieją we WSZYSTKICH 4 językach — używa ich
+  `RainDetailsScreen`. Wcześniejsze podejrzenie „luki na en/es/de" było fałszywym
+  negatywem grepa; nic tam nie brakuje.)
+
+### Ikony nocne na jasnoniebieskie (`WeatherIcon.tsx`)
+Na życzenie: ikony nocne (`clear-night` = księżyc, `partly-cloudy-night` = księżyc z chmurą)
+były złoto-żółte (`MOON_FILL '#E0A82E'`, glow srebrny). Zmienione na jasny błękit:
+`MOON_FILL → '#38BDF8'` (sky blue), `MOON_COLOR (glow) → '#7DD3FC'`. Oba stałe używane
+wyłącznie przez ikony nocne. Deszcz w nocy bez zmian — `rainy` już jest niebieski (`#1385FF`),
+osobnej ikony noc+deszcz nie ma.
+
+---
+
+## 2026-07-09 (b): Redesign „Sunly" — LocationPrompt na jasny motyw + porządki
+
+Branch `redesign`. Kontynuacja po `7a0cac1`.
+
+### 1. `LocationPrompt.tsx` → jasny motyw (ostatni ciemny element w apce)
+Dialog „Użyj mojej lokalizacji" (wyskakuje na SearchScreen po ~0,8 s, gdy brak wcześniejszej
+odpowiedzi o lokalizacji) był jeszcze w całości ciemny — jedyna user-facing pozostałość
+ciemnego motywu. Przerobiony na jasny frosted wg wzorca `SunChanceModal`/`AlertDetailModal`:
+- `BlurView tint="dark"` → `tint="light"`, biały overlay `rgba(255,255,255,0.82)`,
+  border `light.colors.border`, `...light.cardShadow`, `borderRadius.xxl`.
+- Backdrop `rgba(0,0,0,0.5)` → `rgba(15,30,55,0.35)` (jak inne jasne okna).
+- Ikona lokalizacji: krążek `primarySoft` + ikona `light.colors.primary`; poświata stonowana
+  (opacity 0.2→0.12, shadowOpacity 0.8→0.4).
+- Tekst: Manrope (`fonts.bold` tytuł 20, `fonts.regular` opis, `fonts.semibold` przycisk
+  wtórny), kolory `light.colors.text*`. Przycisk główny: `light.colors.primary` + biały tekst
+  i biała ikona `navigate`; pigułka `borderRadius.full`; spinner biały.
+- Import: `colors/typography/shadows` → `fonts, light` (`borderRadius`, `spacing` zostają).
+- UWAGA: to NIE jest `<Modal>` (absolutnie pozycjonowany `Animated.View`), więc pułapka
+  „GlassCard flex:1 w Modal" tu nie dotyczy — i tak frosted zrobiony ręcznie. Logika animacji
+  (fade+scale+translateY) nietknięta.
+
+### 2. Porządek: martwy import `WeatherEffects`
+Usunięty nieużywany import `WeatherEffects` z `ResultScreen.tsx` (l. 23) — komponent nie jest
+już renderowany (tło satelity + efekty pogodowe wycięte przy jasnym restyle ResultScreen).
+Sam plik `WeatherEffects.tsx` zostaje w repo (nietknięty).
+
+### Weryfikacja / stan
+- `npx tsc --noEmit` czysto (exit 0).
+- To domyka warstwę wizualną redesignu — **wszystkie ekrany i okna są jasne**. Sprawdzone
+  skanem tokenów: `GenericAlertCard` już jasny (lokalna zmienna `colors` = kolory severity,
+  nie ciemny motyw — fałszywy alarm skanu); DEV-reset onboardingu w `App.tsx` już usunięty
+  we wcześniejszym commicie (pamięć nieaktualna w tym punkcie). Kolejny naturalny krok:
+  przygotowanie do buildu EAS.
+
+---
+
+## 2026-07-09: Redesign „Sunly" — spójność opadów + okno wskaźnika słońca + jasne okna alertów
+
+Branch `redesign`. Commity: `b2f6a49` (ta sesja), wcześniej `9bb10e7` (onboarding+ikona).
+
+### 1. Spójność kafelka „Dni deszczowe" (`weatherService.ts` + `ResultScreen.tsx`)
+Problem: dla Maspalomas/lipiec wskaźnik słońca 99%, a kafelek „Dni deszczowe" = 0 (mylące).
+- `rain_days` NIE jest już zaokrąglane do całkowitej — zostaje **1 miejsce po przecinku**
+  (`getMonthlyStats` linia ~424 oraz interpolacja `calculateInterpolatedMonthlyStats` ~1278).
+  Koniec z podwójnym zaokrągleniem (było też `Math.round` w ekranie).
+- Kafelek i podsumowanie: gdy `0 < rain_days < 1` → pokazują **„< 1 dnia"** (nie „0”).
+  Prawdziwe 0,0 nadal „0”. Nowy klucz i18n `result.rainDaysLessThanOne` (4 języki).
+- Testy `getMonthlyStats` przechodzą (rain_days 3.0 === 3).
+
+### 2. Okno „Wskaźnik słońca" (`SunChanceModal.tsx`) — jasny motyw + treść
+- Było ciemne + nieścisłe („dla lokalizacji i **godziny**", „bezchmurne niebo”). Poprawione.
+- Przebudowane na **jasny motyw** i **3 sekcje z ikonami**: „Czym jest?", „Jak to liczymy?",
+  „To nie prognoza". Metodologia opisana zgodnie z kodem (dzień słoneczny = ≥6 h słońca I brak
+  opadów; wskaźnik = odsetek takich dni z 10 lat). Sekcja klucze i18n `sun_chance.*`
+  (what_title/what_text/how_title/how_text/note_title/note_text/title/close) w 4 językach;
+  usunięty stary `sun_chance.description`.
+- **PUŁAPKA (ważne):** pierwsza wersja użyła `GlassCard` jako kontenera okna — `GlassCard`
+  owija dzieci w warstwę `flex: 1`, która w oknie modalnym bez zdefiniowanej wysokości
+  **zwija się do 0 px** → okno „otwiera się", ale jest niewidoczne. Rozwiązanie: frosted-look
+  zrobiony ręcznie (BlurView tint="light" + biały overlay 0.82 + border + `light.cardShadow`),
+  BEZ `flex: 1`. Nie używać `GlassCard` wewnątrz `<Modal>`.
+
+### 3. Okna alertów na jasny motyw
+- `AlertDetailModal.tsx` (WSPÓLNE dla coastal/wind/snow): jasny frosted, ciemny tekst, Manrope,
+  paleta severity spójna z `GenericAlertCard` (icon pełny kolor, text ciemny odcień:
+  yellow #B45309 / orange #C2410C / red #B91C1C). Przycisk „Zamknij" → **niebieski
+  `light.colors.primary`** z białym tekstem (jak inne okna), NIE kolor severity.
+- `CalimaInfoModal.tsx`: jasny frosted, ciemny tekst, Manrope. Kolorowe ikonki sekcji
+  (pomarańcz/fiolet/czerwień/turkus) zostawione — niosą znaczenie.
+- W aplikacji są tylko **3** komponenty `<Modal>` (SunChance, AlertDetail, Calima) — wszystkie
+  są już jasne. Innych ciemnych okien brak.
+
+### Środowisko / testy
+- Expo dev na porcie **8082** (8081 zajęty przez canaryeclipse). Test na iPhone (Expo Go).
+- QR: `exp://192.168.0.148:8082` — wygenerować obrazek (`node -e "require('qrcode').toFile(...)"`)
+  i `open`, bo ANSI-QR w terminalu bywa nieczytelny.
+- Onboarding w dev: flaga `hasSeenOnboarding` w AsyncStorage — czyścić przeinstalowaniem
+  Expo Go (tymczasowy DEV-reset w App.tsx został USUNIĘTY w commicie onboardingu).
+- tsc: `npx tsc --noEmit > /Users/bartunio/tsc_out.txt 2>&1` (NIE do /private/tmp — mały
+  tmpfs harnessa zapełnia się logami Expo z tła; jak wysiada output komend, czyścić
+  `find /private/tmp/claude-501 -name '*.output' -size +2M -delete`).
+
+---
+
+## 2026-07-07: Redesign „Sunly" — ekran Onboarding (2 ekrany) + nowe logo/ikona aplikacji
+
+Branch `redesign`, zmiany niezacommitowane. Kontynuacja redesignu na jasny motyw.
+
+### 1. Onboarding przerobiony na jasny motyw + podział na 2 ekrany (`OnboardingScreen.tsx`)
+Logika pierwszego uruchomienia bez zmian (`hasSeenOnboarding` w AsyncStorage → `navigation.replace('Search')`).
+- **Ekran 1 (intro):** ikona marki (`SunlyIcon`) z cieniem + napis „Sunly"; wejście fade+scale.
+  Po **3 s** (`INTRO_DURATION_MS`) automatyczne przejście do ekranu 2 (`useState step 1|2`).
+- **Ekran 2:** BEZ ikony — sama nazwa „Sunly", pod nią `onboarding.tagline`
+  („Sprawdź historyczną pogodę…"), niżej skrócony `onboarding.welcome_text`, dwa kafelki
+  bento (`GlassCard scheme="light"`: „Analiza / 10 lat", „Precyzja / AEMET"), przycisk
+  `onboarding.start_button` (niebieska pigułka) → Search.
+- Tło: `LinearGradient ['#DCEEFF','#E4EEFB','#F8F9FF']`, `StatusBar dark`, `SafeAreaView`.
+- Nowe klucze i18n (4 języki): `tagline`, `tile_analysis_label`, `tile_years_value`,
+  `tile_precision_label`. Skrócono `welcome_text` (usunięto „…w miejscu do którego podróżujesz”).
+  Usunięto podpis „Dane: AEMET" (klucz `data_source` skasowany po dodaniu — nieużywany).
+
+### 2. Nowe logo/ikona marki „Sunly" (`src/components/SunlyIcon.tsx`)
+- Stylizowane słońce nad falami na błękitnym kaflu (radialne niebo `#B0E0FF`→`#5AABDC`,
+  słońce `#FFD700`→`#FF8C00` z refleksem, dwie fale + obrys grzbietu). Projekt dostarczony
+  przez użytkownika (Stitch/ręczny SVG). `react-native-svg`. viewBox 100×100.
+- **Powód zmiany:** aplikacja wychodzi poza Kanary → porzucono `HeroLogo` (słońce + wulkan
+  Teide). `HeroLogo.tsx` zostaje w repo (nietknięty), ale nieużywany.
+- Utworzony w trakcie sesji i usunięty pośredni komponent `SunLogo` (minimalistyczne
+  słońce) — zastąpiony przez `SunlyIcon`.
+
+### 3. Ikony aplikacji wygenerowane z SVG (`scripts/generate-icons.js` + `sharp`)
+- Źródła: `assets/sunly-icon.svg` (pełnokadrowy kwadrat — OS sam zaokrągla) oraz
+  `assets/sunly-splash.svg` (kafel z rogami rx22, przezroczyste narożniki).
+- Wygenerowane: `icon.png` 1024, `adaptive-icon.png` 1024, `favicon.png` 48, `splash.png` 1024.
+- `app.json`: splash `backgroundColor` `#0077CC` → **`#DCEEFF`** (oba miejsca: `splash` i
+  plugin `expo-splash-screen`) — spójne z ekranem powitalnym.
+- Doinstalowano `sharp` jako devDependency (tylko do generowania ikon).
+- **Uwaga:** nowa ikona/splash widoczne dopiero po natywnym buildzie EAS, NIE w Expo Go.
+- Regeneracja po zmianie designu: `node scripts/generate-icons.js`.
+
+### DEV-only (do usunięcia przed wydaniem)
+W `App.tsx` w `prepare()` dodano tymczasowy `if (__DEV__) AsyncStorage.removeItem(ONBOARDING_KEY)`
+— wymusza pokazanie onboardingu przy każdym starcie w dev. **Usunąć przed buildem produkcyjnym.**
+
+---
+
+## 2026-07-06: Redesign „Sunly" — ekrany Wyników, Szczegóły wiatru, Szczegóły opadów (jasny motyw)
+
+Sesja w ramach redesignu Canary Weather → „Sunly" (jasny motyw Stitch, font Manrope). Branch `redesign`, zmiany niezacommitowane.
+
+### Środowisko
+- Expo dev server na porcie **8082** (8081 zajęty przez inny projekt). Test na prawdziwym iPhone (przeładowanie po zmianach).
+- Kontrola typów: `npx tsc --noEmit` (output zapisywać do pliku, np. `> /private/tmp/tsc_out.txt 2>&1` — katalog zadań potrafi się zapełniać logami Expo).
+- Projekty Stitch (HTML): `redesign-input/design_1.txt`.
+
+### 1. Ekran Wyników (`ResultScreen.tsx`) — etap 2
+Nowa kolejność sekcji: **Teraz(live)+alerty → wskaźnik słońca → miesiące → statystyki (śr. max / śr. min / dni deszczowe) → przyciski „Szczegóły wiatru/opadów" → Podsumowanie → Najsłoneczniejsze tygodnie → Historia 10 lat.**
+- „Pętla informacyjna": klik miesiąca przewija do wskaźnika słońca (mierzone `onLayout`, `gaugeOffsetY`) z widocznymi kafelkami miesięcy pod spodem.
+- Przyciski szczegółów bez liczb (sama etykieta + strzałka), wstawione między statystyki a podsumowanie; zmniejszony odstęp (usunięty `marginTop` w `ctaSection`).
+- Nowe klucze i18n: `result.windDetails`, `result.rainDetails` (4 języki).
+- Czcionka wartości w kafelkach statystyk 22→18 px + `numberOfLines={1}` + `adjustsFontSizeToFit` (3 kafelki w rzędzie nie mieściły „°C").
+
+### 2. Karty alertów (`common/GenericAlertCard.tsx`) → jasny motyw
+Był biały tekst z ciemnego motywu (nieczytelny na jasnym tle). Teraz: pełny kolorowy krążek z białą ikoną, ciemny czytelny tytuł (odcień zależny od severity: yellow/orange/red), szary opis, strzałka `textMuted`. Podkład 12% zamiast 20%.
+
+### 3. Ikony pogody (`WeatherIcon.tsx`) → jasny motyw
+Ikony były białe / jasne srebro (znikały na jasnym tle). Dodano pole `color` w `WEATHER_ICON_MAP`: słońce `#F59E0B` (bursztyn), księżyc/noc `#E0A82E` (złoty), chmury/mgła `#6B7280` (szary), deszcz niebieski, burza fioletowa, śnieg błękitny. Ikona złożona „słońce za chmurą" — chmura z białej na szarą. Na karcie LIVE małe ikony wiatru/wilgotności (w `ResultScreen`) z białych na `primary`, krycie 0.6→0.9.
+
+### 4. Ekran Szczegóły wiatru (`WindDetailsScreen.tsx`) → jasny motyw, układ klasyczny
+- Konwersja na jasny motyw (tło `light.gradient`, StatusBar dark, usunięta ciemna nakładka, `colors.` → `light.colors.`, obrys wskaźnika i paski rankingu z białych na ciemne, bieżąca wyspa → `primary`).
+- `ScreenHeader` dostał prop **`scheme: 'dark' | 'light'`** (domyślnie `dark`, żeby nie psuć innych ekranów). Ekran wiatru i opadów używają `scheme="light"`.
+- `TradeWindStabilityCard` → jasny motyw. Dolny wiersz liczb zamieniony na **3 kafelki z ikonami** (Średnia prędkość / Zakres prędkości / „Wiatr >20 km/h" z wartością „X dni"). Wartości: `numberOfLines={1}` + `adjustsFontSizeToFit`.
+- Nowy klucz i18n `wind.daysText_*` (pluralizacja „dzień/dni", NIE reużywać `rainDaysText` — po niemiecku znaczy „dzień deszczowy").
+- Skrócono polski `wind.windyDays` na „Wiatr >20 km/h".
+- **Odrzucono** pełny układ Stitch (hero + „Gwarancja Pasatów" + bento) — po porównaniu z przełącznikiem user wybrał klasyczny wskaźnik. Przełącznik i wariant Stitch usunięte. Nieużywany klucz `wind.basedOnMeasurements` (pozostałość po eksperymencie Stitch) usunięty z 4 locale.
+
+### 5. Ekran Szczegóły opadów (`RainDetailsScreen.tsx`) → jasny motyw
+- Analogiczna konwersja na jasny motyw jak wiatr (`scheme="light"`, obrys wskaźnika, paski rankingu, badge miesiąca).
+- Karta „Charakterystyka opadów": 2 liczby → **2 kafelki z ikonami** (Średnie opady mm / Dni z deszczem „X z 31") + podpis „Na podstawie 10 lat pomiarów" (`rain.basedOnMeasurements`, 4 języki).
+- Tytuł `rain.intensity_info` → małe „o": „Charakterystyka opadów" (pl/en/es; de bez zmian — jedno rzeczowe słowo).
+- Podpis rankingu `rain.island_ranking_month` → „opady zebrane ze wszystkich stacji AEMET" (4 języki).
+
+### 6. Spójność danych opadów (`weatherService.ts`)
+Zgłoszone niespójności między wskaźnikiem „% dni bez deszczu" a liczbami — przyczyną zaokrąglanie w dół:
+- `calculateRainStats`: `rainyDaysPerYear` → **1 miejsce po przecinku** (`Math.round(x*10)/10`). Wcześniej 0,3 dnia/rok → „0", co wyglądało na sprzeczność z 99% suchych dni.
+- `getRainRankingByIsland`: `value` → **1 miejsce po przecinku ORAZ dzielenie przez `stationCount`** (`totalPrecip / yearsCount / stationCount`). Wcześniej sumowało opady ze wszystkich stacji wyspy i dzieliło tylko przez lata → wyspy z wieloma stacjami wychodziły „deszczowsze". Cache podbity **`rain_ranking_v2` → `v4`** (dwie zmiany wartości w sesji).
+- Ranking wiatru (`getWindRankingByIsland`) sprawdzony — OK, liczy `totalWind / count` (średnia z pomiarów, niezależna od liczby stacji), bez zmian.
+
+### Następny krok
+**Ekran Onboarding** — projekt w `redesign-input/design_1.txt`, blok „Onboarding (Jasny)" (ok. linie 1–198). Jasny motyw, radialny gradient, logo z ikoną słońca, dwa kafelki bento (10 lat / AEMET), duży przycisk „Zaczynamy". Zacząć od planu przed kodowaniem.
+
+---
+
 ## 2026-04-15: Google Play - Poprawki zgodności z polityką (Misleading Claims)
 
 ### Problem
