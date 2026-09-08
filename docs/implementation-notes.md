@@ -1077,6 +1077,23 @@ Zmieniono logikę na "użyj wyższej wartości" - spowodowało to fałszywe alar
 
 ---
 
+## 2026-09-08: Strategia komentowania FB + merge redesign→main
+
+### Strategia komentarzy FB (marketing)
+Dopisana sekcja **„Strategia komentowania — ściąga na co dzień"** w `docs/testers-comment-templates.md` (nad szablonami). Warstwa strategii (gdzie/kiedy/ile), bo szablony mówiły tylko „co pisać":
+- **Reguła linku „zależnie od sytuacji":** `app.sunly.live` domyślnie (z etykietami `?z=pl/en/es` do śledzenia w GoatCounter, bo FB nie przekazuje nazwy grupy); bezpośredni link do Google Play tylko „na ciepło" (gdy ktoś sam pyta lub grupa źle znosi linki zewnętrzne).
+- **Koszyki grup A/B/C**, podział godziny dziennie (łowienie → komentowanie → obsługa), **reguła 1-na-3** (1 link na 3 pomocne komentarze), rozgrzewka konta w 1. tygodniu (bez linku dzień 1–2), odpowiedź na zarzut „to reklama", czarna lista (max ~5 linków/dzień, parafraza, nie pod kłótniami).
+- Kontekst użytkownika: komentuje z prywatnego profilu, ~15–20 grup PL/EN o Kanarach, apka pod ręką, ~1h dziennie.
+- **Follow-up:** po ~2 tyg. sprawdzić w GoatCounter, który koszyk (`?z=pl/en/es`) konwertuje.
+
+### Git — domknięcie gałęzi redesign
+- Commit `cfc2f7b` (sekcja strategii) → push `redesign`.
+- **PR #1** (`redesign` → `main`, 29 commitów: cały redesign/rebrand Sunly + materiały marketingowe) — zmergowany merge commitem, `main` = `1d9a124`.
+- Gałąź `redesign` usunięta lokalnie i zdalnie; lokalny `main` zaktualizowany (fast-forward).
+- **Ustalenie na przyszłość:** dzielić na mniejsze, tematyczne PR-y (osobno kod, osobno dokumenty) zamiast jednego dużego.
+
+---
+
 ## TODO / Przyszłe ulepszenia
 
 - [x] ~~Użyć `interpolateLiveWeather()` w UI~~ (zrobione 2026-03-22)
