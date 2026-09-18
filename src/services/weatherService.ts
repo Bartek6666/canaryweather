@@ -2045,6 +2045,15 @@ async function fetchAemetLiveWeather(
   // Get the most recent observation (last in array)
   const latest = observations[observations.length - 1];
 
+  // Some stations report a fresh observation with no temperature/humidity sensor
+  // value (seen at mainland stations, e.g. Alicante). Coercing those to 0 would
+  // overwrite the correct WeatherAPI reading with a bogus 0°C / 0%, so skip
+  // enrichment entirely and let the caller keep its primary value.
+  if (latest.ta == null || latest.hr == null) {
+    console.warn(`[AEMET] Observation missing temperature/humidity, skipping (${latest.fint})`);
+    return null;
+  }
+
   // Default condition (will be overwritten by Open-Meteo in hybrid mode)
   const isNight = isNightTime();
   let condition: WeatherCondition = isNight ? 'clear-night' : 'sunny';
