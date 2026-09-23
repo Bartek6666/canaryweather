@@ -845,50 +845,6 @@ export default function ResultScreen({ navigation, route }: Props) {
     }
   }, [station, stationId, locationCoords, isCoastal, isHighAltitude]);
 
-  const summary = useMemo(() => {
-    const sunChance = sunChanceResult?.sun_chance ?? 0;
-    const avgTmax = currentStats?.avg_tmax ?? interpolatedStats?.stats?.avg_tmax ?? 0;
-    const avgTmin = currentStats?.avg_tmin ?? interpolatedStats?.stats?.avg_tmin ?? 0;
-    const avgWind = interpolatedStats?.stats?.avg_wind ?? 0;
-    const rainDays = interpolatedStats?.stats?.rain_days ?? currentStats?.rain_days ?? 0;
-    const displayName = locationName || station?.name;
-
-    // Get month name - use locative form for Polish
-    const monthKey = MONTH_KEYS[selectedMonth - 1];
-    const currentLanguage = i18n.language;
-    const monthName = currentLanguage === 'pl'
-      ? t(`monthsLocative.${monthKey}`)
-      : t(`months.${monthKey}`);
-
-    // Determine wind description based on speed
-    let windText: string;
-    if (avgWind < 10) {
-      windText = t('result.summaryWindCalm', { speed: avgWind.toFixed(0) });
-    } else if (avgWind < 20) {
-      windText = t('result.summaryWindModerate', { speed: avgWind.toFixed(0) });
-    } else {
-      windText = t('result.summaryWindStrong', { speed: avgWind.toFixed(0) });
-    }
-
-    // Build the detailed summary with proper pluralization for rain days.
-    // Show "< 1 day" for very dry months instead of a misleading rounded "0".
-    const rainDaysText = rainDays > 0 && rainDays < 1
-      ? t('result.rainDaysLessThanOne')
-      : t('result.rainDaysText', { count: Math.round(rainDays) });
-
-    const detailedSummary = t('result.summaryDetailed', {
-      month: monthName,
-      name: displayName,
-      sunChance: sunChance.toFixed(0),
-      tmax: avgTmax.toFixed(0),
-      tmin: avgTmin.toFixed(0),
-      windText: windText,
-      rainDaysText: rainDaysText,
-    });
-
-    return detailedSummary;
-  }, [sunChanceResult?.sun_chance, currentStats, interpolatedStats, locationName, station?.name, selectedMonth, t, i18n.language]);
-
   if (!station) return (
     <View style={styles.container}>
       <LinearGradient colors={[...light.gradient]} style={StyleSheet.absoluteFillObject} />
@@ -1136,19 +1092,6 @@ export default function ResultScreen({ navigation, route }: Props) {
               </View>
             </ClickableGlassCard>
           </View>
-        )}
-
-        {/* Podsumowanie miesiąca */}
-        {sunChanceResult && sunChanceResult.total_days > 0 && !isLoading && (
-          <GlassCard scheme="light" style={styles.summaryContainer} delay={200}>
-            <View style={styles.summaryInner}>
-              <View style={styles.summaryHeader}>
-                <Ionicons name="information-circle" size={20} color={light.colors.rain} />
-                <Text style={styles.summaryTitle}>{t('result.summary')}</Text>
-              </View>
-              <Text style={styles.summaryText}>{summary}</Text>
-            </View>
-          </GlassCard>
         )}
 
         {/* ── 5. Najsłoneczniejsze tygodnie ────────────────────────────────── */}
@@ -1423,17 +1366,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: light.colors.tempCold,
   },
-  // FIGMA: STYLE_TARGET — Summary card (glassmorphism)
-  summaryContainer: { marginTop: spacing.lg },
-  summaryInner: { padding: spacing.lg },
-  summaryHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.sm },
-  summaryTitle: {
-    fontSize: 15,
-    fontFamily: fonts.bold,
-    color: light.colors.textPrimary,
-    marginLeft: spacing.sm,
-  },
-  summaryText: { fontSize: 15, fontFamily: fonts.regular, color: light.colors.textSecondary, lineHeight: 22 },
   bottomSpacer: { height: 40 },
   bestTimeSection: { marginTop: spacing.lg },
   bestTimeHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.xs },
