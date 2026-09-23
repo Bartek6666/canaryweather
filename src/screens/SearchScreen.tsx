@@ -183,7 +183,6 @@ export default function SearchScreen({ navigation }: Props) {
   const scrollViewRef = useRef<ScrollView>(null);
   const scrollContentRef = useRef<View>(null);
   const placesRef = useRef<View>(null);
-  const shouldScrollToPlaces = useRef(false);
 
   // Location prompt state
   const [showLocationPrompt, setShowLocationPrompt] = useState(false);
@@ -803,30 +802,28 @@ export default function SearchScreen({ navigation }: Props) {
     trackIsland(t(`islands.${islandKey}`));
 
     setSelectedIsland(islandKey);
-    shouldScrollToPlaces.current = true;
   }, [selectedIsland, trackIsland, t]);
 
-  const handlePlacesLayout = useCallback(() => {
-    if (shouldScrollToPlaces.current && placesRef.current && scrollContentRef.current) {
-      shouldScrollToPlaces.current = false;
-
-      // Use measureLayout to get position relative to ScrollView content
+  // Scroll the expanded places section into view once it has mounted. Driven by a
+  // short timeout (not onLayout) so the ScrollView content size has grown first —
+  // scrolling during onLayout races that update and gets clamped, leaving the
+  // section off-screen (which looked like a "dead" tile needing a second tap).
+  useEffect(() => {
+    if (!selectedIsland) return;
+    const timer = setTimeout(() => {
+      if (!placesRef.current || !scrollContentRef.current) return;
       (placesRef.current as any).measureLayout(
         scrollContentRef.current,
         (_x: number, y: number) => {
-          // Scroll so the places card starts near the top with small padding
-          scrollViewRef.current?.scrollTo({
-            y: Math.max(0, y - 16),
-            animated: true,
-          });
+          scrollViewRef.current?.scrollTo({ y: Math.max(0, y - 16), animated: true });
         },
         () => {
-          // Fallback: scroll to end if measureLayout fails
           scrollViewRef.current?.scrollToEnd({ animated: true });
         }
       );
-    }
-  }, []);
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [selectedIsland]);
 
   const hasAnyResults = cityResults.length > 0 || geocodeResults.length > 0;
 
@@ -1071,11 +1068,8 @@ export default function SearchScreen({ navigation }: Props) {
                   ))}
 
                   {selectedIsland && (
-                    <View
-                      ref={placesRef}
-                      onLayout={handlePlacesLayout}
-                    >
-                    <GlassCard scheme="light" style={styles.placesContainer} delay={100}>
+                    <View ref={placesRef}>
+                    <GlassCard scheme="light" style={styles.placesContainer} delay={0}>
                       <View style={styles.placesContainerInner}>
                         <View style={styles.placesHeader}>
                           <Text style={styles.placesTitle}>{t(`islands.${selectedIsland}`)} - {t('search.popularPlaces')}</Text>
