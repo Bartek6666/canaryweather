@@ -6,6 +6,7 @@ export { ClickableGlassCard } from './common/ClickableGlassCard';
 export { CoastalAlertCard } from './CoastalAlertCard';
 export { GlassCard } from './GlassCard';
 export { IslandRankingCard } from './IslandRankingCard';
+export { MiniGauge } from './MiniGauge';
 export { SnowAlertCard } from './SnowAlertCard';
 export { WindAlertCard } from './WindAlertCard';
 export { SunlyIcon } from './SunlyIcon';
