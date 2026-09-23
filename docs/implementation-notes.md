@@ -4,6 +4,85 @@ Ten plik zawiera notatki z implementacji i decyzji technicznych. Sprawdzaj go na
 
 ---
 
+## 2026-09-23: Fix — fałszywy „lekki deszcz" wraca (WeatherAPI 1063), wariant chirurgiczny
+
+Zgłoszenie usera: karta LIVE dla **Corralejo** i **Caleta de Fuste** (Fuerteventura), 23.09 ~13:43,
+pokazywała „lekki deszcz" mimo pełnego słońca i ~31°C odczuwalnej + żółty alert AEMET o upale.
+
+### Diagnoza (odtworzone na żywo)
+Obie lokalizacje dostają z WeatherAPI **kod 1063 „Patchy rain nearby"** (deszcz W OKOLICY, nie w
+punkcie) ze śladowym opadem skaczącym wokół zera. Lipcowa poprawka (wpis 2026-07-10) korygowała
+fałszywy deszcz tylko gdy `precip_mm < NEGLIGIBLE_PRECIP_MM (0.1)`. Caleta raportowała **0.11 mm**
+— ledwie ponad progiem → korekta NIE działała → „lekki deszcz" na słonecznym dniu. Corralejo o
+13:43 zapewne też ≥0.1 (przy sprawdzaniu 13:45 miało 0.04 i само się „naprawiło"). **Próg 0.1 był
+za ciasny** — 0.11 mm to meteorologicznie zero (dzień deszczowy to >1 mm).
+
+### Poprawka (wybór usera: WARIANT CHIRURGICZNY, nie podniesienie progu)
+`weatherService.ts`, `mapWeatherAPICode`:
+- **Nowy dedykowany blok dla `code === 1063`** — zawsze klasyfikuje wg zachmurzenia (`cloud ≥ 70`
+  → cloudy/overcast; inaczej partly-sunny / partly-cloudy-night), **ignoruje śladowy opad**,
+  nigdy nie pokazuje deszczu dla tego kodu. Umieszczony przed blokiem progowanym.
+- **`1063` usunięte** z `LIGHT_PATCHY_RAIN_CODES` (próg zostaje dla kodów „w punkcie": 1150, 1153,
+  1168, 1171, 1180, 1183) ORAZ z zapasowej listy „Drizzle/Light rain".
+- Prawdziwy lekki deszcz w punkcie (np. 1183) BEZ zmian — nadal pokazywany.
+
+### Weryfikacja
+- `npx tsc --noEmit` czysto.
+- Replikacja nowej logiki na żywych danych WeatherAPI (23.09): Corralejo 1063/precip 0.12/cloud
+  95% → cloudy (nie deszcz); Caleta 1063/precip 0.09/cloud 100% → cloudy (nie deszcz). Potwierdza,
+  że stary próg 0.1 znów by przeciekał (0.12 ≥ 0.1), a nowa logika to zamyka.
+
+### Uwaga o temperaturze (NIE błąd)
+Sunly pokazuje realną temp. POWIETRZA (~25°C, zgodne z WeatherAPI 24.7°C); „31°C" z innych
+serwisów to temp. ODCZUWALNA (feels-like) — inna miara. Ewentualne pokazywanie feels-like =
+osobna zmiana funkcji, nie ten fix.
+
+### Status
+Working tree zmodyfikowany, NIEZACOMMITOWANE. Do kolejki niewydanych poprawek (build 1.5.3/vc11
+razem z fixem 0°C). Patrz pamięć `project_unreleased_fixes`.
+
+---
+
+## 2026-09-20: Calima „wisi za długo" — diagnoza (uzupełnienie do wpisu 2026-04-22)
+
+**Nawiązuje do:** „2026-04-22: Calima - przywrócenie WAQI jako primary source" (niżej w pliku).
+
+### Wniosek
+Objaw z kwietnia („alert Calima widoczny mimo braku pyłu od doby") był **zredukowany, ale
+NIE usunięty** przez przełączenie na WAQI. WAQI **nie podaje chwilowego stężenia** — podaje PM10
+jako **indeks AQI liczony ze średniej 24-godzinnej** (widać w `convertPM10AqiToConcentration`,
+progi EPA opisane jako „24-hour average"). Gdy Calima ustaje, średnia krocząca 24h nadal jest
+podniesiona i spadnie poniżej progu 50 µg/m³ dopiero, gdy uzbiera się dość czystych godzin →
+alert potrafi wisieć jeszcze kilkanaście godzin po fizycznym oczyszczeniu powietrza. Czyli w
+kwietniu zamieniliśmy WIĘKSZY lag (model Open-Meteo do 24h + odświeżanie co 6–12h) na MNIEJSZY,
+ale wciąż realny lag (uśrednianie 24h w WAQI). Objaw jest wbudowany w to, jak WAQI liczy PM10 —
+nie w nasz kod.
+
+### Dodatkowo
+- `fetchCalimaFromWAQI()` **nie sprawdza świeżości** odczytu (brak odrzucania starego timestamp);
+  `ResultScreen` odświeża co 30 min → apka wiernie pokazuje zalegający, uśredniony odczyt.
+- **Nie ma czystego fixa po stronie danych:** wszystkie darmowe źródła PM10 albo uśredniają 24h
+  (WAQI), albo są modelem z własnym lagiem (Open-Meteo). To ten sam kompromis „fałszywy alarm vs.
+  opóźnienie" co w marcu/kwietniu — wtedy świadomie wybrano „lepiej niech wisi za długo niż
+  fałszywie alarmuje po drodze".
+
+### Opcje łagodzenia (NIC nie kodowane 2026-09-20 — tylko diagnoza)
+1. Nic nie ruszać (lag pyłowy jest standardem w konsumenckich apkach o jakości powietrza).
+2. Dopisek w `CalimaInfoModal` („wskaźnik bazuje na uśrednieniu, może utrzymywać się po ustaniu
+   epizodu") — zarządzenie oczekiwaniem, zero ryzyka. Kandydat do kolejki build 1.5.3 jeśli user
+   zdecyduje.
+3. Heurystyka trendu/świeżości — ryzykowne, trudno pobić uśrednianie tą samą uśrednioną liczbą.
+
+### Osobny, niezależny problem zauważony przy okazji (NIE zgłaszany przez usera)
+Alert Calima **nie jest filtrowany po regionie** — `ResultScreen.tsx` pokazuje go dla DOWOLNEJ
+lokalizacji przy PM10 ≥ 50. Notatka lipcowa „Calima/alerty dla nowych regionów neutralne" jest
+prawdziwa TYLKO dla alertów przybrzeżnych AEMET (kodowane tylko dla Kanarów przez
+`AEMET_ISLAND_GEOCODES`); Calima leci przez WAQI/Open-Meteo po współrzędnych i odpala się też na
+Balearach/wybrzeżu, gdzie wysokie PM10 to zwykle smog miejski/pył rolniczy, NIE pył saharyjski.
+Do rozważenia osobno.
+
+---
+
 ## 2026-08-05: 3. WNIOSEK O PRODUKCJĘ ZŁOŻONY (operacyjne, nie kod)
 
 Po 2 odmowach (29.06, 22.07) tym razem warunek Google **„12 testerów × 14 dni" SPEŁNIONY** —

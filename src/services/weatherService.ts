@@ -2198,8 +2198,9 @@ interface WeatherAPIResponse {
  */
 // Below this WeatherAPI precip reading (mm) we treat it as "not actually raining"
 const NEGLIGIBLE_PRECIP_MM = 0.1;
-// Light/patchy rain codes that frequently signal "nearby" rain rather than rain at the point
-const LIGHT_PATCHY_RAIN_CODES = [1063, 1150, 1153, 1168, 1171, 1180, 1183];
+// Light rain/drizzle codes AT the location — corrected to no-rain only when precip is
+// negligible. (Code 1063 "patchy rain nearby" is handled separately above, always by cloud.)
+const LIGHT_PATCHY_RAIN_CODES = [1150, 1153, 1168, 1171, 1180, 1183];
 
 function mapWeatherAPICode(
   code: number,
@@ -2212,6 +2213,19 @@ function mapWeatherAPICode(
     return isNight
       ? { condition: 'clear-night', labelKey: 'clearNight' }
       : { condition: 'sunny', labelKey: 'clearSky' };
+  }
+
+  // Code 1063 = "Patchy rain nearby": rain in the vicinity, not at the point. WeatherAPI
+  // reports a trace precip value (0–0.2mm) that flaps around zero, so even a strict precip
+  // threshold still leaks false "light rain" on clear days (e.g. Caleta de Fuste: 0.11mm,
+  // cloud 55%, hot & sunny). Always classify by cloud cover, never show rain for this code.
+  if (code === 1063) {
+    if (cloud !== undefined && cloud >= 70) {
+      return { condition: 'cloudy', labelKey: 'overcast' };
+    }
+    return isNight
+      ? { condition: 'partly-cloudy-night', labelKey: 'partlyCloudyNight' }
+      : { condition: 'partly-sunny', labelKey: 'partlyCloudy' };
   }
 
   // Correction: WeatherAPI's light/"patchy rain nearby" codes often report no actual
@@ -2249,8 +2263,8 @@ function mapWeatherAPICode(
     return { condition: 'foggy', labelKey: 'fog' };
   }
 
-  // Drizzle/Light rain (1063, 1150, 1153, 1168, 1171, 1180, 1183)
-  if ([1063, 1150, 1153, 1168, 1171, 1180, 1183].includes(code)) {
+  // Drizzle/Light rain (1150, 1153, 1168, 1171, 1180, 1183). Code 1063 handled above.
+  if ([1150, 1153, 1168, 1171, 1180, 1183].includes(code)) {
     return { condition: 'rainy', labelKey: 'lightRain' };
   }
 
