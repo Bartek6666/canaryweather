@@ -21,7 +21,7 @@ import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 
 import { colors, spacing, typography, glass, glassTokens, glassText, borderRadius, liveCard, light, fonts } from '../constants/theme';
-import { AlertCard, AlertDetailModal, ClickableGlassCard, CoastalAlertCard, GlassCard, SnowAlertCard, SunChanceGauge, SunChanceModal, WeatherIcon, WindAlertCard, YearTemperatureChartModal } from '../components';
+import { AlertCard, AlertDetailModal, ClickableGlassCard, CoastalAlertCard, GlassCard, MiniGauge, SnowAlertCard, SunChanceGauge, SunChanceModal, WeatherIcon, WindAlertCard, YearTemperatureChartModal } from '../components';
 import locationsMapping from '../constants/locations_mapping.json';
 import { calculateSunChanceWithFallback, SunChanceWithFallback, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult, calculateInterpolatedMonthlyStats, InterpolatedMonthlyStatsResult, fetchMostSevereCoastalAlert, fetchMostSevereWindAlert, fetchMostSevereSnowAlert, validateWeatherWithNearbyStation, WeatherValidationResult, interpolateLiveWeather, InterpolatedLiveWeatherResult, findNearestStations } from '../services/weatherService';
 import { supabase } from '../services/supabase';
@@ -32,6 +32,9 @@ import { RootStackParamList } from '../../App';
 
 // Satellite map background – place your image at assets/map_bg.jpg
 const MAP_BG_SOURCE = require('../../assets/map_bg.jpg');
+// Calendar days per month (index 0 = January) — used to turn "avg rainy days" into a
+// per-day rain chance for the result-screen tile.
+const DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
 /**
  * Formats timestamp to human-readable time (HH:MM)
@@ -1045,7 +1048,7 @@ export default function ResultScreen({ navigation, route }: Props) {
           </View>
         )}
 
-        {/* ── 5. Przyciski: szczegóły wiatru / opadów ──────────────────────── */}
+        {/* ── 5. Kafelki: szansa na wiatr / deszcz (obok siebie, z mini-wskaźnikiem) ── */}
         {interpolatedStats && interpolatedStats.stats.total_days > 0 && !isLoading && (
           <View style={styles.ctaSection}>
             <ClickableGlassCard
@@ -1060,14 +1063,14 @@ export default function ResultScreen({ navigation, route }: Props) {
                 island: station?.island || '',
               })}
             >
-              <View style={styles.ctaButtonInner}>
-                <View style={styles.ctaLeft}>
-                  <View style={styles.ctaIconCircle}>
-                    <MaterialCommunityIcons name="weather-windy" size={22} color={light.colors.primary} />
-                  </View>
-                  <Text style={styles.ctaLabel}>{t('result.windDetails')}</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={22} color={light.colors.textMuted} />
+              <View style={styles.ctaTileInner}>
+                <MiniGauge
+                  fraction={interpolatedStats.stats.avg_wind / 60}
+                  value={`${Math.round(interpolatedStats.stats.avg_wind)}`}
+                  unit="km/h"
+                  color={light.colors.primary}
+                />
+                <Text style={styles.ctaLabel}>{t('result.windDetails')}</Text>
               </View>
             </ClickableGlassCard>
             <ClickableGlassCard
@@ -1081,14 +1084,14 @@ export default function ResultScreen({ navigation, route }: Props) {
                 island: station?.island || '',
               })}
             >
-              <View style={styles.ctaButtonInner}>
-                <View style={styles.ctaLeft}>
-                  <View style={[styles.ctaIconCircle, styles.ctaIconCircleRain]}>
-                    <Ionicons name="rainy" size={22} color={light.colors.rain} />
-                  </View>
-                  <Text style={styles.ctaLabel}>{t('result.rainDetails')}</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={22} color={light.colors.textMuted} />
+              <View style={styles.ctaTileInner}>
+                <MiniGauge
+                  fraction={interpolatedStats.stats.rain_days / DAYS_IN_MONTH[selectedMonth - 1]}
+                  value={`${Math.round((interpolatedStats.stats.rain_days / DAYS_IN_MONTH[selectedMonth - 1]) * 100)}`}
+                  unit="%"
+                  color={light.colors.rain}
+                />
+                <Text style={styles.ctaLabel}>{t('result.rainDetails')}</Text>
               </View>
             </ClickableGlassCard>
           </View>
@@ -1208,27 +1211,16 @@ const styles = StyleSheet.create({
   tempValueHigh: { color: light.colors.tempHot },
   tempValueLow: { color: light.colors.tempCold },
   tempValueRain: { color: light.colors.rain },
-  // ── CTA buttons (Szczegóły wiatru / opadów) ──
-  ctaSection: { gap: spacing.sm },
-  ctaButton: {},
-  ctaButtonInner: {
-    flexDirection: 'row',
+  // ── Tiles: szansa na wiatr / deszcz (side by side, each with a mini gauge) ──
+  ctaSection: { flexDirection: 'row', gap: spacing.sm },
+  ctaButton: { flex: 1 },
+  ctaTileInner: {
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.md,
+    gap: spacing.sm,
   },
-  ctaLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  ctaIconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: light.colors.primarySoft,
-  },
-  ctaIconCircleRain: { backgroundColor: 'rgba(19, 133, 255, 0.1)' },
-  ctaLabel: { fontSize: 16, fontFamily: fonts.semibold, color: light.colors.textPrimary },
+  ctaLabel: { fontSize: 15, fontFamily: fonts.semibold, color: light.colors.textPrimary, textAlign: 'center' },
   // marginTop sm (8) + header's bottom padding md (16) = 24px above the "Teraz" group,
   // matching the 24px gap below the live card (liveCard mb md 16 + gauge mt sm 8).
   nowSection: { marginTop: spacing.sm },
