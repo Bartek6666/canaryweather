@@ -1286,7 +1286,9 @@ const styles = StyleSheet.create({
   },
   ctaIconCircleRain: { backgroundColor: 'rgba(19, 133, 255, 0.1)' },
   ctaLabel: { fontSize: 16, fontFamily: fonts.semibold, color: light.colors.textPrimary },
-  nowSection: { marginTop: spacing.lg },
+  // marginTop sm (8) + header's bottom padding md (16) = 24px above the "Teraz" group,
+  // matching the 24px gap below the live card (liveCard mb md 16 + gauge mt sm 8).
+  nowSection: { marginTop: spacing.sm },
   nowSectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
