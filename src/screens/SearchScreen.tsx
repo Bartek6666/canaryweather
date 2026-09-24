@@ -1187,6 +1187,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md + 2,
+    // Match the height of the "recently searched" cards below (44px icon circle
+    // + md padding top & bottom), so the search capsule reads as the same size.
+    minHeight: 44 + spacing.md * 2,
   },
   searchInput: {
     flex: 1,
