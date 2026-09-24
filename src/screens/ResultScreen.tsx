@@ -1009,43 +1009,23 @@ export default function ResultScreen({ navigation, route }: Props) {
           ))}
         </View>
 
-        {sunChanceResult && sunChanceResult.total_days > 0 && !isLoading && (
-          <View style={styles.statsInfo}>
-            <Text style={styles.statsText}>
-              {t('result.basedOnDays', {
-                station: sunChanceFallback?.name || station?.name
-              })}
-            </Text>
-          </View>
-        )}
-
-        {/* ── 4. Statystyki: śr. max / śr. min / dni deszczowe ─────────────── */}
+        {/* ── 4. Statystyki: średnia temperatura max / min (jeden kafelek) ── */}
         {currentStats && currentStats.total_days > 0 && !isLoading && (
-          <View style={styles.tempCards}>
-            <GlassCard scheme="light" style={styles.tempCard} delay={200}>
-              <View style={styles.tempCardInner}>
+          <GlassCard scheme="light" style={styles.tempCard} delay={200}>
+            <View style={styles.tempCardRow}>
+              <View style={styles.tempCardHalf}>
                 <MaterialCommunityIcons name="thermometer-high" size={28} color={light.colors.tempHot} />
                 <Text style={styles.tempLabel}>{t('result.avgMax')}</Text>
                 <Text style={[styles.tempValue, styles.tempValueHigh]} numberOfLines={1} adjustsFontSizeToFit>{currentStats.avg_tmax.toFixed(1)}°C</Text>
               </View>
-            </GlassCard>
-            <GlassCard scheme="light" style={styles.tempCard} delay={300}>
-              <View style={styles.tempCardInner}>
+              <View style={styles.tempDivider} />
+              <View style={styles.tempCardHalf}>
                 <MaterialCommunityIcons name="thermometer-low" size={28} color={light.colors.tempCold} />
                 <Text style={styles.tempLabel}>{t('result.avgMin')}</Text>
                 <Text style={[styles.tempValue, styles.tempValueLow]} numberOfLines={1} adjustsFontSizeToFit>{currentStats.avg_tmin.toFixed(1)}°C</Text>
               </View>
-            </GlassCard>
-            {interpolatedStats && interpolatedStats.stats.total_days > 0 && (
-              <GlassCard scheme="light" style={styles.tempCard} delay={400}>
-                <View style={styles.tempCardInner}>
-                  <MaterialCommunityIcons name="weather-rainy" size={28} color={light.colors.rain} />
-                  <Text style={styles.tempLabel}>{t('result.rainyDays')}</Text>
-                  <Text style={[styles.tempValue, styles.tempValueRain]} numberOfLines={1} adjustsFontSizeToFit>{interpolatedStats.stats.rain_days > 0 && interpolatedStats.stats.rain_days < 1 ? t('result.rainDaysLessThanOne') : t('result.rainDaysText', { count: Math.round(interpolatedStats.stats.rain_days) })}</Text>
-                </View>
-              </GlassCard>
-            )}
-          </View>
+            </View>
+          </GlassCard>
         )}
 
         {/* ── 5. Kafelki: szansa na wiatr / deszcz (obok siebie, z mini-wskaźnikiem) ── */}
@@ -1068,7 +1048,8 @@ export default function ResultScreen({ navigation, route }: Props) {
                   fraction={interpolatedStats.stats.avg_wind / 60}
                   value={`${Math.round(interpolatedStats.stats.avg_wind)}`}
                   unit="km/h"
-                  color={light.colors.primary}
+                  color={light.colors.cloudDark}
+                  size={100}
                 />
                 <Text style={styles.ctaLabel}>{t('result.windDetails')}</Text>
               </View>
@@ -1090,6 +1071,7 @@ export default function ResultScreen({ navigation, route }: Props) {
                   value={`${Math.round((interpolatedStats.stats.rain_days / DAYS_IN_MONTH[selectedMonth - 1]) * 100)}`}
                   unit="%"
                   color={light.colors.rain}
+                  size={100}
                 />
                 <Text style={styles.ctaLabel}>{t('result.rainDetails')}</Text>
               </View>
@@ -1200,17 +1182,14 @@ const styles = StyleSheet.create({
   monthBtnActive: { backgroundColor: light.colors.primary, borderColor: light.colors.primary },
   monthBtnText: { fontSize: 13, fontFamily: fonts.semibold, color: light.colors.textSecondary },
   monthBtnTextActive: { color: '#FFFFFF', fontFamily: fonts.bold },
-  statsInfo: { alignItems: 'center', marginBottom: spacing.sm },
-  statsText: { fontSize: 14, fontFamily: fonts.regular, color: light.colors.textSecondary, textAlign: 'center', lineHeight: 20 },
-  tempCards: { flexDirection: 'row', marginBottom: spacing.lg, gap: spacing.sm },
-  // FIGMA: STYLE_TARGET — Temperature card (glassmorphism)
-  tempCard: { flex: 1 },
-  tempCardInner: { padding: spacing.md, alignItems: 'center' },
+  tempCard: { marginBottom: spacing.lg },
+  tempCardRow: { flexDirection: 'row', alignItems: 'center' },
+  tempCardHalf: { flex: 1, padding: spacing.md, alignItems: 'center' },
+  tempDivider: { width: StyleSheet.hairlineWidth, alignSelf: 'stretch', marginVertical: spacing.md, backgroundColor: 'rgba(0, 0, 0, 0.08)' },
   tempLabel: { ...typography.label, fontFamily: fonts.medium, color: light.colors.textSecondary, marginTop: spacing.sm, textAlign: 'center', flexShrink: 1 },
   tempValue: { ...typography.value, fontSize: 18, lineHeight: 24, fontFamily: fonts.extrabold, marginTop: spacing.xs },
   tempValueHigh: { color: light.colors.tempHot },
   tempValueLow: { color: light.colors.tempCold },
-  tempValueRain: { color: light.colors.rain },
   // ── Tiles: szansa na wiatr / deszcz (side by side, each with a mini gauge) ──
   ctaSection: { flexDirection: 'row', gap: spacing.sm },
   ctaButton: { flex: 1 },
