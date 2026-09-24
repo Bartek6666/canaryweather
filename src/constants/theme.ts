@@ -191,13 +191,16 @@ export const shadows = {
     shadowRadius: 16,
     elevation: 8,
   },
-  // Subtle shadow for glass cards
+  // Subtle shadow for glass cards.
+  // iOS renders the soft shadow via shadow* props; Android would turn `elevation`
+  // into a hard grey drop-shadow (an ugly frame around every card), so we keep it
+  // at 0 to leave Android cards flat with just their border.
   glass: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
-    elevation: 3,
+    elevation: 0,
   },
   glow: {
     shadowColor: colors.accent,
@@ -379,13 +382,15 @@ export const light = {
     overlay: 'rgba(255, 255, 255, 0.0)',
   },
   gradient: ['#E4EEFB', '#CFDFF4'] as const,
-  // Soft blue ambient shadow used by glass cards on light backgrounds
+  // Soft blue ambient shadow used by glass cards on light backgrounds.
+  // iOS uses the blue shadow* props; Android ignores them and would draw a hard
+  // grey `elevation` shadow (a frame around each card), so we keep it flat at 0.
   cardShadow: {
     shadowColor: '#0064C8',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.1,
     shadowRadius: 16,
-    elevation: 3,
+    elevation: 0,
   },
 } as const;
 
