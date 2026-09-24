@@ -1260,7 +1260,7 @@ const styles = StyleSheet.create({
   popularSection: { marginTop: spacing.xs },
   popularTitle: {
     fontFamily: fonts.bold,
-    fontSize: 22,
+    fontSize: 18,
     color: light.colors.textPrimary,
     marginBottom: spacing.md,
   },
