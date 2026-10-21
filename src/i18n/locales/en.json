@@ -328,6 +328,6 @@
       "fri": "Fri",
       "sat": "Sat"
     },
-    "source": "% = chance of a sunny day (model forecast)."
+    "source": "% = chance of sun on that day, based on the weather forecast"
   }
 }

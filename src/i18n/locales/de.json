@@ -328,6 +328,6 @@
       "fri": "Fr",
       "sat": "Sa"
     },
-    "source": "% = Chance auf einen sonnigen Tag (Modellvorhersage)."
+    "source": "% = Sonnenchance an diesem Tag laut Wettervorhersage"
   }
 }

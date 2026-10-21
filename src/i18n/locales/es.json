@@ -328,6 +328,6 @@
       "fri": "Vie",
       "sat": "Sáb"
     },
-    "source": "% = probabilidad de un día soleado (pronóstico de modelo)."
+    "source": "% = probabilidad de sol ese día según el pronóstico"
   }
 }

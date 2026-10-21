@@ -1161,7 +1161,7 @@ const styles = StyleSheet.create({
   bgGradientOverlay: { opacity: 0.85 },
   overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: light.colors.overlay },
   safeArea: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
+  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.sm },
   // FIGMA: STYLE_TARGET — Back button (bg, radius, size)
   backButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: light.colors.glassBg, justifyContent: 'center', alignItems: 'center' },
   headerTitle: { flex: 1, marginLeft: spacing.md },
@@ -1196,7 +1196,7 @@ const styles = StyleSheet.create({
   monthBtnActive: { backgroundColor: light.colors.primary, borderColor: light.colors.primary },
   monthBtnText: { fontSize: 13, fontFamily: fonts.semibold, color: light.colors.textSecondary },
   monthBtnTextActive: { color: '#FFFFFF', fontFamily: fonts.bold },
-  tempCard: { marginBottom: spacing.lg },
+  tempCard: { marginBottom: spacing.md },
   tempCardRow: { flexDirection: 'row', alignItems: 'center' },
   tempCardHalf: { flex: 1, padding: spacing.md, alignItems: 'center' },
   tempDivider: { width: StyleSheet.hairlineWidth, alignSelf: 'stretch', marginVertical: spacing.md, backgroundColor: 'rgba(0, 0, 0, 0.08)' },
@@ -1214,8 +1214,8 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   ctaLabel: { fontSize: 15, fontFamily: fonts.semibold, color: light.colors.textPrimary, textAlign: 'center' },
-  // marginTop sm (8) + header's bottom padding md (16) = 24px above the "Teraz" group,
-  // matching the 24px gap below the live card (liveCard mb md 16 + gauge mt sm 8).
+  // marginTop sm (8) + header's bottom padding sm (8) = 16px above the "Teraz" group —
+  // every main section on this screen is separated by 16px.
   nowSection: { marginTop: spacing.sm },
   nowSectionHeader: {
     flexDirection: 'row',
@@ -1352,7 +1352,7 @@ const styles = StyleSheet.create({
     color: light.colors.tempCold,
   },
   bottomSpacer: { height: 40 },
-  bestTimeSection: { marginTop: spacing.lg },
+  bestTimeSection: { marginTop: spacing.md },
   bestTimeHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.xs },
   bestTimeTitle: {
     ...typography.h3,
@@ -1492,17 +1492,17 @@ const styles = StyleSheet.create({
     color: light.colors.textMuted,
   },
   cacheIndicator: {
-    alignItems: 'center',
     marginTop: -spacing.xs,
     marginBottom: spacing.sm,
   },
   cacheIndicatorInner: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: light.colors.surface,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.full,
+    paddingVertical: spacing.sm,
+    borderRadius: 24, // same as GlassCard
     borderWidth: 1,
     borderColor: light.colors.border,
   },

@@ -51,7 +51,7 @@ export function SunForecastStrip({ days }: SunForecastStripProps) {
 }
 
 const styles = StyleSheet.create({
-  section: { marginTop: spacing.md },
+  section: { marginBottom: spacing.md },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
