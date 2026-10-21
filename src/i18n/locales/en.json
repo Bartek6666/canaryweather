@@ -328,6 +328,34 @@
       "fri": "Fri",
       "sat": "Sat"
     },
-    "source": "% = chance of sun on that day, based on the weather forecast"
+    "source": "% = chance of sun on that day, based on the weather forecast",
+    "weekdaysFull": {
+      "sun": "Sunday",
+      "mon": "Monday",
+      "tue": "Tuesday",
+      "wed": "Wednesday",
+      "thu": "Thursday",
+      "fri": "Friday",
+      "sat": "Saturday"
+    },
+    "detail": {
+      "sunChance": "chance of sun",
+      "sunshine": "Sunshine",
+      "sunshineValue": "{{sun}} h of {{day}} h",
+      "temperature": "Temperature",
+      "rain": "Rain",
+      "wind": "Wind",
+      "gusts": "gusts",
+      "uv": "UV index",
+      "uvLevels": {
+        "low": "low",
+        "moderate": "moderate",
+        "high": "high",
+        "veryHigh": "very high",
+        "extreme": "extreme"
+      },
+      "sunriseSunset": "Sunrise / sunset",
+      "close": "Close"
+    }
   }
 }

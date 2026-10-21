@@ -328,6 +328,34 @@
       "fri": "Vie",
       "sat": "Sáb"
     },
-    "source": "% = probabilidad de sol ese día según el pronóstico"
+    "source": "% = probabilidad de sol ese día según el pronóstico",
+    "weekdaysFull": {
+      "sun": "Domingo",
+      "mon": "Lunes",
+      "tue": "Martes",
+      "wed": "Miércoles",
+      "thu": "Jueves",
+      "fri": "Viernes",
+      "sat": "Sábado"
+    },
+    "detail": {
+      "sunChance": "probabilidad de sol",
+      "sunshine": "Sol",
+      "sunshineValue": "{{sun}} h de {{day}} h",
+      "temperature": "Temperatura",
+      "rain": "Lluvia",
+      "wind": "Viento",
+      "gusts": "rachas",
+      "uv": "Índice UV",
+      "uvLevels": {
+        "low": "bajo",
+        "moderate": "moderado",
+        "high": "alto",
+        "veryHigh": "muy alto",
+        "extreme": "extremo"
+      },
+      "sunriseSunset": "Amanecer / atardecer",
+      "close": "Cerrar"
+    }
   }
 }

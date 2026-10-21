@@ -1376,11 +1376,9 @@ const styles = StyleSheet.create({
   // FIGMA: STYLE_TARGET — LiveWeatherCard
   liveCard: {
     marginBottom: spacing.md,
-    minHeight: liveCard.minHeight,
   },
   liveCardInner: {
     padding: liveCard.padding,
-    minHeight: liveCard.minHeight - 2, // account for border
   },
   // Figma: Top row layout - tighter spacing
   liveTopRow: {
@@ -1419,6 +1417,10 @@ const styles = StyleSheet.create({
     fontFamily: fonts.extrabold,
     color: light.colors.textPrimary,
     letterSpacing: -2,
+    // Manrope adds a tall empty band above digits - trim it so the top margin matches the bottom
+    lineHeight: typography.liveTemperature.lineHeight,
+    includeFontPadding: false,
+    marginTop: -8,
   },
   // Figma: Bottom row layout
   liveBottomRow: {

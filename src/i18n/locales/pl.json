@@ -360,6 +360,34 @@
       "fri": "Pt",
       "sat": "Sob"
     },
-    "source": "% = szansa na słońce w danym dniu wg prognozy pogody"
+    "source": "% = szansa na słońce w danym dniu wg prognozy pogody",
+    "weekdaysFull": {
+      "sun": "Niedziela",
+      "mon": "Poniedziałek",
+      "tue": "Wtorek",
+      "wed": "Środa",
+      "thu": "Czwartek",
+      "fri": "Piątek",
+      "sat": "Sobota"
+    },
+    "detail": {
+      "sunChance": "szansa na słońce",
+      "sunshine": "Słońce",
+      "sunshineValue": "{{sun}} h z {{day}} h",
+      "temperature": "Temperatura",
+      "rain": "Deszcz",
+      "wind": "Wiatr",
+      "gusts": "porywy",
+      "uv": "Indeks UV",
+      "uvLevels": {
+        "low": "niski",
+        "moderate": "umiarkowany",
+        "high": "wysoki",
+        "veryHigh": "bardzo wysoki",
+        "extreme": "ekstremalny"
+      },
+      "sunriseSunset": "Wschód / zachód",
+      "close": "Zamknij"
+    }
   }
 }

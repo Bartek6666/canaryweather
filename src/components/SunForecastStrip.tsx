@@ -1,10 +1,11 @@
-import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTranslation } from 'react-i18next';
 import { spacing, typography, light, fonts } from '../constants/theme';
 import { SunForecastDay } from '../services/weatherService';
 import { WeatherIcon } from './WeatherIcon';
+import { SunForecastDayModal } from './SunForecastDayModal';
 
 const WEEKDAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
@@ -20,6 +21,7 @@ function sunChanceColor(sunChance: number): string {
 
 export function SunForecastStrip({ days }: SunForecastStripProps) {
   const { t } = useTranslation();
+  const [selectedDay, setSelectedDay] = useState<SunForecastDay | null>(null);
 
   return (
     <View style={styles.section}>
@@ -35,17 +37,19 @@ export function SunForecastStrip({ days }: SunForecastStripProps) {
           const label = i === 0 ? t('forecast.today') : t(`forecast.weekdays.${WEEKDAY_KEYS[weekday]}`);
 
           return (
-            <View key={day.date} style={styles.tile}>
+            <TouchableOpacity key={day.date} style={styles.tile} onPress={() => setSelectedDay(day)} activeOpacity={0.7}>
               <Text style={styles.dayLabel}>{label}</Text>
               <WeatherIcon condition={day.condition} size={26} />
               <Text style={[styles.sunChance, { color: sunChanceColor(day.sunChance) }]}>{day.sunChance}%</Text>
               <Text style={styles.temps}>{day.tempMax}° / {day.tempMin}°</Text>
-            </View>
+            </TouchableOpacity>
           );
         })}
       </ScrollView>
 
       <Text style={styles.source}>{t('forecast.source')}</Text>
+
+      <SunForecastDayModal day={selectedDay} onClose={() => setSelectedDay(null)} />
     </View>
   );
 }
