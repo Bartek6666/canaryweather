@@ -328,6 +328,6 @@
       "fri": "Vie",
       "sat": "Sáb"
     },
-    "source": "Pronóstico: Google. % = probabilidad de un día soleado."
+    "source": "% = probabilidad de un día soleado (pronóstico de modelo)."
   }
 }

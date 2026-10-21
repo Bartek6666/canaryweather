@@ -328,6 +328,6 @@
       "fri": "Fri",
       "sat": "Sat"
     },
-    "source": "Forecast: Google. % = chance of a sunny day."
+    "source": "% = chance of a sunny day (model forecast)."
   }
 }
