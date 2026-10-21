@@ -315,5 +315,19 @@
   "footer": {
     "dataSource": "Data: AEMET",
     "disclaimer": "This app is not affiliated with AEMET or any government entity."
+  },
+  "forecast": {
+    "title": "Sun chance · next 10 days",
+    "today": "Today",
+    "weekdays": {
+      "sun": "Sun",
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat"
+    },
+    "source": "Forecast: Google. % = chance of a sunny day."
   }
 }

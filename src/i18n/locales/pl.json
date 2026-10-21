@@ -347,5 +347,19 @@
   "footer": {
     "dataSource": "Dane: AEMET",
     "disclaimer": "Ta aplikacja nie jest powiązana z AEMET ani żadną instytucją rządową."
+  },
+  "forecast": {
+    "title": "Szansa na słońce · 10 dni",
+    "today": "Dziś",
+    "weekdays": {
+      "sun": "Ndz",
+      "mon": "Pon",
+      "tue": "Wt",
+      "wed": "Śr",
+      "thu": "Czw",
+      "fri": "Pt",
+      "sat": "Sob"
+    },
+    "source": "Prognoza: Google. % = szansa na słoneczny dzień."
   }
 }

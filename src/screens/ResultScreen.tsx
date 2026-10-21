@@ -21,9 +21,9 @@ import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 
 import { colors, spacing, typography, glass, glassTokens, glassText, borderRadius, liveCard, light, fonts } from '../constants/theme';
-import { AlertCard, AlertDetailModal, ClickableGlassCard, CoastalAlertCard, GlassCard, MiniGauge, SnowAlertCard, SunChanceGauge, SunChanceModal, WeatherIcon, WindAlertCard, YearTemperatureChartModal } from '../components';
+import { AlertCard, AlertDetailModal, ClickableGlassCard, CoastalAlertCard, GlassCard, MiniGauge, SnowAlertCard, SunChanceGauge, SunForecastStrip, SunChanceModal, WeatherIcon, WindAlertCard, YearTemperatureChartModal } from '../components';
 import locationsMapping from '../constants/locations_mapping.json';
-import { calculateSunChanceWithFallback, SunChanceWithFallback, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult, calculateInterpolatedMonthlyStats, InterpolatedMonthlyStatsResult, fetchMostSevereCoastalAlert, fetchMostSevereWindAlert, fetchMostSevereSnowAlert, validateWeatherWithNearbyStation, WeatherValidationResult, interpolateLiveWeather, InterpolatedLiveWeatherResult, findNearestStations } from '../services/weatherService';
+import { calculateSunChanceWithFallback, SunChanceWithFallback, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult, calculateInterpolatedMonthlyStats, InterpolatedMonthlyStatsResult, fetchMostSevereCoastalAlert, fetchMostSevereWindAlert, fetchMostSevereSnowAlert, validateWeatherWithNearbyStation, WeatherValidationResult, interpolateLiveWeather, InterpolatedLiveWeatherResult, findNearestStations, fetchSunForecast, SunForecastDay } from '../services/weatherService';
 import { supabase } from '../services/supabase';
 import { trackResultView, trackAlertDetailsView } from '../services/analyticsService';
 import { SunChanceResult, MonthlyStats, LiveWeatherData, WeatherCondition, CoastalAlert, StationMapping } from '../types';
@@ -390,6 +390,7 @@ export default function ResultScreen({ navigation, route }: Props) {
 
   // Calima alert state (connected to Open-Meteo Air Quality API)
   const [calimaStatus, setCalimaStatus] = useState<CalimaStatus | null>(null);
+  const [sunForecast, setSunForecast] = useState<SunForecastDay[] | null>(null);
 
   // Display live weather data directly (Calima alerts are shown via AlertCard)
   const displayLiveData = liveData;
@@ -604,6 +605,16 @@ export default function ResultScreen({ navigation, route }: Props) {
       appStateSub.remove();
     };
   }, [station, stationId, locationCoords]);
+
+  // Fetch 10-day sun forecast (Google Weather API) for the searched location
+  useEffect(() => {
+    if (!station) return;
+
+    const forecastLat = locationCoords?.lat ?? station.latitude;
+    const forecastLon = locationCoords?.lon ?? station.longitude;
+
+    fetchSunForecast(forecastLat, forecastLon).then(setSunForecast);
+  }, [station, locationCoords]);
 
   // Fetch Calima status from Open-Meteo Air Quality API
   // Use user's location coords for accurate local air quality
@@ -986,6 +997,9 @@ export default function ResultScreen({ navigation, route }: Props) {
             </View>
           </View>
         )}
+
+        {/* ── 2a. Prognoza szansy na słońce — najbliższe 10 dni ───────────── */}
+        {sunForecast && sunForecast.length > 0 && <SunForecastStrip days={sunForecast} />}
 
         {/* ── 2. Wskaźnik słońca ───────────────────────────────────────────── */}
         {(isLoading || (sunChanceResult && sunChanceResult.total_days > 0)) && (

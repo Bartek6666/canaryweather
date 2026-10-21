@@ -3501,3 +3501,107 @@ export async function fetchMostSevereSnowAlert(
   if (!alerts || alerts.length === 0) return null;
   return alerts[0]; // Already sorted by severity
 }
+
+// ─── SUN FORECAST (Google Maps Weather API, 10 days) ─────────────────────────
+
+const GOOGLE_WEATHER_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_WEATHER_API_KEY || '';
+const SUN_FORECAST_CACHE_PREFIX = 'sun_forecast_';
+const SUN_FORECAST_CACHE_MS = 3 * 60 * 60 * 1000; // 3h — saves the free monthly quota
+
+export interface SunForecastDay {
+  date: string; // YYYY-MM-DD (local date at the location)
+  sunChance: number; // 0-100
+  condition: WeatherCondition;
+  tempMax: number;
+  tempMin: number;
+}
+
+interface GoogleForecastDay {
+  displayDate: { year: number; month: number; day: number };
+  daytimeForecast?: {
+    cloudCover?: number;
+    precipitation?: { probability?: { percent?: number } };
+  };
+  maxTemperature?: { degrees: number };
+  minTemperature?: { degrees: number };
+}
+
+/**
+ * Converts a daytime forecast into a sun chance on the same 0-100 scale as
+ * calculateSunChance: share of clear sky, reduced by the chance of rain.
+ */
+function forecastToSunChance(cloudCover: number, precipPercent: number): number {
+  return Math.round((100 - cloudCover) * (1 - precipPercent / 100));
+}
+
+function sunChanceToCondition(sunChance: number, precipPercent: number): WeatherCondition {
+  if (precipPercent >= 50) return 'rainy';
+  if (sunChance >= 70) return 'sunny';
+  if (sunChance >= 40) return 'partly-sunny';
+  return 'cloudy';
+}
+
+/**
+ * Fetches a 10-day sun chance forecast for the given coordinates.
+ * Returns null when the API key is missing or the request fails (section is hidden).
+ */
+export async function fetchSunForecast(lat: number, lon: number): Promise<SunForecastDay[] | null> {
+  if (!GOOGLE_WEATHER_API_KEY) return null;
+
+  const cacheKey = `${SUN_FORECAST_CACHE_PREFIX}${lat.toFixed(2)}_${lon.toFixed(2)}`;
+  try {
+    const cached = await AsyncStorage.getItem(cacheKey);
+    if (cached) {
+      const entry: { timestamp: number; days: SunForecastDay[] } = JSON.parse(cached);
+      if (Date.now() - entry.timestamp < SUN_FORECAST_CACHE_MS) return entry.days;
+    }
+  } catch {
+    // Ignore broken cache — fetch fresh data below
+  }
+
+  const TIMEOUT_MS = 8000;
+  try {
+    const url = `https://weather.googleapis.com/v1/forecast/days:lookup?key=${GOOGLE_WEATHER_API_KEY}&location.latitude=${lat}&location.longitude=${lon}&days=10&pageSize=10`;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      console.warn(`[SunForecast] API error: ${response.status}`);
+      return null;
+    }
+
+    const data: { forecastDays?: GoogleForecastDay[] } = await response.json();
+    if (!data.forecastDays || data.forecastDays.length === 0) return null;
+
+    const days: SunForecastDay[] = data.forecastDays.map((d) => {
+      const cloudCover = d.daytimeForecast?.cloudCover ?? 0;
+      const precipPercent = d.daytimeForecast?.precipitation?.probability?.percent ?? 0;
+      const sunChance = forecastToSunChance(cloudCover, precipPercent);
+      const { year, month, day } = d.displayDate;
+      return {
+        date: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+        sunChance,
+        condition: sunChanceToCondition(sunChance, precipPercent),
+        tempMax: Math.round(d.maxTemperature?.degrees ?? 0),
+        tempMin: Math.round(d.minTemperature?.degrees ?? 0),
+      };
+    });
+
+    try {
+      await AsyncStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), days }));
+    } catch {
+      // Cache is optional
+    }
+    return days;
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.warn('[SunForecast] Request timed out');
+    } else {
+      console.warn('[SunForecast] Error:', error);
+    }
+    return null;
+  }
+}

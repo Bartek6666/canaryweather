@@ -315,5 +315,19 @@
   "footer": {
     "dataSource": "Daten: AEMET",
     "disclaimer": "Diese App ist nicht mit AEMET oder einer Regierungsbehörde verbunden."
+  },
+  "forecast": {
+    "title": "Sonnenchance · 10 Tage",
+    "today": "Heute",
+    "weekdays": {
+      "sun": "So",
+      "mon": "Mo",
+      "tue": "Di",
+      "wed": "Mi",
+      "thu": "Do",
+      "fri": "Fr",
+      "sat": "Sa"
+    },
+    "source": "Vorhersage: Google. % = Chance auf einen sonnigen Tag."
   }
 }

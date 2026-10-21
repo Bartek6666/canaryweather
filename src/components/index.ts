@@ -14,6 +14,7 @@ export { LanguageSwitcher } from './LanguageSwitcher';
 export { LocationPrompt } from './LocationPrompt';
 export { SunChanceGauge } from './SunChanceGauge';
 export { SunChanceModal } from './SunChanceModal';
+export { SunForecastStrip } from './SunForecastStrip';
 export { TradeWindStabilityCard } from './TradeWindStabilityCard';
 export { WeatherIcon } from './WeatherIcon';
 export { YearTemperatureChartModal } from './YearTemperatureChartModal';

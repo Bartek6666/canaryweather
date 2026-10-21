@@ -315,5 +315,19 @@
   "footer": {
     "dataSource": "Datos: AEMET",
     "disclaimer": "Esta app no está afiliada con AEMET ni con ninguna entidad gubernamental."
+  },
+  "forecast": {
+    "title": "Probabilidad de sol · 10 días",
+    "today": "Hoy",
+    "weekdays": {
+      "sun": "Dom",
+      "mon": "Lun",
+      "tue": "Mar",
+      "wed": "Mié",
+      "thu": "Jue",
+      "fri": "Vie",
+      "sat": "Sáb"
+    },
+    "source": "Pronóstico: Google. % = probabilidad de un día soleado."
   }
 }
