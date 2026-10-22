@@ -2248,9 +2248,9 @@ function mapWeatherAPICode(
       : { condition: 'partly-sunny', labelKey: 'partlyCloudy' };
   }
 
-  // Cloudy
+  // Cloudy - grey cloud icon, so the label must say cloudy too (was "partly sunny")
   if (code === 1006) {
-    return { condition: 'cloudy', labelKey: 'partlyCloudy' };
+    return { condition: 'cloudy', labelKey: 'cloudy' };
   }
 
   // Overcast
