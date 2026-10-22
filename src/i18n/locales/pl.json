@@ -349,6 +349,7 @@
     "disclaimer": "Ta aplikacja nie jest powiązana z AEMET ani żadną instytucją rządową."
   },
   "forecast": {
+    "open": "Prognoza 10 dni",
     "title": "Szansa na słońce · 10 dni",
     "today": "Dziś",
     "weekdays": {

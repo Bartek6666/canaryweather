@@ -317,6 +317,7 @@
     "disclaimer": "Diese App ist nicht mit AEMET oder einer Regierungsbehörde verbunden."
   },
   "forecast": {
+    "open": "10-Tage-Prognose",
     "title": "Sonnenchance · 10 Tage",
     "today": "Heute",
     "weekdays": {

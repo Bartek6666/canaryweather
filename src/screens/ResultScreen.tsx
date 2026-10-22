@@ -21,7 +21,7 @@ import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 
 import { colors, spacing, typography, glass, glassTokens, glassText, borderRadius, liveCard, light, fonts } from '../constants/theme';
-import { AlertCard, AlertDetailModal, ClickableGlassCard, CoastalAlertCard, GlassCard, MiniGauge, SnowAlertCard, SunChanceGauge, SunForecastStrip, SunChanceModal, WeatherIcon, WindAlertCard, YearTemperatureChartModal } from '../components';
+import { AlertCard, AlertDetailModal, ClickableGlassCard, CoastalAlertCard, GlassCard, MiniGauge, SnowAlertCard, SunChanceGauge, SunForecastSheet, SunChanceModal, WeatherIcon, WindAlertCard, YearTemperatureChartModal } from '../components';
 import locationsMapping from '../constants/locations_mapping.json';
 import { calculateSunChanceWithFallback, SunChanceWithFallback, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult, calculateInterpolatedMonthlyStats, InterpolatedMonthlyStatsResult, fetchMostSevereCoastalAlert, fetchMostSevereWindAlert, fetchMostSevereSnowAlert, validateWeatherWithNearbyStation, WeatherValidationResult, interpolateLiveWeather, InterpolatedLiveWeatherResult, findNearestStations, fetchSunForecast, SunForecastDay } from '../services/weatherService';
 import { supabase } from '../services/supabase';
@@ -59,9 +59,10 @@ interface LiveWeatherCardProps {
   isLoading: boolean;
   hasError: boolean;
   isFromCache?: boolean;
+  onOpenForecast?: () => void;
 }
 
-const LiveWeatherCard = React.memo(function LiveWeatherCard({ data, isLoading, hasError, isFromCache = false }: LiveWeatherCardProps) {
+const LiveWeatherCard = React.memo(function LiveWeatherCard({ data, isLoading, hasError, isFromCache = false, onOpenForecast }: LiveWeatherCardProps) {
   const { t } = useTranslation();
   const pulseAnim = useRef(new Animated.Value(0.4)).current;
   const skeletonAnim = useRef(new Animated.Value(0.3)).current;
@@ -213,6 +214,15 @@ const LiveWeatherCard = React.memo(function LiveWeatherCard({ data, isLoading, h
               <Text style={styles.liveConditionLabel}>{t(`weather.${data.conditionLabelKey}`)}</Text>
             </View>
           </View>
+
+          {/* 10-day forecast entry chip - opens the forecast sheet */}
+          {onOpenForecast && (
+            <TouchableOpacity style={styles.forecastChip} onPress={onOpenForecast} activeOpacity={0.7} hitSlop={6}>
+              <Ionicons name="calendar-outline" size={16} color={light.colors.primary} />
+              <Text style={styles.forecastChipText}>{t('forecast.open')}</Text>
+              <Ionicons name="chevron-forward" size={16} color={light.colors.primary} />
+            </TouchableOpacity>
+          )}
         </View>
       </GlassCard>
       {/* Offline cache indicator */}
@@ -391,6 +401,8 @@ export default function ResultScreen({ navigation, route }: Props) {
   // Calima alert state (connected to Open-Meteo Air Quality API)
   const [calimaStatus, setCalimaStatus] = useState<CalimaStatus | null>(null);
   const [sunForecast, setSunForecast] = useState<SunForecastDay[] | null>(null);
+  const [forecastVisible, setForecastVisible] = useState(false);
+  const openForecast = useCallback(() => setForecastVisible(true), []);
 
   // Display live weather data directly (Calima alerts are shown via AlertCard)
   const displayLiveData = liveData;
@@ -940,6 +952,7 @@ export default function ResultScreen({ navigation, route }: Props) {
             isLoading={isLoadingLive}
             hasError={liveError}
             isFromCache={isFromCache}
+            onOpenForecast={sunForecast && sunForecast.length > 0 ? openForecast : undefined}
           />
 
           {/* Calima Alert */}
@@ -997,9 +1010,6 @@ export default function ResultScreen({ navigation, route }: Props) {
             </View>
           </View>
         )}
-
-        {/* ── 2a. Prognoza szansy na słońce — najbliższe 10 dni ───────────── */}
-        {sunForecast && sunForecast.length > 0 && <SunForecastStrip days={sunForecast} />}
 
         {/* ── 2. Wskaźnik słońca ───────────────────────────────────────────── */}
         {(isLoading || (sunChanceResult && sunChanceResult.total_days > 0)) && (
@@ -1129,6 +1139,11 @@ export default function ResultScreen({ navigation, route }: Props) {
         <View style={styles.bottomSpacer} />
       </Animated.ScrollView>
       </SafeAreaView>
+
+      {/* 10-day sun forecast sheet (opened from the LIVE card chip) */}
+      {sunForecast && sunForecast.length > 0 && (
+        <SunForecastSheet visible={forecastVisible} days={sunForecast} onClose={() => setForecastVisible(false)} />
+      )}
 
       {/* Sun Chance Info Modal */}
       <SunChanceModal
@@ -1381,6 +1396,24 @@ const styles = StyleSheet.create({
     padding: liveCard.padding,
   },
   // Figma: Top row layout - tighter spacing
+  forecastChip: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    height: 32,
+    paddingHorizontal: spacing.sm + 4,
+    marginTop: spacing.sm + 4,
+    borderRadius: borderRadius.full,
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: light.colors.liveBadgeBorder,
+  },
+  forecastChipText: {
+    fontFamily: fonts.bold,
+    fontSize: 13,
+    color: light.colors.primary,
+  },
   liveTopRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',

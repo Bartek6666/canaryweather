@@ -317,6 +317,7 @@
     "disclaimer": "This app is not affiliated with AEMET or any government entity."
   },
   "forecast": {
+    "open": "10-day forecast",
     "title": "Sun chance · next 10 days",
     "today": "Today",
     "weekdays": {

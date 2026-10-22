@@ -317,6 +317,7 @@
     "disclaimer": "Esta app no está afiliada con AEMET ni con ninguna entidad gubernamental."
   },
   "forecast": {
+    "open": "Previsión 10 días",
     "title": "Probabilidad de sol · 10 días",
     "today": "Hoy",
     "weekdays": {
