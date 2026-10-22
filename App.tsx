@@ -55,6 +55,8 @@ export type RootStackParamList = {
     stationName: string;
     locationName?: string;
     island: string;
+    // Rain chance shown on the result-screen tile, so the detail gauge shows the same number
+    rainPercent?: number;
   };
 };
 

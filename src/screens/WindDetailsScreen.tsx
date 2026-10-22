@@ -14,16 +14,14 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
-import i18n from 'i18next';
 import Svg, { Circle } from 'react-native-svg';
 
 import { light, spacing, typography, borderRadius, fonts } from '../constants/theme';
-import { GlassCard, ScreenHeader, TradeWindStabilityCard, IslandRankingCard } from '../components';
+import { ScreenHeader, TradeWindStabilityCard, IslandRankingCard } from '../components';
 import { trackWindDetailsView, trackWindStabilityView } from '../services/analyticsService';
 import { calculateWindStability, WindStabilityResult, getWindRankingByIsland, IslandRanking } from '../services/weatherService';
 import { RootStackParamList } from '../../App';
 import { MONTH_KEYS } from '../i18n';
-import { getRegionForIsland } from '../constants/regions';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'WindDetails'>;
 
@@ -72,7 +70,6 @@ function getBeaufortFromSpeed(speedKmh: number): BeaufortScale {
 export default function WindDetailsScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
   const { stationId, month, stationName, averageSpeed, locationName, island } = route.params;
-  const region = getRegionForIsland(island);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const gaugeAnim = useRef(new Animated.Value(0)).current;
@@ -231,29 +228,9 @@ export default function WindDetailsScreen({ navigation, route }: Props) {
               stability={stability}
               monthName={monthName}
               month={month}
-              isTradeWind={region === 'canary'}
               delay={450}
             />
           )}
-
-          {/* Historical Context Card */}
-          <GlassCard scheme="light" style={styles.contextCard} delay={550}>
-            <View style={styles.contextInner}>
-              <View style={styles.contextHeader}>
-                <Ionicons name="time-outline" size={20} color={light.colors.rain} />
-                <Text style={styles.contextTitle}>{t('wind.historicalContext')}</Text>
-              </View>
-              <Text style={styles.contextText}>
-                {t('wind.historicalDescription', {
-                  month: i18n.language === 'pl'
-                    ? t(`monthsLocative.${MONTH_KEYS[month - 1]}`)
-                    : monthName,
-                  station: stationName,
-                  years: '2016-2025'
-                })}
-              </Text>
-            </View>
-          </GlassCard>
 
           {/* Island Wind Ranking */}
           <IslandRankingCard
@@ -351,28 +328,6 @@ const styles = StyleSheet.create({
     color: light.colors.textSecondary,
     marginTop: spacing.xs,
     textAlign: 'center',
-  },
-  contextCard: {
-    width: '100%',
-    marginBottom: spacing.md,
-  },
-  contextInner: {
-    padding: spacing.lg,
-  },
-  contextHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  contextTitle: {
-    ...typography.h3, fontFamily: fonts.semibold,
-    color: light.colors.textPrimary,
-    marginLeft: spacing.sm,
-  },
-  contextText: {
-    ...typography.body, fontFamily: fonts.regular,
-    color: light.colors.textSecondary,
-    lineHeight: 22,
   },
   bottomSpacer: {
     height: 40,

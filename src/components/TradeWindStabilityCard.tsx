@@ -1,9 +1,8 @@
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  Animated,
 } from 'react-native';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -20,9 +19,6 @@ interface TradeWindStabilityCardProps {
   stability: WindStabilityResult;
   monthName: string;
   month: number;
-  // Trade winds (alisios) only occur in the Canaries. Outside them we show the
-  // same wind-consistency metric but with generic wording (no "trade winds").
-  isTradeWind?: boolean;
   delay?: number;
 }
 
@@ -46,7 +42,6 @@ export function TradeWindStabilityCard({
   stability,
   monthName,
   month,
-  isTradeWind = true,
   delay = 0,
 }: TradeWindStabilityCardProps) {
   const { t } = useTranslation();
@@ -55,8 +50,6 @@ export function TradeWindStabilityCard({
   const monthForDescription = i18n.language === 'pl'
     ? t(`monthsLocative.${MONTH_KEYS[month - 1]}`)
     : monthName;
-  const progressAnim = useRef(new Animated.Value(0)).current;
-
   const stabilityColor = useMemo(
     () => getStabilityColor(stability.stability),
     [stability.stability]
@@ -66,23 +59,6 @@ export function TradeWindStabilityCard({
     () => getStabilityLevel(stability.stability),
     [stability.stability]
   );
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      Animated.timing(progressAnim, {
-        toValue: stability.stability / 100,
-        duration: 1000,
-        useNativeDriver: false,
-      }).start();
-    }, delay + 200);
-
-    return () => clearTimeout(timeout);
-  }, [stability.stability, delay, progressAnim]);
-
-  const progressWidth = progressAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0%', '100%'],
-  });
 
   if (stability.sampleCount === 0) {
     return null;
@@ -99,43 +75,24 @@ export function TradeWindStabilityCard({
             color={stabilityColor}
           />
           <Text style={styles.title}>
-            {t(isTradeWind ? 'wind.stabilityTitle' : 'wind.stabilityTitle_generic')}
+            {t('wind.stabilityTitle')}
           </Text>
         </View>
 
-        {/* Stability value */}
+        {/* Typical day range (mean ± std dev) + consistency level */}
         <View style={styles.valueContainer}>
-          <Text style={[styles.value, { color: stabilityColor }]}>
-            {stability.stability}%
+          <Text style={styles.valueCaption}>{t('wind.typicalDay')}</Text>
+          <Text style={styles.value}>
+            {stability.windRange.min}–{stability.windRange.max}<Text style={styles.valueUnit}> km/h</Text>
           </Text>
-          <Text style={styles.valueLabel}>
+          <Text style={[styles.valueLabel, { color: stabilityColor }]}>
             {t(`wind.stability_${stabilityLevel}`)}
           </Text>
         </View>
 
-        {/* Progress bar */}
-        <View style={styles.progressContainer}>
-          <View style={styles.progressTrack}>
-            <Animated.View
-              style={[
-                styles.progressBar,
-                {
-                  width: progressWidth,
-                  backgroundColor: stabilityColor,
-                },
-              ]}
-            />
-          </View>
-        </View>
-
         {/* Description */}
         <Text style={styles.description}>
-          {t(
-            isTradeWind
-              ? `wind.stabilityDesc_${stabilityLevel}`
-              : `wind.stabilityDescGeneric_${stabilityLevel}`,
-            { month: monthForDescription }
-          )}
+          {t(`wind.stabilityDescGeneric_${stabilityLevel}`, { month: monthForDescription })}
         </Text>
 
         {/* Stats tiles */}
@@ -148,15 +105,6 @@ export function TradeWindStabilityCard({
               {stability.averageSpeed}<Text style={styles.tileUnit}> km/h</Text>
             </Text>
             <Text style={styles.tileLabel}>{t('wind.avgSpeed')}</Text>
-          </View>
-          <View style={styles.tile}>
-            <View style={styles.tileIconCircle}>
-              <Ionicons name="trending-up" size={18} color={light.colors.primary} />
-            </View>
-            <Text style={styles.tileValue} numberOfLines={1} adjustsFontSizeToFit>
-              {stability.windRange.min}–{stability.windRange.max}<Text style={styles.tileUnit}> km/h</Text>
-            </Text>
-            <Text style={styles.tileLabel}>{t('wind.windRange')}</Text>
           </View>
           <View style={styles.tile}>
             <View style={styles.tileIconCircle}>
@@ -195,28 +143,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: spacing.md,
   },
-  value: {
-    fontSize: 48, fontFamily: fonts.bold,
-    fontWeight: '700',
-    letterSpacing: -2,
-  },
-  valueLabel: {
+  valueCaption: {
     ...typography.label, fontFamily: fonts.medium,
     color: light.colors.textSecondary,
-    marginTop: -4,
   },
-  progressContainer: {
-    marginBottom: spacing.md,
+  value: {
+    fontSize: 40, fontFamily: fonts.bold,
+    fontWeight: '700',
+    letterSpacing: -1,
+    color: light.colors.textPrimary,
   },
-  progressTrack: {
-    height: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.06)',
-    borderRadius: 4,
-    overflow: 'hidden',
+  valueUnit: {
+    fontSize: 18, fontFamily: fonts.medium,
+    fontWeight: '500',
+    letterSpacing: 0,
+    color: light.colors.textSecondary,
   },
-  progressBar: {
-    height: '100%',
-    borderRadius: 4,
+  valueLabel: {
+    ...typography.label, fontFamily: fonts.semibold,
   },
   description: {
     ...typography.body, fontFamily: fonts.regular,
