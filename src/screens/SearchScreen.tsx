@@ -1168,28 +1168,27 @@ const styles = StyleSheet.create({
   searchSection: { marginBottom: spacing.lg },
   // Search input — frosted capsule on light background
   searchContainer: {
-    borderRadius: 30,
+    borderRadius: 24, // same as GlassCard (recently searched cards)
     borderWidth: 1,
     borderColor: light.colors.border,
     overflow: 'hidden',
     ...light.cardShadow,
   },
   searchBlur: {
-    borderRadius: 30,
+    borderRadius: 24,
   },
   searchOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: light.colors.surfaceStrong,
-    borderRadius: 30,
+    borderRadius: 24,
   },
   searchInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md + 2,
-    // Match the height of the "recently searched" cards below (44px icon circle
-    // + md padding top & bottom), so the search capsule reads as the same size.
-    minHeight: 44 + spacing.md * 2,
+    paddingHorizontal: spacing.md,
+    // Exactly the height of the "recently searched" cards below (44px icon circle
+    // + md padding top & bottom), so the search box reads as the same size.
+    height: 44 + spacing.md * 2,
   },
   searchInput: {
     flex: 1,
@@ -1197,6 +1196,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
     color: light.colors.textPrimary,
     marginLeft: spacing.sm + 2,
+    paddingVertical: 0, // Android TextInput adds its own padding, which made the box taller
   },
   // GPS button — solid primary
   gpsButton: {
@@ -1438,8 +1438,8 @@ const styles = StyleSheet.create({
   },
   // Footer section with disclaimer
   footerSection: {
-    marginTop: spacing.xl,
-    paddingTop: spacing.md,
+    // Last region section already adds 16px below the tiles - keep the gap to the footer small
+    marginTop: spacing.sm,
     alignItems: 'center',
   },
   footerSource: {
