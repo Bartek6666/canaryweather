@@ -3501,3 +3501,211 @@ export async function fetchMostSevereSnowAlert(
   if (!alerts || alerts.length === 0) return null;
   return alerts[0]; // Already sorted by severity
 }
+
+// ─── SUN FORECAST (Google Weather API → Open-Meteo, 10 days) ─────────────────────────
+
+const GOOGLE_WEATHER_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_WEATHER_API_KEY || '';
+const SUN_FORECAST_CACHE_PREFIX = 'sun_forecast_v2_';
+const SUN_FORECAST_CACHE_MS = 3 * 60 * 60 * 1000; // 3h — saves the free monthly quota
+
+export interface SunForecastDay {
+  date: string; // YYYY-MM-DD (local date at the location)
+  sunChance: number; // 0-100
+  condition: WeatherCondition;
+  tempMax: number;
+  tempMin: number;
+  sunshineHours: number | null; // null when the source doesn't provide it (Google)
+  daylightHours: number | null;
+  precipProbability: number; // %
+  precipMm: number | null;
+  windMax: number | null; // km/h
+  windGusts: number | null; // km/h
+  uvIndex: number | null;
+  sunrise: string | null; // HH:MM local time
+  sunset: string | null; // HH:MM local time
+}
+
+interface GoogleForecastDay {
+  displayDate: { year: number; month: number; day: number };
+  daytimeForecast?: {
+    cloudCover?: number;
+    uvIndex?: number;
+    precipitation?: { probability?: { percent?: number }; qpf?: { quantity?: number } };
+    wind?: { speed?: { value?: number }; gust?: { value?: number } };
+  };
+  maxTemperature?: { degrees: number };
+  minTemperature?: { degrees: number };
+  sunEvents?: { sunriseTime?: string; sunsetTime?: string };
+}
+
+/**
+ * Converts a daytime forecast into a sun chance on the same 0-100 scale as
+ * calculateSunChance: share of clear sky, reduced by the chance of rain.
+ */
+function forecastToSunChance(cloudCover: number, precipPercent: number): number {
+  return Math.round((100 - cloudCover) * (1 - precipPercent / 100));
+}
+
+function sunChanceToCondition(sunChance: number, precipPercent: number): WeatherCondition {
+  if (precipPercent >= 50) return 'rainy';
+  if (sunChance >= 70) return 'sunny';
+  if (sunChance >= 40) return 'partly-sunny';
+  return 'cloudy';
+}
+
+const roundOrNull = (v: number | null | undefined, digits: number = 0): number | null => {
+  if (v === null || v === undefined) return null;
+  const f = Math.pow(10, digits);
+  return Math.round(v * f) / f;
+};
+
+/** Formats an RFC 3339 UTC timestamp as HH:MM in the given IANA time zone. */
+function formatTimeInZone(iso: string | undefined, timeZone: string | undefined): string | null {
+  if (!iso) return null;
+  try {
+    return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone });
+  } catch {
+    return null;
+  }
+}
+
+async function fetchWithTimeout(url: string, timeoutMs: number = 8000): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+/** Primary source: Google Maps Weather API (daytime forecast). */
+async function fetchGoogleSunForecast(lat: number, lon: number): Promise<SunForecastDay[] | null> {
+  if (!GOOGLE_WEATHER_API_KEY) return null;
+  try {
+    const url = `https://weather.googleapis.com/v1/forecast/days:lookup?key=${GOOGLE_WEATHER_API_KEY}&location.latitude=${lat}&location.longitude=${lon}&days=10&pageSize=10`;
+    const response = await fetchWithTimeout(url);
+    if (!response.ok) {
+      console.warn(`[SunForecast] Google API error: ${response.status}`);
+      return null;
+    }
+    const data: { forecastDays?: GoogleForecastDay[]; timeZone?: { id?: string } } = await response.json();
+    if (!data.forecastDays || data.forecastDays.length === 0) return null;
+    const timeZone = data.timeZone?.id;
+
+    return data.forecastDays.map((d) => {
+      const { year, month, day } = d.displayDate;
+      const daytime = d.daytimeForecast;
+      const precipProbability = daytime?.precipitation?.probability?.percent ?? 0;
+      const sunChance = forecastToSunChance(daytime?.cloudCover ?? 0, precipProbability);
+      const { sunriseTime, sunsetTime } = d.sunEvents ?? {};
+      const daylightHours = sunriseTime && sunsetTime
+        ? (new Date(sunsetTime).getTime() - new Date(sunriseTime).getTime()) / 3600000
+        : null;
+      return {
+        date: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+        sunChance,
+        condition: sunChanceToCondition(sunChance, precipProbability),
+        tempMax: Math.round(d.maxTemperature?.degrees ?? 0),
+        tempMin: Math.round(d.minTemperature?.degrees ?? 0),
+        sunshineHours: null,
+        daylightHours: roundOrNull(daylightHours, 1),
+        precipProbability,
+        precipMm: roundOrNull(daytime?.precipitation?.qpf?.quantity, 1),
+        windMax: roundOrNull(daytime?.wind?.speed?.value),
+        windGusts: roundOrNull(daytime?.wind?.gust?.value),
+        uvIndex: roundOrNull(daytime?.uvIndex),
+        sunrise: formatTimeInZone(sunriseTime, timeZone),
+        sunset: formatTimeInZone(sunsetTime, timeZone),
+      };
+    });
+  } catch (error) {
+    console.warn('[SunForecast] Google error:', error);
+    return null;
+  }
+}
+
+/** Fallback source: Open-Meteo (free, no key). */
+async function fetchOpenMeteoSunForecast(lat: number, lon: number): Promise<SunForecastDay[] | null> {
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,sunshine_duration,daylight_duration,wind_speed_10m_max,wind_gusts_10m_max,uv_index_max,sunrise,sunset&timezone=auto&forecast_days=10`;
+    const response = await fetchWithTimeout(url);
+    if (!response.ok) {
+      console.warn(`[SunForecast] Open-Meteo error: ${response.status}`);
+      return null;
+    }
+    const data: {
+      daily?: {
+        time: string[];
+        temperature_2m_max: number[];
+        temperature_2m_min: number[];
+        precipitation_probability_max: (number | null)[];
+        precipitation_sum: (number | null)[];
+        sunshine_duration: (number | null)[];
+        daylight_duration: number[];
+        wind_speed_10m_max: (number | null)[];
+        wind_gusts_10m_max: (number | null)[];
+        uv_index_max: (number | null)[];
+        sunrise: string[]; // local ISO, e.g. 2026-10-21T08:12
+        sunset: string[];
+      };
+    } = await response.json();
+    if (!data.daily || data.daily.time.length === 0) return null;
+
+    // Open-Meteo's total cloud cover counts thin high cirrus that still lets the sun through,
+    // so we use the share of daylight hours with sunshine instead (as "clear sky" share).
+    const d = data.daily;
+    return d.time.map((date, i) => {
+      const sunshineSeconds = d.sunshine_duration[i] ?? 0;
+      const sunshineShare = d.daylight_duration[i] > 0 ? sunshineSeconds / d.daylight_duration[i] : 0;
+      const precipProbability = d.precipitation_probability_max[i] ?? 0;
+      const sunChance = forecastToSunChance(100 - Math.min(100, sunshineShare * 100), precipProbability);
+      return {
+        date,
+        sunChance,
+        condition: sunChanceToCondition(sunChance, precipProbability),
+        tempMax: Math.round(d.temperature_2m_max[i]),
+        tempMin: Math.round(d.temperature_2m_min[i]),
+        sunshineHours: roundOrNull(sunshineSeconds / 3600, 1),
+        daylightHours: roundOrNull(d.daylight_duration[i] / 3600, 1),
+        precipProbability,
+        precipMm: roundOrNull(d.precipitation_sum[i], 1),
+        windMax: roundOrNull(d.wind_speed_10m_max[i]),
+        windGusts: roundOrNull(d.wind_gusts_10m_max[i]),
+        uvIndex: roundOrNull(d.uv_index_max[i]),
+        sunrise: d.sunrise[i]?.slice(11, 16) ?? null,
+        sunset: d.sunset[i]?.slice(11, 16) ?? null,
+      };
+    });
+  } catch (error) {
+    console.warn('[SunForecast] Open-Meteo error:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetches a 10-day sun chance forecast for the given coordinates.
+ * Google Weather API first, Open-Meteo as fallback. Returns null when both fail (section is hidden).
+ */
+export async function fetchSunForecast(lat: number, lon: number): Promise<SunForecastDay[] | null> {
+  const cacheKey = `${SUN_FORECAST_CACHE_PREFIX}${lat.toFixed(2)}_${lon.toFixed(2)}`;
+  try {
+    const cached = await AsyncStorage.getItem(cacheKey);
+    if (cached) {
+      const entry: { timestamp: number; days: SunForecastDay[] } = JSON.parse(cached);
+      if (Date.now() - entry.timestamp < SUN_FORECAST_CACHE_MS) return entry.days;
+    }
+  } catch {
+    // Ignore broken cache — fetch fresh data below
+  }
+
+  const days = (await fetchGoogleSunForecast(lat, lon)) ?? (await fetchOpenMeteoSunForecast(lat, lon));
+  if (!days) return null;
+
+  try {
+    await AsyncStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), days }));
+  } catch {
+    // Cache is optional
+  }
+  return days;
+}

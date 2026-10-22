@@ -21,9 +21,9 @@ import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
 
 import { colors, spacing, typography, glass, glassTokens, glassText, borderRadius, liveCard, light, fonts } from '../constants/theme';
-import { AlertCard, AlertDetailModal, ClickableGlassCard, CoastalAlertCard, GlassCard, MiniGauge, SnowAlertCard, SunChanceGauge, SunChanceModal, WeatherIcon, WindAlertCard, YearTemperatureChartModal } from '../components';
+import { AlertCard, AlertDetailModal, ClickableGlassCard, CoastalAlertCard, GlassCard, MiniGauge, SnowAlertCard, SunChanceGauge, SunForecastSheet, SunChanceModal, WeatherIcon, WindAlertCard, YearTemperatureChartModal } from '../components';
 import locationsMapping from '../constants/locations_mapping.json';
-import { calculateSunChanceWithFallback, SunChanceWithFallback, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult, calculateInterpolatedMonthlyStats, InterpolatedMonthlyStatsResult, fetchMostSevereCoastalAlert, fetchMostSevereWindAlert, fetchMostSevereSnowAlert, validateWeatherWithNearbyStation, WeatherValidationResult, interpolateLiveWeather, InterpolatedLiveWeatherResult, findNearestStations } from '../services/weatherService';
+import { calculateSunChanceWithFallback, SunChanceWithFallback, getMonthlyStats, getBestWeeksForStation, WeeklyBestPeriod, fetchLiveWeather, fetchCalimaStatus, CalimaStatus, LiveWeatherResult, calculateInterpolatedMonthlyStats, InterpolatedMonthlyStatsResult, fetchMostSevereCoastalAlert, fetchMostSevereWindAlert, fetchMostSevereSnowAlert, validateWeatherWithNearbyStation, WeatherValidationResult, interpolateLiveWeather, InterpolatedLiveWeatherResult, findNearestStations, fetchSunForecast, SunForecastDay } from '../services/weatherService';
 import { supabase } from '../services/supabase';
 import { trackResultView, trackAlertDetailsView } from '../services/analyticsService';
 import { SunChanceResult, MonthlyStats, LiveWeatherData, WeatherCondition, CoastalAlert, StationMapping } from '../types';
@@ -59,9 +59,10 @@ interface LiveWeatherCardProps {
   isLoading: boolean;
   hasError: boolean;
   isFromCache?: boolean;
+  onOpenForecast?: () => void;
 }
 
-const LiveWeatherCard = React.memo(function LiveWeatherCard({ data, isLoading, hasError, isFromCache = false }: LiveWeatherCardProps) {
+const LiveWeatherCard = React.memo(function LiveWeatherCard({ data, isLoading, hasError, isFromCache = false, onOpenForecast }: LiveWeatherCardProps) {
   const { t } = useTranslation();
   const pulseAnim = useRef(new Animated.Value(0.4)).current;
   const skeletonAnim = useRef(new Animated.Value(0.3)).current;
@@ -213,6 +214,15 @@ const LiveWeatherCard = React.memo(function LiveWeatherCard({ data, isLoading, h
               <Text style={styles.liveConditionLabel}>{t(`weather.${data.conditionLabelKey}`)}</Text>
             </View>
           </View>
+
+          {/* 10-day forecast entry chip - opens the forecast sheet */}
+          {onOpenForecast && (
+            <TouchableOpacity style={styles.forecastChip} onPress={onOpenForecast} activeOpacity={0.7} hitSlop={6}>
+              <Ionicons name="calendar-outline" size={16} color={light.colors.primary} />
+              <Text style={styles.forecastChipText}>{t('forecast.open')}</Text>
+              <Ionicons name="chevron-forward" size={16} color={light.colors.primary} />
+            </TouchableOpacity>
+          )}
         </View>
       </GlassCard>
       {/* Offline cache indicator */}
@@ -390,6 +400,9 @@ export default function ResultScreen({ navigation, route }: Props) {
 
   // Calima alert state (connected to Open-Meteo Air Quality API)
   const [calimaStatus, setCalimaStatus] = useState<CalimaStatus | null>(null);
+  const [sunForecast, setSunForecast] = useState<SunForecastDay[] | null>(null);
+  const [forecastVisible, setForecastVisible] = useState(false);
+  const openForecast = useCallback(() => setForecastVisible(true), []);
 
   // Display live weather data directly (Calima alerts are shown via AlertCard)
   const displayLiveData = liveData;
@@ -604,6 +617,16 @@ export default function ResultScreen({ navigation, route }: Props) {
       appStateSub.remove();
     };
   }, [station, stationId, locationCoords]);
+
+  // Fetch 10-day sun forecast (Google Weather API) for the searched location
+  useEffect(() => {
+    if (!station) return;
+
+    const forecastLat = locationCoords?.lat ?? station.latitude;
+    const forecastLon = locationCoords?.lon ?? station.longitude;
+
+    fetchSunForecast(forecastLat, forecastLon).then(setSunForecast);
+  }, [station, locationCoords]);
 
   // Fetch Calima status from Open-Meteo Air Quality API
   // Use user's location coords for accurate local air quality
@@ -929,6 +952,7 @@ export default function ResultScreen({ navigation, route }: Props) {
             isLoading={isLoadingLive}
             hasError={liveError}
             isFromCache={isFromCache}
+            onOpenForecast={sunForecast && sunForecast.length > 0 ? openForecast : undefined}
           />
 
           {/* Calima Alert */}
@@ -1116,6 +1140,11 @@ export default function ResultScreen({ navigation, route }: Props) {
       </Animated.ScrollView>
       </SafeAreaView>
 
+      {/* 10-day sun forecast sheet (opened from the LIVE card chip) */}
+      {sunForecast && sunForecast.length > 0 && (
+        <SunForecastSheet visible={forecastVisible} days={sunForecast} onClose={() => setForecastVisible(false)} />
+      )}
+
       {/* Sun Chance Info Modal */}
       <SunChanceModal
         visible={showSunChanceModal}
@@ -1147,7 +1176,7 @@ const styles = StyleSheet.create({
   bgGradientOverlay: { opacity: 0.85 },
   overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: light.colors.overlay },
   safeArea: { flex: 1 },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
+  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.sm },
   // FIGMA: STYLE_TARGET — Back button (bg, radius, size)
   backButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: light.colors.glassBg, justifyContent: 'center', alignItems: 'center' },
   headerTitle: { flex: 1, marginLeft: spacing.md },
@@ -1182,7 +1211,7 @@ const styles = StyleSheet.create({
   monthBtnActive: { backgroundColor: light.colors.primary, borderColor: light.colors.primary },
   monthBtnText: { fontSize: 13, fontFamily: fonts.semibold, color: light.colors.textSecondary },
   monthBtnTextActive: { color: '#FFFFFF', fontFamily: fonts.bold },
-  tempCard: { marginBottom: spacing.lg },
+  tempCard: { marginBottom: spacing.md },
   tempCardRow: { flexDirection: 'row', alignItems: 'center' },
   tempCardHalf: { flex: 1, padding: spacing.md, alignItems: 'center' },
   tempDivider: { width: StyleSheet.hairlineWidth, alignSelf: 'stretch', marginVertical: spacing.md, backgroundColor: 'rgba(0, 0, 0, 0.08)' },
@@ -1200,8 +1229,8 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   ctaLabel: { fontSize: 15, fontFamily: fonts.semibold, color: light.colors.textPrimary, textAlign: 'center' },
-  // marginTop sm (8) + header's bottom padding md (16) = 24px above the "Teraz" group,
-  // matching the 24px gap below the live card (liveCard mb md 16 + gauge mt sm 8).
+  // marginTop sm (8) + header's bottom padding sm (8) = 16px above the "Teraz" group —
+  // every main section on this screen is separated by 16px.
   nowSection: { marginTop: spacing.sm },
   nowSectionHeader: {
     flexDirection: 'row',
@@ -1338,7 +1367,7 @@ const styles = StyleSheet.create({
     color: light.colors.tempCold,
   },
   bottomSpacer: { height: 40 },
-  bestTimeSection: { marginTop: spacing.lg },
+  bestTimeSection: { marginTop: spacing.md },
   bestTimeHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.xs },
   bestTimeTitle: {
     ...typography.h3,
@@ -1362,13 +1391,29 @@ const styles = StyleSheet.create({
   // FIGMA: STYLE_TARGET — LiveWeatherCard
   liveCard: {
     marginBottom: spacing.md,
-    minHeight: liveCard.minHeight,
   },
   liveCardInner: {
     padding: liveCard.padding,
-    minHeight: liveCard.minHeight - 2, // account for border
   },
   // Figma: Top row layout - tighter spacing
+  forecastChip: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    height: 32,
+    paddingHorizontal: spacing.sm + 4,
+    marginTop: spacing.sm + 4,
+    borderRadius: borderRadius.full,
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: light.colors.liveBadgeBorder,
+  },
+  forecastChipText: {
+    fontFamily: fonts.bold,
+    fontSize: 13,
+    color: light.colors.primary,
+  },
   liveTopRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -1405,6 +1450,10 @@ const styles = StyleSheet.create({
     fontFamily: fonts.extrabold,
     color: light.colors.textPrimary,
     letterSpacing: -2,
+    // Manrope adds a tall empty band above digits - trim it so the top margin matches the bottom
+    lineHeight: typography.liveTemperature.lineHeight,
+    includeFontPadding: false,
+    marginTop: -8,
   },
   // Figma: Bottom row layout
   liveBottomRow: {
@@ -1478,17 +1527,17 @@ const styles = StyleSheet.create({
     color: light.colors.textMuted,
   },
   cacheIndicator: {
-    alignItems: 'center',
     marginTop: -spacing.xs,
     marginBottom: spacing.sm,
   },
   cacheIndicatorInner: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: light.colors.surface,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: borderRadius.full,
+    paddingVertical: spacing.sm,
+    borderRadius: 24, // same as GlassCard
     borderWidth: 1,
     borderColor: light.colors.border,
   },

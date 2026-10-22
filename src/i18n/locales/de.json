@@ -315,5 +315,48 @@
   "footer": {
     "dataSource": "Daten: AEMET",
     "disclaimer": "Diese App ist nicht mit AEMET oder einer Regierungsbehörde verbunden."
+  },
+  "forecast": {
+    "open": "10-Tage-Prognose",
+    "title": "Sonnenchance · 10 Tage",
+    "today": "Heute",
+    "weekdays": {
+      "sun": "So",
+      "mon": "Mo",
+      "tue": "Di",
+      "wed": "Mi",
+      "thu": "Do",
+      "fri": "Fr",
+      "sat": "Sa"
+    },
+    "source": "% = Sonnenchance an diesem Tag laut Wettervorhersage",
+    "weekdaysFull": {
+      "sun": "Sonntag",
+      "mon": "Montag",
+      "tue": "Dienstag",
+      "wed": "Mittwoch",
+      "thu": "Donnerstag",
+      "fri": "Freitag",
+      "sat": "Samstag"
+    },
+    "detail": {
+      "sunChance": "Sonnenchance",
+      "sunshine": "Sonne",
+      "sunshineValue": "{{sun}} h von {{day}} h",
+      "temperature": "Temperatur",
+      "rain": "Regen",
+      "wind": "Wind",
+      "gusts": "Böen",
+      "uv": "UV-Index",
+      "uvLevels": {
+        "low": "niedrig",
+        "moderate": "mäßig",
+        "high": "hoch",
+        "veryHigh": "sehr hoch",
+        "extreme": "extrem"
+      },
+      "sunriseSunset": "Sonnenauf- / -untergang",
+      "close": "Schließen"
+    }
   }
 }
