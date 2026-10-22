@@ -244,7 +244,7 @@
     "island_ranking_month": "średnia prędkość wiatru ze wszystkich stacji AEMET"
   },
   "rain": {
-    "days_without_rain": "Dni bez deszczu",
+    "days_with_rain": "Dni z deszczem",
     "intensity_info": "Charakterystyka opadów",
     "basedOnMeasurements": "Na podstawie 10 lat pomiarów",
     "avg_precip": "Średnie opady",

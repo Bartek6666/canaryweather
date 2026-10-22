@@ -231,7 +231,7 @@
     "island_ranking_month": "durchschnittliche Windgeschwindigkeit aller AEMET-Stationen"
   },
   "rain": {
-    "days_without_rain": "Tage ohne Regen",
+    "days_with_rain": "Tage mit Regen",
     "intensity_info": "Niederschlagseigenschaften",
     "basedOnMeasurements": "Basierend auf 10 Jahren Messungen",
     "avg_precip": "Durchschn. Niederschlag",

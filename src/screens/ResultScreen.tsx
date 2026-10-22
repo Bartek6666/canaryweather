@@ -1063,6 +1063,7 @@ export default function ResultScreen({ navigation, route }: Props) {
                 stationName: station?.name || '',
                 locationName: locationName,
                 island: station?.island || '',
+                rainPercent: Math.round((interpolatedStats.stats.rain_days / DAYS_IN_MONTH[selectedMonth - 1]) * 100),
               })}
             >
               <View style={styles.ctaTileInner}>

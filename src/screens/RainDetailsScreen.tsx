@@ -39,17 +39,9 @@ function getDaysInMonth(month: number): number {
  * Gets color for dry day percentage gauge
  * Uses blue gradient: light blue (low) to navy (high)
  */
-function getDryDayColor(percentage: number): string {
-  if (percentage >= 85) return '#1e3a5f'; // Excellent - navy
-  if (percentage >= 70) return '#2563eb'; // Very good - blue
-  if (percentage >= 55) return '#3b82f6'; // Good - medium blue
-  if (percentage >= 40) return '#60a5fa'; // Moderate - light blue
-  return '#93c5fd'; // Low - very light blue
-}
-
 export default function RainDetailsScreen({ navigation, route }: Props) {
   const { t } = useTranslation();
-  const { stationId, month, stationName, locationName, island } = route.params;
+  const { stationId, month, stationName, locationName, island, rainPercent } = route.params;
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const gaugeAnim = useRef(new Animated.Value(0)).current;
@@ -103,12 +95,13 @@ export default function RainDetailsScreen({ navigation, route }: Props) {
   // SVG gauge calculations
   const radius = (GAUGE_SIZE - STROKE_WIDTH) / 2;
   const circumference = 2 * Math.PI * radius;
-  const dryPercentage = rainStats?.daysWithoutRain ?? 0;
-  const gaugeColor = getDryDayColor(dryPercentage);
+  // Share of days with rain - same number and colour as the result-screen tile
+  const rainyPercentage = rainPercent ?? (rainStats ? 100 - rainStats.daysWithoutRain : 0);
+  const gaugeColor = light.colors.rain;
 
   const animatedStrokeDashoffset = gaugeAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [circumference, circumference * (1 - dryPercentage / 100)],
+    outputRange: [circumference, circumference * (1 - rainyPercentage / 100)],
   });
 
   return (
@@ -140,7 +133,7 @@ export default function RainDetailsScreen({ navigation, route }: Props) {
             <Text style={styles.monthBadgeText}>{monthName}</Text>
           </View>
 
-          {/* Hero Gauge - Days without rain */}
+          {/* Hero Gauge - Days with rain */}
           <View style={styles.gaugeContainer}>
             <Svg width={GAUGE_SIZE} height={GAUGE_SIZE} style={styles.gaugeSvg}>
               {/* Background circle */}
@@ -176,8 +169,8 @@ export default function RainDetailsScreen({ navigation, route }: Props) {
                 color={gaugeColor}
                 style={styles.gaugeIcon}
               />
-              <Text style={styles.gaugeValue}>{dryPercentage}%</Text>
-              <Text style={styles.gaugeLabel}>{t('rain.days_without_rain')}</Text>
+              <Text style={styles.gaugeValue}>{rainyPercentage}%</Text>
+              <Text style={styles.gaugeLabel}>{t('rain.days_with_rain')}</Text>
 
               {/* Confidence badge */}
               {rainStats && (

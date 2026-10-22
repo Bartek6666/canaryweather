@@ -231,7 +231,7 @@
     "island_ranking_month": "velocidad media del viento de todas las estaciones AEMET"
   },
   "rain": {
-    "days_without_rain": "Días sin lluvia",
+    "days_with_rain": "Días con lluvia",
     "intensity_info": "Características de la lluvia",
     "basedOnMeasurements": "Basado en 10 años de mediciones",
     "avg_precip": "Precip. media",
