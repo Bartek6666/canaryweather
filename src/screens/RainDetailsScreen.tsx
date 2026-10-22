@@ -12,7 +12,6 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
-import i18n from 'i18next';
 import Svg, { Circle } from 'react-native-svg';
 
 import { light, spacing, typography, borderRadius, fonts } from '../constants/theme';
@@ -235,25 +234,6 @@ export default function RainDetailsScreen({ navigation, route }: Props) {
             </GlassCard>
           )}
 
-          {/* Historical Context Card */}
-          <GlassCard scheme="light" style={styles.contextCard} delay={550}>
-            <View style={styles.contextInner}>
-              <View style={styles.contextHeader}>
-                <Ionicons name="time-outline" size={20} color={light.colors.rain} />
-                <Text style={styles.contextTitle}>{t('rain.historical_context')}</Text>
-              </View>
-              <Text style={styles.contextText}>
-                {t('rain.historical_description', {
-                  month: i18n.language === 'pl'
-                    ? t(`monthsLocative.${MONTH_KEYS[month - 1]}`)
-                    : monthName,
-                  station: stationName,
-                  years: '2016-2025',
-                })}
-              </Text>
-            </View>
-          </GlassCard>
-
           {/* Island Rain Ranking */}
           <IslandRankingCard
             kind="rain"
@@ -423,28 +403,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     textAlign: 'center',
     marginTop: spacing.xs,
-  },
-  contextCard: {
-    width: '100%',
-    marginBottom: spacing.md,
-  },
-  contextInner: {
-    padding: spacing.lg,
-  },
-  contextHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  contextTitle: {
-    ...typography.h3, fontFamily: fonts.semibold,
-    color: light.colors.textPrimary,
-    marginLeft: spacing.sm,
-  },
-  contextText: {
-    ...typography.body, fontFamily: fonts.regular,
-    color: light.colors.textSecondary,
-    lineHeight: 22,
   },
   bottomSpacer: {
     height: 40,

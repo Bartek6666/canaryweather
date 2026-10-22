@@ -247,8 +247,6 @@
     "north_south_title": "Norte vs Sur",
     "north_south_context_north": "El norte de la isla es estadísticamente más verde y húmedo que el sur. Los vientos alisios traen humedad que se condensa en las laderas norte.",
     "north_south_context_south": "El sur de la isla es típicamente más seco y soleado. Las montañas bloquean los alisios húmedos, creando un efecto de sombra de lluvia.",
-    "historical_context": "Contexto Histórico",
-    "historical_description": "Estadísticas de lluvia para {{month}} calculadas a partir de mediciones en la estación {{station}} durante los años {{years}}.",
     "island_ranking_title": "Lluvia en las Islas Canarias en {{month}}",
     "island_ranking_title_balearic": "Lluvia en las Islas Baleares en {{month}}",
     "island_ranking_title_mainland": "Lluvia en la costa española en {{month}}",

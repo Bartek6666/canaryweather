@@ -247,8 +247,6 @@
     "north_south_title": "Norden vs Süden",
     "north_south_context_north": "Der Norden der Insel ist statistisch grüner und feuchter als der Süden. Passatwinde bringen Feuchtigkeit, die an den Nordhängen kondensiert.",
     "north_south_context_south": "Der Süden der Insel ist typischerweise trockener und sonniger. Die Berge blockieren die feuchten Passatwinde und erzeugen einen Regenschatteneffekt.",
-    "historical_context": "Historischer Kontext",
-    "historical_description": "Niederschlagsstatistik für {{month}} berechnet aus Messungen an der Station {{station}} in den Jahren {{years}}.",
     "island_ranking_title": "Regen auf den Kanarischen Inseln im {{month}}",
     "island_ranking_title_balearic": "Regen auf den Balearen im {{month}}",
     "island_ranking_title_mainland": "Regen an der spanischen Küste im {{month}}",

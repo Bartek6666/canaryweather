@@ -260,8 +260,6 @@
     "north_south_title": "Północ vs Południe",
     "north_south_context_north": "Północ wyspy jest statystycznie bardziej zielona i wilgotna niż południe. Pasaty przynoszą wilgoć, która skrapla się na północnych zboczach.",
     "north_south_context_south": "Południe wyspy jest typowo bardziej suche i słoneczne. Góry blokują wilgotne pasaty, tworząc efekt cienia deszczowego.",
-    "historical_context": "Kontekst Historyczny",
-    "historical_description": "Statystyki opadów w {{month}} obliczone z pomiarów na stacji {{station}} w latach {{years}}.",
     "island_ranking_title": "Deszcz na Wyspach Kanaryjskich w {{month}}",
     "island_ranking_title_balearic": "Deszcz na Balearach w {{month}}",
     "island_ranking_title_mainland": "Deszcz na wybrzeżu Hiszpanii w {{month}}",

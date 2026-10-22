@@ -247,8 +247,6 @@
     "north_south_title": "North vs South",
     "north_south_context_north": "The north of the island is statistically greener and more humid than the south. Trade winds bring moisture that condenses on the northern slopes.",
     "north_south_context_south": "The south of the island is typically drier and sunnier. The mountains block humid trade winds, creating a rain shadow effect.",
-    "historical_context": "Historical Context",
-    "historical_description": "Rain statistics for {{month}} calculated from measurements at {{station}} station over the years {{years}}.",
     "island_ranking_title": "Rain in the Canary Islands in {{month}}",
     "island_ranking_title_balearic": "Rain in the Balearic Islands in {{month}}",
     "island_ranking_title_mainland": "Rain on the Spanish coast in {{month}}",
