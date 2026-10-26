@@ -45,11 +45,13 @@ Realnie: **max ~5 linków dziennie**, rozłożonych w czasie.
 
 ### Który link (reguła „zależnie od sytuacji")
 - **`app.sunly.live` — domyślnie, prawie zawsze.** Liczy wejścia w GoatCounter, więc widzisz, co
-  działa. Dokładaj etykietę koszyka językowego, żeby wiedzieć skąd ruch (FB nie przekazuje nazwy
-  grupy):
-  - polskie grupy: `app.sunly.live?z=pl`
-  - angielskie: `app.sunly.live?z=en`
-  - hiszpańskie: `app.sunly.live?z=es`
+  działa. Dokładaj etykietę koszyka językowego przez `utm_campaign`, żeby wiedzieć skąd ruch (FB
+  nie przekazuje nazwy grupy). **UWAGA: stary format `?z=pl` NIE działał** — GoatCounter nie
+  rozdzielał go na osobne źródła (Campaigns puste). Poprawny format to `utm_campaign`, który ląduje
+  w sekcji **Campaigns**:
+  - polskie grupy: `app.sunly.live?utm_campaign=pl`
+  - angielskie: `app.sunly.live?utm_campaign=en`
+  - hiszpańskie: `app.sunly.live?utm_campaign=es`
 - **Bezpośredni link do Play — tylko „na ciepło":** (1) gdy ktoś **sam pyta** „co to za apka? gdzie
   pobrać?"; (2) w grupach, gdzie linki do zewnętrznych stron są źle widziane, a Google Play
   przechodzi jako mniej podejrzany. Link: `play.google.com/store/apps/details?id=com.canaryweather.app`
