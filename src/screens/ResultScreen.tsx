@@ -227,14 +227,14 @@ const LiveWeatherCard = React.memo(function LiveWeatherCard({ data, isLoading, h
       </GlassCard>
       {/* Offline cache indicator */}
       {isFromCache && (
-        <View style={styles.cacheIndicator}>
+        <GlassCard scheme="light" style={styles.cacheIndicator} delay={100}>
           <View style={styles.cacheIndicatorInner}>
             <Ionicons name="time-outline" size={12} color={light.colors.textMuted} />
             <Text style={styles.cacheIndicatorText}>
               {t('result.offlineData', { time: formatCacheTime(data?.timestamp) })}
             </Text>
           </View>
-        </View>
+        </GlassCard>
       )}
     </View>
   );
@@ -1192,7 +1192,8 @@ const styles = StyleSheet.create({
   monthSelector: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginBottom: spacing.md,
+    // chips already carry marginBottom sm (8) → 8 + 8 = 16, same as other sections
+    marginBottom: spacing.sm,
     justifyContent: 'space-between',
   },
   // FIGMA: STYLE_TARGET — Month chip (bg, radius, padding)
@@ -1216,7 +1217,8 @@ const styles = StyleSheet.create({
   tempCardRow: { flexDirection: 'row', alignItems: 'center' },
   tempCardHalf: { flex: 1, padding: spacing.md, alignItems: 'center' },
   tempDivider: { width: StyleSheet.hairlineWidth, alignSelf: 'stretch', marginVertical: spacing.md, backgroundColor: 'rgba(0, 0, 0, 0.08)' },
-  tempLabel: { ...typography.label, fontFamily: fonts.medium, color: light.colors.textSecondary, marginTop: spacing.sm, textAlign: 'center', flexShrink: 1 },
+  // alignSelf stretch: Android under-measures custom-font text width, wrapping "max" to a hidden 2nd line
+  tempLabel: { ...typography.label, fontFamily: fonts.medium, color: light.colors.textSecondary, marginTop: spacing.sm, textAlign: 'center', flexShrink: 1, alignSelf: 'stretch' },
   tempValue: { ...typography.value, fontSize: 18, lineHeight: 24, fontFamily: fonts.extrabold, marginTop: spacing.xs },
   tempValueHigh: { color: light.colors.tempHot },
   tempValueLow: { color: light.colors.tempCold },
@@ -1528,19 +1530,14 @@ const styles = StyleSheet.create({
     color: light.colors.textMuted,
   },
   cacheIndicator: {
-    marginTop: -spacing.xs,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
   },
   cacheIndicatorInner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: light.colors.surface,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    borderRadius: 24, // same as GlassCard
-    borderWidth: 1,
-    borderColor: light.colors.border,
   },
   cacheIndicatorText: {
     fontSize: 13, fontFamily: fonts.medium,
