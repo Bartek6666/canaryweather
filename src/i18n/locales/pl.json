@@ -105,7 +105,6 @@
     "last10Years": "Ostatnie 10 lat",
     "yearChartSubtitle": "Średnie temperatury według miesięcy",
     "yearChartNoData": "Brak danych temperatury dla tego roku",
-    "close": "Zamknij",
     "missingYearsInfo": "Brak danych AEMET o temperaturach dla lat: {{years}}",
     "bestTimeToVisit": "Najlepszy moment na wyjazd",
     "top3Weeks": "Top 3 najbardziej słoneczne tygodnie w roku",
@@ -323,8 +322,7 @@
     "how_title": "Jak to liczymy?",
     "how_text": "Sprawdzamy wszystkie dni danego miesiąca z ostatnich 10 lat. Liczymy dni słoneczne (co najmniej 6 godzin słońca) i dni, kiedy nie padał deszcz.",
     "note_title": "To nie prognoza",
-    "note_text": "To jest statystyka historyczna, a nie prognoza na konkretny dzień — najlepiej działa z prognozą na żywo. Brakujące dni to nie zawsze deszcz — bywają to dni pochmurne, ale bez opadów.",
-    "close": "Rozumiem"
+    "note_text": "To jest statystyka historyczna, a nie prognoza na konkretny dzień — najlepiej działa z prognozą na żywo. Brakujące dni to nie zawsze deszcz — bywają to dni pochmurne, ale bez opadów."
   },
   "alerts": {
     "titleCoastal": "Wysokie Fale",
@@ -334,8 +332,7 @@
     "severityOrange": "Ostrzeżenie Pomarańczowe",
     "severityRed": "Ostrzeżenie Czerwone",
     "noDescriptionAvailable": "Brak szczegółowego opisu.",
-    "dataSource": "Źródło: AEMET Meteoalerta",
-    "close": "Zamknij"
+    "dataSource": "Źródło: AEMET Meteoalerta"
   },
   "footer": {
     "dataSource": "Dane: AEMET",

@@ -7,16 +7,14 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   ActivityIndicator,
-  Dimensions,
 } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 
-import { spacing, borderRadius, fonts, light } from '../constants/theme';
+import { spacing, fonts, light } from '../constants/theme';
 import { getYearlyMonthlyTemperatures, MonthlyTemperature } from '../services/weatherService';
 
-const { width } = Dimensions.get('window');
 const PLOT_HEIGHT = 170;
 
 const MONTH_KEYS = [
@@ -69,140 +67,136 @@ export function YearTemperatureChartModal({
   const yFor = (temp: number) => PLOT_HEIGHT - ((temp - minT) / range) * PLOT_HEIGHT;
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.overlay}>
-          <TouchableWithoutFeedback>
-            <View style={styles.modalContainer}>
-              <BlurView intensity={40} tint="light" style={[StyleSheet.absoluteFill, styles.blur]} />
-              <View style={styles.glassOverlay} />
+    // Bottom sheet — same shell as SunForecastSheet (handle, title + ✕ header)
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <View style={styles.overlay}>
+        <TouchableWithoutFeedback onPress={onClose}>
+          <View style={StyleSheet.absoluteFill} />
+        </TouchableWithoutFeedback>
+        <View style={styles.sheet}>
+          <View style={styles.handle} />
+          <View style={styles.header}>
+            <Text style={styles.title}>{year}</Text>
+            <TouchableOpacity onPress={onClose} hitSlop={12}>
+              <Ionicons name="close" size={24} color={light.colors.primary} />
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.subtitle}>{t('result.yearChartSubtitle')}</Text>
 
-              <View style={styles.content}>
-                <Text style={styles.title}>{year}</Text>
-                <Text style={styles.subtitle}>{t('result.yearChartSubtitle')}</Text>
-
-                {loading ? (
-                  <View style={styles.center}>
-                    <ActivityIndicator color={light.colors.primary} />
-                  </View>
-                ) : !hasAny ? (
-                  <View style={styles.center}>
-                    <Text style={styles.noData}>{t('result.yearChartNoData')}</Text>
-                  </View>
-                ) : (
-                  <>
-                    <View style={styles.chartRow}>
-                      {/* Y axis */}
-                      <View style={styles.yAxis}>
-                        <Text style={styles.axisLabel}>{maxT}°</Text>
-                        <Text style={styles.axisLabel}>{midT}°</Text>
-                        <Text style={styles.axisLabel}>{minT}°</Text>
-                      </View>
-
-                      {/* Plot + month labels */}
-                      <View style={styles.plotWrapper}>
-                        <View style={styles.plotArea}>
-                          <View style={[styles.gridline, { top: 0 }]} />
-                          <View style={[styles.gridline, { top: PLOT_HEIGHT / 2 }]} />
-                          <View style={[styles.gridline, { top: PLOT_HEIGHT }]} />
-
-                          <View style={styles.barsRow}>
-                            {(data ?? []).map((m) => {
-                              const has = m.avgTmax !== null && m.avgTmin !== null;
-                              const top = has ? yFor(m.avgTmax as number) : 0;
-                              const barHeight = has
-                                ? Math.max(4, yFor(m.avgTmin as number) - yFor(m.avgTmax as number))
-                                : 0;
-                              return (
-                                <View key={m.month} style={styles.barCol}>
-                                  {has && (
-                                    <LinearGradient
-                                      colors={[light.colors.tempHot, light.colors.tempCold]}
-                                      style={[styles.bar, { marginTop: top, height: barHeight }]}
-                                    />
-                                  )}
-                                </View>
-                              );
-                            })}
-                          </View>
-                        </View>
-
-                        <View style={styles.labelsRow}>
-                          {MONTH_KEYS.map((key) => (
-                            <Text key={key} style={styles.monthLabel} numberOfLines={1}>
-                              {t(`monthsShort.${key}`)}
-                            </Text>
-                          ))}
-                        </View>
-                      </View>
-                    </View>
-
-                    {/* Legend */}
-                    <View style={styles.legend}>
-                      <View style={styles.legendItem}>
-                        <View style={[styles.legendSwatch, { backgroundColor: light.colors.tempHot }]} />
-                        <Text style={styles.legendText}>{t('result.avgMax')}</Text>
-                      </View>
-                      <View style={styles.legendItem}>
-                        <View style={[styles.legendSwatch, { backgroundColor: light.colors.tempCold }]} />
-                        <Text style={styles.legendText}>{t('result.avgMin')}</Text>
-                      </View>
-                    </View>
-                  </>
-                )}
-
-                <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.85}>
-                  <Text style={styles.closeButtonText}>{t('result.close')}</Text>
-                </TouchableOpacity>
-              </View>
+          {loading ? (
+            <View style={styles.center}>
+              <ActivityIndicator color={light.colors.primary} />
             </View>
-          </TouchableWithoutFeedback>
+          ) : !hasAny ? (
+            <View style={styles.center}>
+              <Text style={styles.noData}>{t('result.yearChartNoData')}</Text>
+            </View>
+          ) : (
+            <>
+              <View style={styles.chartRow}>
+                {/* Y axis */}
+                <View style={styles.yAxis}>
+                  <Text style={styles.axisLabel}>{maxT}°</Text>
+                  <Text style={styles.axisLabel}>{midT}°</Text>
+                  <Text style={styles.axisLabel}>{minT}°</Text>
+                </View>
+
+                {/* Plot + month labels */}
+                <View style={styles.plotWrapper}>
+                  <View style={styles.plotArea}>
+                    <View style={[styles.gridline, { top: 0 }]} />
+                    <View style={[styles.gridline, { top: PLOT_HEIGHT / 2 }]} />
+                    <View style={[styles.gridline, { top: PLOT_HEIGHT }]} />
+
+                    <View style={styles.barsRow}>
+                      {(data ?? []).map((m) => {
+                        const has = m.avgTmax !== null && m.avgTmin !== null;
+                        const top = has ? yFor(m.avgTmax as number) : 0;
+                        const barHeight = has
+                          ? Math.max(4, yFor(m.avgTmin as number) - yFor(m.avgTmax as number))
+                          : 0;
+                        return (
+                          <View key={m.month} style={styles.barCol}>
+                            {has && (
+                              <LinearGradient
+                                colors={[light.colors.tempHot, light.colors.tempCold]}
+                                style={[styles.bar, { marginTop: top, height: barHeight }]}
+                              />
+                            )}
+                          </View>
+                        );
+                      })}
+                    </View>
+                  </View>
+
+                  <View style={styles.labelsRow}>
+                    {MONTH_KEYS.map((key) => (
+                      <Text key={key} style={styles.monthLabel} numberOfLines={1}>
+                        {t(`monthsShort.${key}`)}
+                      </Text>
+                    ))}
+                  </View>
+                </View>
+              </View>
+
+              {/* Legend */}
+              <View style={styles.legend}>
+                <View style={styles.legendItem}>
+                  <View style={[styles.legendSwatch, { backgroundColor: light.colors.tempHot }]} />
+                  <Text style={styles.legendText}>{t('result.avgMax')}</Text>
+                </View>
+                <View style={styles.legendItem}>
+                  <View style={[styles.legendSwatch, { backgroundColor: light.colors.tempCold }]} />
+                  <Text style={styles.legendText}>{t('result.avgMin')}</Text>
+                </View>
+              </View>
+            </>
+          )}
         </View>
-      </TouchableWithoutFeedback>
+      </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  // Sheet shell matches SunForecastSheet
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 30, 55, 0.35)',
-    justifyContent: 'center',
+    backgroundColor: 'rgba(15, 30, 55, 0.36)',
+    justifyContent: 'flex-end',
+  },
+  sheet: {
+    backgroundColor: '#F8FAFD',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: spacing.md + 4,
+    paddingBottom: spacing.xl,
+  },
+  handle: {
+    alignSelf: 'center',
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(0, 82, 212, 0.18)',
+    marginTop: spacing.sm + 2,
+    marginBottom: spacing.md,
+  },
+  header: {
+    flexDirection: 'row',
     alignItems: 'center',
-    padding: spacing.md,
-  },
-  modalContainer: {
-    width: width - spacing.md * 2,
-    maxWidth: 440,
-    borderRadius: borderRadius.xxl,
-    borderWidth: 1,
-    borderColor: light.colors.border,
-    overflow: 'hidden',
-    ...light.cardShadow,
-  },
-  blur: {
-    borderRadius: borderRadius.xxl,
-  },
-  glassOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.82)',
-    borderRadius: borderRadius.xxl,
-  },
-  content: {
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.md,
+    justifyContent: 'space-between',
+    gap: spacing.sm,
   },
   title: {
-    fontFamily: fonts.extrabold,
-    fontSize: 24,
+    fontFamily: fonts.bold,
+    fontSize: 20,
     color: light.colors.textPrimary,
-    textAlign: 'center',
+    flexShrink: 1,
   },
   subtitle: {
     fontFamily: fonts.regular,
     fontSize: 13,
     color: light.colors.textSecondary,
-    textAlign: 'center',
     marginBottom: spacing.lg,
   },
   center: {
@@ -290,17 +284,5 @@ const styles = StyleSheet.create({
     fontFamily: fonts.medium,
     fontSize: 12,
     color: light.colors.textSecondary,
-  },
-  closeButton: {
-    backgroundColor: light.colors.primary,
-    paddingVertical: spacing.sm + 3,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
-    marginTop: spacing.lg,
-  },
-  closeButtonText: {
-    fontFamily: fonts.bold,
-    fontSize: 15,
-    color: '#FFFFFF',
   },
 });

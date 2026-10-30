@@ -60,11 +60,8 @@ export function CalimaInfoModal({ visible, onClose }: CalimaInfoModalProps) {
               <Ionicons name="warning" size={24} color={CALIMA_ICON_COLOR} />
               <Text style={styles.modalTitle}>{t('result.calimaInfoTitle')}</Text>
             </View>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={onClose}
-            >
-              <Ionicons name="close" size={24} color={light.colors.textMuted} />
+            <TouchableOpacity onPress={onClose} hitSlop={12}>
+              <Ionicons name="close" size={24} color={light.colors.primary} />
             </TouchableOpacity>
           </View>
 
@@ -166,14 +163,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: light.colors.textPrimary,
     marginLeft: spacing.sm,
-  },
-  closeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   modalScroll: {
     padding: spacing.lg,
