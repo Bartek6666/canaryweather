@@ -1416,6 +1416,17 @@ export async function interpolateLiveWeather(
   // Fetch live weather from all nearest stations in parallel
   console.log(`[InterpolateLive] Location ${closestStation.distance.toFixed(1)}km from nearest station, using interpolation`);
 
+  // Sky condition (icon/label) is taken at the location itself, not at the closest station:
+  // stations can be 20+ km away with different cloud (e.g. Playa Blanca: partly cloudy vs
+  // overcast at Lanzarote airport), which also contradicted the 10-day forecast for the place.
+  const locationConditionPromise = fetchWeatherAPICondition(lat, lon);
+  const withLocationCondition = async (data: LiveWeatherData): Promise<LiveWeatherData> => {
+    const loc = await locationConditionPromise;
+    return loc
+      ? { ...data, weatherCode: loc.weatherCode, condition: loc.condition, conditionLabelKey: loc.conditionLabelKey }
+      : data;
+  };
+
   const weatherPromises = nearestStations.map(station =>
     fetchLiveWeather(
       station.latitude!,
@@ -1441,7 +1452,7 @@ export async function interpolateLiveWeather(
   // If only one station has data, use it directly
   if (validResults.length === 1) {
     return {
-      data: validResults[0].result.data,
+      data: await withLocationCondition(validResults[0].result.data),
       stations: [{
         stationId: validResults[0].station.stationId,
         name: validResults[0].station.name,
@@ -1458,7 +1469,7 @@ export async function interpolateLiveWeather(
   const weights = calculateDistanceWeights(distances);
 
   // Interpolate weather data (numeric values only)
-  // Condition comes from closest station - we trust WeatherAPI's condition data
+  // Condition comes from the location itself (fallback: closest station)
   let interpolatedTemp = 0;
   let interpolatedHumidity = 0;
   let interpolatedWindSpeed = 0;
@@ -1467,7 +1478,7 @@ export async function interpolateLiveWeather(
   let interpolatedPrecip = 0;
   let precipCount = 0;
 
-  // Use condition from closest station (most relevant for location)
+  // Closest station's condition — fallback if the location's own condition is unavailable
   const primaryData = validResults[0].result.data;
 
   validResults.forEach((r, index) => {
@@ -1489,18 +1500,17 @@ export async function interpolateLiveWeather(
     }
   });
 
-  const interpolatedData: LiveWeatherData = {
+  const interpolatedData: LiveWeatherData = await withLocationCondition({
     temperature: Math.round(interpolatedTemp),
     humidity: Math.round(interpolatedHumidity),
     windSpeed: Math.round(interpolatedWindSpeed),
     windGusts: gustsCount > 0 ? Math.round(interpolatedWindGusts) : undefined,
     precipitation: precipCount > 0 ? Math.round(interpolatedPrecip * 10) / 10 : undefined,
-    // Use condition from closest station (we trust WeatherAPI)
     weatherCode: primaryData.weatherCode,
     condition: primaryData.condition,
     conditionLabelKey: primaryData.conditionLabelKey,
     timestamp: primaryData.timestamp,
-  };
+  });
 
   const stationNames = validResults.map(r => r.station.name).join(', ');
   console.log(`[InterpolateLive] Interpolated from ${validResults.length} stations: ${stationNames}`);
