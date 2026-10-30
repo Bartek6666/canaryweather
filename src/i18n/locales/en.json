@@ -91,7 +91,6 @@
     "last10Years": "Last 10 years",
     "yearChartSubtitle": "Average temperature by month",
     "yearChartNoData": "No temperature data for this year",
-    "close": "Close",
     "missingYearsInfo": "AEMET temperature data missing for years: {{years}}",
     "bestTimeToVisit": "Best time to visit",
     "top3Weeks": "Top 3 sunniest weeks of the year",
@@ -189,8 +188,7 @@
     "how_title": "How we calculate it",
     "how_text": "We look at every day of that month over the last 10 years. We count sunny days (at least 6 hours of sunshine) and days without rain.",
     "note_title": "It's not a forecast",
-    "note_text": "This is historical data, not a forecast for a specific day — it works best together with the live forecast. Days that aren't sunny aren't always rainy — they can be cloudy but dry.",
-    "close": "Got it"
+    "note_text": "This is historical data, not a forecast for a specific day — it works best together with the live forecast. Days that aren't sunny aren't always rainy — they can be cloudy but dry."
   },
   "wind": {
     "detailsTitle": "Wind Statistics",
@@ -302,8 +300,7 @@
     "severityOrange": "Orange Warning",
     "severityRed": "Red Warning",
     "noDescriptionAvailable": "No detailed description available.",
-    "dataSource": "Source: AEMET Meteoalerta",
-    "close": "Close"
+    "dataSource": "Source: AEMET Meteoalerta"
   },
   "footer": {
     "dataSource": "Data: AEMET",

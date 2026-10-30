@@ -162,8 +162,8 @@ export function AlertDetailModal({ visible, alert, alertType = 'coastal', onClos
                 {t(typeConfig.titleKey)}
               </Text>
             </View>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <Ionicons name="close" size={22} color={light.colors.textMuted} />
+            <TouchableOpacity onPress={onClose} hitSlop={12}>
+              <Ionicons name="close" size={24} color={light.colors.primary} />
             </TouchableOpacity>
           </View>
 
@@ -207,13 +207,6 @@ export function AlertDetailModal({ visible, alert, alertType = 'coastal', onClos
 
             {/* Source */}
             <Text style={styles.sourceText}>{t('alerts.dataSource')}</Text>
-          </View>
-
-          {/* Close Button */}
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.button} onPress={onClose}>
-              <Text style={styles.buttonText}>{t('alerts.close')}</Text>
-            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -262,17 +255,9 @@ const styles = StyleSheet.create({
     fontFamily: fonts.bold,
     fontSize: 22,
   },
-  closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   content: {
     paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.md,
+    paddingBottom: spacing.lg,
   },
   severityBadge: {
     flexDirection: 'row',
@@ -324,20 +309,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: light.colors.textMuted,
     textAlign: 'center',
-  },
-  buttonContainer: {
-    padding: spacing.lg,
-    paddingTop: spacing.sm,
-  },
-  button: {
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    backgroundColor: light.colors.primary,
-  },
-  buttonText: {
-    fontFamily: fonts.bold,
-    fontSize: 16,
-    color: '#FFFFFF',
   },
 });

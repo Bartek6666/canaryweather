@@ -91,7 +91,6 @@
     "last10Years": "Últimos 10 años",
     "yearChartSubtitle": "Temperatura media por mes",
     "yearChartNoData": "Sin datos de temperatura para este año",
-    "close": "Cerrar",
     "missingYearsInfo": "Faltan datos de temperatura AEMET para los años: {{years}}",
     "bestTimeToVisit": "Mejor época para visitar",
     "top3Weeks": "Top 3 semanas más soleadas del año",
@@ -189,8 +188,7 @@
     "how_title": "Cómo lo calculamos",
     "how_text": "Revisamos todos los días de ese mes de los últimos 10 años. Contamos los días soleados (al menos 6 horas de sol) y los días sin lluvia.",
     "note_title": "No es un pronóstico",
-    "note_text": "Son datos históricos, no un pronóstico para un día concreto — funciona mejor junto al pronóstico en vivo. Los días que no son soleados no siempre son lluviosos — pueden ser nublados pero secos.",
-    "close": "Entendido"
+    "note_text": "Son datos históricos, no un pronóstico para un día concreto — funciona mejor junto al pronóstico en vivo. Los días que no son soleados no siempre son lluviosos — pueden ser nublados pero secos."
   },
   "wind": {
     "detailsTitle": "Estadísticas del Viento",
@@ -302,8 +300,7 @@
     "severityOrange": "Aviso Naranja",
     "severityRed": "Aviso Rojo",
     "noDescriptionAvailable": "No hay descripción detallada disponible.",
-    "dataSource": "Fuente: AEMET Meteoalerta",
-    "close": "Cerrar"
+    "dataSource": "Fuente: AEMET Meteoalerta"
   },
   "footer": {
     "dataSource": "Datos: AEMET",

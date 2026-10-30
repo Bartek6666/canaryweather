@@ -66,8 +66,13 @@ export function SunChanceModal({ visible, onClose }: SunChanceModalProps) {
               <View style={styles.content}>
                 {/* Header */}
                 <View style={styles.header}>
-                  <Ionicons name="sunny" size={22} color={light.colors.accentDeep} />
-                  <Text style={styles.title}>{t('sun_chance.title')}</Text>
+                  <View style={styles.headerTitle}>
+                    <Ionicons name="sunny" size={22} color={light.colors.accentDeep} />
+                    <Text style={styles.title}>{t('sun_chance.title')}</Text>
+                  </View>
+                  <TouchableOpacity onPress={onClose} hitSlop={12}>
+                    <Ionicons name="close" size={24} color={light.colors.primary} />
+                  </TouchableOpacity>
                 </View>
 
                 {/* Sections */}
@@ -91,15 +96,6 @@ export function SunChanceModal({ visible, onClose }: SunChanceModalProps) {
                     text={t('sun_chance.note_text')}
                   />
                 </View>
-
-                {/* Close button */}
-                <TouchableOpacity
-                  style={styles.closeButton}
-                  onPress={onClose}
-                  activeOpacity={0.85}
-                >
-                  <Text style={styles.closeButtonText}>{t('sun_chance.close')}</Text>
-                </TouchableOpacity>
               </View>
             </View>
           </TouchableWithoutFeedback>
@@ -140,9 +136,15 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     gap: spacing.sm,
     marginBottom: spacing.md,
+  },
+  headerTitle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    flexShrink: 1,
   },
   title: {
     fontFamily: fonts.bold,
@@ -151,7 +153,6 @@ const styles = StyleSheet.create({
   },
   sections: {
     gap: spacing.md,
-    marginBottom: spacing.lg,
   },
   section: {
     flexDirection: 'row',
@@ -179,16 +180,5 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     color: light.colors.textSecondary,
-  },
-  closeButton: {
-    backgroundColor: light.colors.primary,
-    paddingVertical: spacing.sm + 3,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
-  },
-  closeButtonText: {
-    fontFamily: fonts.bold,
-    fontSize: 15,
-    color: '#FFFFFF',
   },
 });
