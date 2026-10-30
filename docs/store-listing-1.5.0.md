@@ -14,11 +14,18 @@ Języki: en-GB, pl-PL, es-ES, de-DE. Limity Google Play:
 
 ## 1. Nazwa aplikacji (title) — ≤ 30 znaków
 
-Ta sama nazwa dla wszystkich języków:
+**Od 30.10.2026:** nazwa z podpisem, czego dotyczy apka (lepsze wyszukiwanie w sklepie).
+Wcześniej było samo `Sunly`. Nazwa pod ikoną na telefonie zostaje `Sunly` (app.json).
 
-```
-Sunly
-```
+| Język | Tytuł | Znaki |
+|---|---|---|
+| pl-PL | `Sunly: Szansa na słońce` | 23 |
+| en-GB | `Sunly: Chance of Sun` | 20 |
+| es-ES | `Sunly: Probabilidad de sol` | 26 |
+| de-DE | `Sunly: Sonnenchance` | 19 |
+
+**Nazwa dewelopera** (pod tytułem, jedna dla wszystkich języków; Play Console → Konto
+dewelopera → O Tobie): `Sunly Weather` (wcześniej: imię i nazwisko).
 
 ---
 
