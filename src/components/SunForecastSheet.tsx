@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Modal, ScrollView, TouchableOpacity, TouchableWithoutFeedback, useWindowDimensions } from 'react-native';
 import Svg, { Circle, G } from 'react-native-svg';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
@@ -126,6 +127,7 @@ interface SunForecastSheetProps {
 export function SunForecastSheet({ visible, days, onClose }: SunForecastSheetProps) {
   const { t, i18n } = useTranslation();
   const { height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const [selected, setSelected] = useState<SunForecastDay | null>(null);
 
   // Always reopen on the list
@@ -255,7 +257,7 @@ export function SunForecastSheet({ visible, days, onClose }: SunForecastSheetPro
         <TouchableWithoutFeedback onPress={onClose}>
           <View style={StyleSheet.absoluteFill} />
         </TouchableWithoutFeedback>
-        <View style={[styles.sheet, selected ? { maxHeight: height * 0.84 } : { height: height * 0.74 }]}>
+        <View style={[styles.sheet, { paddingBottom: spacing.lg + insets.bottom }, selected ? { maxHeight: height * 0.84 } : { height: height * 0.74 }]}>
           <View style={styles.handle} />
           {selected ? renderDetail(selected) : renderList()}
         </View>

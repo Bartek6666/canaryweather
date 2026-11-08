@@ -15,7 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import * as Haptics from 'expo-haptics';
@@ -377,6 +377,7 @@ const YearHistoryItem = React.memo(function YearHistoryItem({ data, month, delay
 
 export default function ResultScreen({ navigation, route }: Props) {
   const { t, i18n } = useTranslation();
+  const insets = useSafeAreaInsets();
   const { stationId, locationName, locationCoords, isHighAltitudeFallback, isCoastal: isCoastalParam, isHighAltitude: isHighAltitudeParam } = route.params;
   const [isLoading, setIsLoading] = useState(true);
   const [sunChanceResult, setSunChanceResult] = useState<SunChanceResult | null>(null);
@@ -927,7 +928,8 @@ export default function ResultScreen({ navigation, route }: Props) {
         <Animated.ScrollView
           ref={scrollViewRef}
           style={[styles.scroll, { opacity: fadeAnim }]}
-          contentContainerStyle={styles.scrollContent}
+          // edgeToEdge: content would otherwise end under the Android nav bar
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom }]}
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}

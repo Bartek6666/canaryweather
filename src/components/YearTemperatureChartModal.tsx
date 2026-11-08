@@ -11,6 +11,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { spacing, fonts, light } from '../constants/theme';
 import { getYearlyMonthlyTemperatures, MonthlyTemperature } from '../services/weatherService';
@@ -36,6 +37,7 @@ export function YearTemperatureChartModal({
   onClose,
 }: YearTemperatureChartModalProps) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   const [data, setData] = useState<MonthlyTemperature[] | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -73,7 +75,7 @@ export function YearTemperatureChartModal({
         <TouchableWithoutFeedback onPress={onClose}>
           <View style={StyleSheet.absoluteFill} />
         </TouchableWithoutFeedback>
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, { paddingBottom: spacing.xl + insets.bottom }]}>
           <View style={styles.handle} />
           <View style={styles.header}>
             <Text style={styles.title}>{year}</Text>
