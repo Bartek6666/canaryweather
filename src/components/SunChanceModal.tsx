@@ -6,15 +6,12 @@ import {
   Modal,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  Dimensions,
 } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 
-import { spacing, borderRadius, fonts, light } from '../constants/theme';
-
-const { width } = Dimensions.get('window');
+import { spacing, fonts, light } from '../constants/theme';
 
 interface SunChanceModalProps {
   visible: boolean;
@@ -28,11 +25,11 @@ interface InfoSectionProps {
   text: string;
 }
 
-function InfoSection({ icon, iconColor, title, text }: InfoSectionProps) {
+function InfoSection({ icon, iconColor, title, text, last }: InfoSectionProps & { last?: boolean }) {
   return (
-    <View style={styles.section}>
+    <View style={[styles.section, !last && styles.divider]}>
       <View style={styles.sectionIcon}>
-        <Ionicons name={icon} size={18} color={iconColor} />
+        <Ionicons name={icon} size={20} color={iconColor} />
       </View>
       <View style={styles.sectionBody}>
         <Text style={styles.sectionTitle}>{title}</Text>
@@ -44,101 +41,80 @@ function InfoSection({ icon, iconColor, title, text }: InfoSectionProps) {
 
 export function SunChanceModal({ visible, onClose }: SunChanceModalProps) {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-    >
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.overlay}>
-          <TouchableWithoutFeedback>
-            <View style={styles.modalContainer}>
-              <BlurView
-                intensity={40}
-                tint="light"
-                style={[StyleSheet.absoluteFill, styles.blur]}
-              />
-              <View style={styles.glassOverlay} />
-
-              <View style={styles.content}>
-                {/* Header */}
-                <View style={styles.header}>
-                  <View style={styles.headerTitle}>
-                    <Ionicons name="sunny" size={22} color={light.colors.accentDeep} />
-                    <Text style={styles.title}>{t('sun_chance.title')}</Text>
-                  </View>
-                  <TouchableOpacity onPress={onClose} hitSlop={12}>
-                    <Ionicons name="close" size={24} color={light.colors.primary} />
-                  </TouchableOpacity>
-                </View>
-
-                {/* Sections */}
-                <View style={styles.sections}>
-                  <InfoSection
-                    icon="help-circle-outline"
-                    iconColor={light.colors.primary}
-                    title={t('sun_chance.what_title')}
-                    text={t('sun_chance.what_text')}
-                  />
-                  <InfoSection
-                    icon="bar-chart-outline"
-                    iconColor={light.colors.accentDeep}
-                    title={t('sun_chance.how_title')}
-                    text={t('sun_chance.how_text')}
-                  />
-                  <InfoSection
-                    icon="information-circle-outline"
-                    iconColor={light.colors.rain}
-                    title={t('sun_chance.note_title')}
-                    text={t('sun_chance.note_text')}
-                  />
-                </View>
-              </View>
+    // Bottom sheet — same shell as SunForecastSheet (handle, title + ✕ header)
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <View style={styles.overlay}>
+        <TouchableWithoutFeedback onPress={onClose}>
+          <View style={StyleSheet.absoluteFill} />
+        </TouchableWithoutFeedback>
+        <View style={[styles.sheet, { paddingBottom: spacing.xl + insets.bottom }]}>
+          <View style={styles.handle} />
+          <View style={styles.header}>
+            <View style={styles.headerTitle}>
+              <Text style={styles.title}>{t('sun_chance.title')}</Text>
+              <Ionicons name="sunny" size={22} color={light.colors.accentDeep} />
             </View>
-          </TouchableWithoutFeedback>
+            <TouchableOpacity onPress={onClose} hitSlop={12}>
+              <Ionicons name="close" size={24} color={light.colors.primary} />
+            </TouchableOpacity>
+          </View>
+
+          <InfoSection
+            icon="help-circle-outline"
+            iconColor={light.colors.primary}
+            title={t('sun_chance.what_title')}
+            text={t('sun_chance.what_text')}
+          />
+          <InfoSection
+            icon="bar-chart-outline"
+            iconColor={light.colors.accentDeep}
+            title={t('sun_chance.how_title')}
+            text={t('sun_chance.how_text')}
+          />
+          <InfoSection
+            icon="information-circle-outline"
+            iconColor={light.colors.rain}
+            title={t('sun_chance.note_title')}
+            text={t('sun_chance.note_text')}
+            last
+          />
         </View>
-      </TouchableWithoutFeedback>
+      </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  // Sheet shell matches SunForecastSheet
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(15, 30, 55, 0.35)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: spacing.lg,
+    backgroundColor: 'rgba(15, 30, 55, 0.36)',
+    justifyContent: 'flex-end',
   },
-  modalContainer: {
-    width: width - spacing.lg * 2,
-    maxWidth: 360,
-    borderRadius: borderRadius.xxl,
-    borderWidth: 1,
-    borderColor: light.colors.border,
-    overflow: 'hidden',
-    ...light.cardShadow,
+  sheet: {
+    backgroundColor: '#F8FAFD',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: spacing.md + 4,
   },
-  blur: {
-    borderRadius: borderRadius.xxl,
-  },
-  glassOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.82)',
-    borderRadius: borderRadius.xxl,
-  },
-  content: {
-    padding: spacing.lg,
+  handle: {
+    alignSelf: 'center',
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(0, 82, 212, 0.18)',
+    marginTop: spacing.sm + 2,
+    marginBottom: spacing.md,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: spacing.sm,
     gap: spacing.sm,
-    marginBottom: spacing.md,
   },
   headerTitle: {
     flexDirection: 'row',
@@ -148,20 +124,24 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: fonts.bold,
-    fontSize: 18,
+    fontSize: 20,
     color: light.colors.textPrimary,
+    flexShrink: 1,
   },
-  sections: {
-    gap: spacing.md,
+  divider: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(0, 82, 212, 0.12)',
   },
+  // Rows mirror SunForecastSheet's InfoRow (36 px soft icon circle)
   section: {
     flexDirection: 'row',
-    gap: spacing.sm + 2,
+    gap: spacing.sm + 4,
+    paddingVertical: spacing.sm + 4,
   },
   sectionIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: borderRadius.full,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: light.colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
@@ -171,14 +151,14 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontFamily: fonts.bold,
-    fontSize: 14,
+    fontSize: 15,
     color: light.colors.textPrimary,
-    marginBottom: 1,
+    marginBottom: 2,
   },
   sectionText: {
     fontFamily: fonts.regular,
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 20,
     color: light.colors.textSecondary,
   },
 });
